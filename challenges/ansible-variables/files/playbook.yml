@@ -19,4 +19,4 @@
           port={{ app_port }}
           env={{ app_env }}
           log_dir={{ log_directory }}
-        dest: {{ app_dir }}/config.ini
+        dest: "{{ app_dir }}/config.ini"

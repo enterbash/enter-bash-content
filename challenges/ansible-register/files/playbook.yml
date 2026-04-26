@@ -5,7 +5,7 @@
   tasks:
     - name: Get hostname
       command: hostname
-      register: {{ hostname_result }}
+      register: hostname_result
 
     - name: Get kernel version
       command: uname -r

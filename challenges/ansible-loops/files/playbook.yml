@@ -22,7 +22,7 @@
       copy:
         content: "app={{ item.name }}\nport={{ item.port }}\n"
         dest: "/tmp/apps/{{ item.name }}/config.txt"
-      loop: {{ apps }}
+      loop: "{{ apps }}"
 
     - name: Create log directories
       file:

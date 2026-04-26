@@ -23,4 +23,4 @@
       copy:
         content: "port={{ app_port }}\n"
         dest: /tmp/port_info.txt
-      when: {{ app_port }} > 1024
+      when: app_port > 1024
