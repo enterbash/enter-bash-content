@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Verify docker daemon is accessible
+if ! docker info > /dev/null 2>&1; then
+  echo "FAIL: Docker daemon is not running or not accessible"
+  exit 1
+fi
+
+
 if [ ! -f ~/savetest.tar ]; then
   echo "FAIL: ~/savetest.tar not found"
   exit 1

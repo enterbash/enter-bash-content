@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Verify docker daemon is accessible
+if ! docker info > /dev/null 2>&1; then
+  echo "FAIL: Docker daemon is not running or not accessible"
+  exit 1
+fi
+
+
 # Check both containers are running
 if ! docker ps --format '{{.Names}}' | grep -q '^web$'; then
   echo "FAIL: web container is not running"

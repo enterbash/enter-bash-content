@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Verify docker daemon is accessible
+if ! docker info > /dev/null 2>&1; then
+  echo "FAIL: Docker daemon is not running or not accessible"
+  exit 1
+fi
+
+
 # Check network exists with correct subnet
 SUBNET=$(docker network inspect appnet --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}' 2>/dev/null || true)
 if [ "$SUBNET" != "172.20.0.0/16" ]; then

@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Verify docker daemon is accessible
+if ! docker info > /dev/null 2>&1; then
+  echo "FAIL: Docker daemon is not running or not accessible"
+  exit 1
+fi
+
+
 # Check no stopped containers
 STOPPED=$(docker ps -a --filter "status=exited" --format '{{.Names}}' | grep -c 'old' || true)
 if [ "$STOPPED" -gt 0 ]; then

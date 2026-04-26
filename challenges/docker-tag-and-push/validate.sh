@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Verify docker daemon is accessible
+if ! docker info > /dev/null 2>&1; then
+  echo "FAIL: Docker daemon is not running or not accessible"
+  exit 1
+fi
+
+
 IMAGES=$(docker images --format '{{.Repository}}:{{.Tag}}')
 
 if ! echo "$IMAGES" | grep -q '^tagme:v1.0$'; then

@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Verify docker daemon is accessible
+if ! docker info > /dev/null 2>&1; then
+  echo "FAIL: Docker daemon is not running or not accessible"
+  exit 1
+fi
+
+
 # Check network exists
 if ! docker network ls --format '{{.Name}}' | grep -q '^mynet$'; then
   echo "FAIL: mynet network not found"
