@@ -10,8 +10,14 @@ if ! terraform validate > /dev/null 2>&1; then
 fi
 
 # Check sensitive markers
-grep -A5 'variable "db_password"' *.tf | grep -q 'sensitive.*=.*true'
-grep -A5 'variable "api_key"' *.tf | grep -q 'sensitive.*=.*true'
+if ! grep -A5 'variable "db_password"' *.tf | grep -q 'sensitive.*=.*true'; then
+  echo "FAIL: db_password variable should have sensitive = true"
+  exit 1
+fi
+if ! grep -A5 'variable "api_key"' *.tf | grep -q 'sensitive.*=.*true'; then
+  echo "FAIL: api_key variable should have sensitive = true"
+  exit 1
+fi
 
 # Check outputs
 if ! grep -q 'output "app_id"' *.tf; then
@@ -22,7 +28,10 @@ if ! grep -q 'output "password_set"' *.tf; then
   echo "FAIL: Expected to find: output "password_set""
   exit 1
 fi
-grep -A5 'output "password_set"' *.tf | grep -q 'sensitive.*=.*true'
+if ! grep -A5 'output "password_set"' *.tf | grep -q 'sensitive.*=.*true'; then
+  echo "FAIL: password_set output should have sensitive = true"
+  exit 1
+fi
 
 # Check config resource
 if ! grep -q 'local_file.*config' *.tf; then

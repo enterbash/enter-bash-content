@@ -10,7 +10,10 @@ if ! terraform validate > /dev/null 2>&1; then
 fi
 
 # Check dynamic block exists
-grep -q 'dynamic "provisioner"' *.tf || grep -q 'dynamic "provisioner"' *.tf
+if ! grep -q 'dynamic' *.tf; then
+  echo "FAIL: No dynamic block found — use 'dynamic' keyword"
+  exit 1
+fi
 if ! grep -q 'for_each' *.tf; then
   echo "FAIL: Expected to find: for_each"
   exit 1
