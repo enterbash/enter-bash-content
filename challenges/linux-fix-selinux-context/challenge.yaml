@@ -5,7 +5,7 @@ difficulty: hard
 tags: [linux, selinux, security, contexts]
 time_estimate: "20m"
 xp_reward: 150
-packages: [selinux-utils, policycoreutils]
+packages: [selinux-utils, policycoreutils, attr]
 pre_install: []
 namespace: ""
 files:
