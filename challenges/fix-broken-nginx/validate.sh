@@ -8,9 +8,8 @@ if ! pgrep -x nginx > /dev/null 2>&1; then
 fi
 
 # Check nginx config is valid
-sudo nginx -t 2>/dev/null
-if [ $? -ne 0 ]; then
-  echo "FAIL: Nginx configuration is invalid"
+if ! sudo nginx -t > /dev/null 2>&1; then
+  echo "FAIL: Nginx configuration is invalid — run 'sudo nginx -t' to see errors"
   exit 1
 fi
 
