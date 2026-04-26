@@ -30,8 +30,11 @@ if ! echo "$CONFIG" | grep -q '/var/log/myapp'; then
 fi
 
 # Check that logrotate config is valid (dry run)
-if ! sudo logrotate -d /etc/logrotate.d/myapp 2>&1 | grep -q 'considering log'; then
-  echo "FAIL: Logrotate config has errors"
+# logrotate -d exits 0 on success; stderr output varies by version
+LOGROTATE_OUT=$(sudo logrotate -d /etc/logrotate.d/myapp 2>&1)
+if echo "$LOGROTATE_OUT" | grep -qi 'error\|no such file\|unknown option'; then
+  echo "FAIL: Logrotate config has errors:"
+  echo "$LOGROTATE_OUT" | grep -i 'error\|no such file\|unknown option' | head -5
   exit 1
 fi
 
