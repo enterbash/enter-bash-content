@@ -4764,7 +4764,8 @@
       "script": "validate.sh",
       "success_message": "Swap space is configured and active!",
       "failure_message": "Swap is not properly configured. Check the swap file and fstab."
-    }
+    },
+    "privileged": true
   },
   {
     "dir_name": "linux-find-and-replace-text",
@@ -5046,7 +5047,8 @@
       "script": "validate.sh",
       "success_message": "Disk mount permissions are correctly configured!",
       "failure_message": "The mount permissions are still incorrect."
-    }
+    },
+    "privileged": true
   },
   {
     "dir_name": "linux-fix-dns-resolution",
@@ -5168,7 +5170,8 @@
       "script": "validate.sh",
       "success_message": "fstab is fixed and the filesystem is mounted!",
       "failure_message": "The fstab entry is still broken or the filesystem isn't mounted."
-    }
+    },
+    "privileged": true
   },
   {
     "dir_name": "linux-fix-iptables",
@@ -5210,7 +5213,8 @@
       "script": "validate.sh",
       "success_message": "Firewall rules are correctly configured!",
       "failure_message": "Firewall rules are still blocking traffic."
-    }
+    },
+    "privileged": true
   },
   {
     "dir_name": "linux-fix-locale",
@@ -5295,7 +5299,8 @@
       "script": "validate.sh",
       "success_message": "Network interface is correctly configured!",
       "failure_message": "The network interface configuration is still incorrect."
-    }
+    },
+    "privileged": true
   },
   {
     "dir_name": "linux-fix-selinux-context",
@@ -5585,7 +5590,8 @@
       "script": "validate.sh",
       "success_message": "LVM volume extended and filesystem resized!",
       "failure_message": "The LVM volume has not been properly extended."
-    }
+    },
+    "privileged": true
   },
   {
     "dir_name": "linux-manage-systemd-service",
@@ -5875,7 +5881,8 @@
       "script": "validate.sh",
       "success_message": "NFS share is configured and mounted!",
       "failure_message": "NFS share is not properly configured or mounted."
-    }
+    },
+    "privileged": true
   },
   {
     "dir_name": "linux-setup-rsync-backup",

@@ -7,6 +7,7 @@ time_estimate: "20m"
 xp_reward: 150
 packages: [iproute2, net-tools]
 pre_install: []
+privileged: true
 namespace: ""
 files:
   - source: files/setup.sh

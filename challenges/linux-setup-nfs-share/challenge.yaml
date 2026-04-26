@@ -7,6 +7,7 @@ time_estimate: "20m"
 xp_reward: 150
 packages: [nfs-kernel-server, nfs-common]
 pre_install: []
+privileged: true
 namespace: ""
 files:
   - source: files/setup.sh

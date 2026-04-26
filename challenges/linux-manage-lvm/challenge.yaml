@@ -7,6 +7,7 @@ time_estimate: "25m"
 xp_reward: 200
 packages: [lvm2]
 pre_install: []
+privileged: true
 namespace: ""
 files:
   - source: files/setup.sh
