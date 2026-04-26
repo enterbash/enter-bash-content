@@ -2,12 +2,12 @@
 set -e
 
 # Create the shared directory with test data
-mkdir -p /srv/nfs/shared
-echo "NFS test file" > /srv/nfs/shared/testfile.txt
-echo "shared data" > /srv/nfs/shared/data.txt
+sudo mkdir -p /srv/nfs/shared
+echo "NFS test file" | sudo tee /srv/nfs/shared/testfile.txt > /dev/null
+echo "shared data" | sudo tee /srv/nfs/shared/data.txt > /dev/null
 
 # Create mount point
-mkdir -p /mnt/nfs-test
+sudo mkdir -p /mnt/nfs-test
 
 # Clear any existing exports
 echo "" | sudo tee /etc/exports > /dev/null

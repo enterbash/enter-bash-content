@@ -12,8 +12,8 @@ HTML
 service nginx start 2>/dev/null || true
 
 # Set restrictive iptables rules
-iptables -F
-iptables -P INPUT DROP
-iptables -P FORWARD DROP
-iptables -P OUTPUT ACCEPT
+sudo iptables -F
+sudo iptables -P INPUT DROP
+sudo iptables -P FORWARD DROP
+sudo iptables -P OUTPUT ACCEPT
 # Intentionally NOT allowing loopback, HTTP, or SSH

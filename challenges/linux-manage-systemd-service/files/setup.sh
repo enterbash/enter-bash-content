@@ -2,8 +2,8 @@
 set -e
 
 # Create the application
-mkdir -p /opt/myapp
-cat > /opt/myapp/server.py <<'PYTHON'
+sudo mkdir -p /opt/myapp
+sudo tee /opt/myapp/server.py <<'PYTHON' > /dev/null
 #!/usr/bin/env python3
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import os
@@ -20,9 +20,9 @@ if __name__ == '__main__':
     print('Server running on port 8080')
     server.serve_forever()
 PYTHON
-chmod +x /opt/myapp/server.py
-chown -R runner:runner /opt/myapp
+sudo chmod +x /opt/myapp/server.py
+sudo chown -R runner:runner /opt/myapp
 
 # Remove any existing service file
-rm -f /etc/systemd/system/myapp.service
+sudo rm -f /etc/systemd/system/myapp.service
 systemctl daemon-reload 2>/dev/null || true

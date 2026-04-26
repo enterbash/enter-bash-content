@@ -2,7 +2,7 @@
 set -e
 
 # Create a broken GRUB config
-mkdir -p /etc/default
+sudo mkdir -p /etc/default
 sudo tee /etc/default/grub <<'EOF' > /dev/null
 # Broken GRUB configuration
 GRUB_DEFAULT=0

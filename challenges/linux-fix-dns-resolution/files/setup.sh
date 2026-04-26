@@ -2,7 +2,7 @@
 set -e
 
 # Back up original resolv.conf
-cp /etc/resolv.conf /etc/resolv.conf.bak 2>/dev/null || true
+sudo cp /etc/resolv.conf /etc/resolv.conf.bak 2>/dev/null || true
 
 # Break DNS by setting invalid nameservers
 sudo tee /etc/resolv.conf <<'EOF' > /dev/null

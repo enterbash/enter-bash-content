@@ -2,10 +2,10 @@
 set -e
 
 # Create web content directory with files
-mkdir -p /srv/www/html
-echo '<!DOCTYPE html><html><body>Welcome</body></html>' > /srv/www/html/index.html
-echo 'body { color: black; }' > /srv/www/html/style.css
-echo 'console.log("loaded");' > /srv/www/html/app.js
+sudo mkdir -p /srv/www/html
+echo '<!DOCTYPE html><html><body>Welcome</body></html>' | sudo tee /srv/www/html/index.html > /dev/null
+echo 'body { color: black; }' | sudo tee /srv/www/html/style.css > /dev/null
+echo 'console.log("loaded");' | sudo tee /srv/www/html/app.js > /dev/null
 
 # Set wrong extended attributes to simulate wrong SELinux context
 for f in /srv/www/html/*; do

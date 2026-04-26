@@ -2,7 +2,7 @@
 set -e
 
 # Create the developer user
-useradd -m developer 2>/dev/null || true
+sudo useradd -m developer 2>/dev/null || true
 
 # Remove any existing sudoers config
-rm -f /etc/sudoers.d/developer
+sudo rm -f /etc/sudoers.d/developer

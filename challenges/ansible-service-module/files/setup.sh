@@ -2,7 +2,7 @@
 mkdir -p ~/ansible-project
 
 # Create a fake service script
-cat > /usr/local/bin/myservice << 'SCRIPT'
+sudo tee /usr/local/bin/myservice << 'SCRIPT' > /dev/null
 #!/bin/bash
 case "$1" in
   start)
@@ -26,4 +26,4 @@ case "$1" in
     ;;
 esac
 SCRIPT
-chmod +x /usr/local/bin/myservice
+sudo chmod +x /usr/local/bin/myservice
