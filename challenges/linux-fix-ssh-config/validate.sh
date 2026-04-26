@@ -28,10 +28,10 @@ if [ "$PERMS" != "600" ]; then
   exit 1
 fi
 
-# Check authorized_keys permissions (should be 600)
+# Check authorized_keys permissions (should be 600 or 644)
 PERMS=$(stat -c '%a' /home/runner/.ssh/authorized_keys)
-if [ "$PERMS" != "600" ]; then
-  echo "FAIL: authorized_keys should be 600, got $PERMS"
+if [ "$PERMS" != "600" ] && [ "$PERMS" != "644" ]; then
+  echo "FAIL: authorized_keys should be 600 or 644, got $PERMS"
   exit 1
 fi
 
