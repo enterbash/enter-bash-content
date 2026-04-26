@@ -10,7 +10,7 @@
     - name: Install curl
       apt:
         name: curl
-        state: installed
+        state: present
 
     - name: Install jq
       package:
@@ -20,7 +20,7 @@
 
     - name: Install tree
       apt:
-        pkg: tree
+        name: tree
         state: present
 
     - name: Verify installations

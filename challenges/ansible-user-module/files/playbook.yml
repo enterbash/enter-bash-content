@@ -10,7 +10,7 @@
 
     - name: Create deploy user
       user:
-        username: deploy
+        name: deploy
         shell: /bin/bash
         group: deploy
         home: /home/deploy

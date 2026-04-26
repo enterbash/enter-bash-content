@@ -19,9 +19,8 @@
         mode: "0644"
 
     - name: Start the service
-      service:
-        name: myservice
-        state: started
+      command: myservice start
+      register: start_result
 
     - name: Check service status
       command: myservice status
