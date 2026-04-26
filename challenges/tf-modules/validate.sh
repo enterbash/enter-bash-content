@@ -55,6 +55,14 @@ if ! grep -q 'module\.app_config' main.tf; then
   exit 1
 fi
 
-terraform plan -input=false > /dev/null 2>&1
+EXIT_CODE=0
+terraform plan -input=false > /dev/null 2>&1 || EXIT_CODE=$?
+if [ "$EXIT_CODE" -eq 2 ]; then
+  echo "FAIL: terraform plan shows pending changes — your config may be incomplete"
+  exit 1
+elif [ "$EXIT_CODE" -ne 0 ]; then
+  echo "FAIL: terraform plan encountered an error"
+  exit 1
+fi
 echo "PASS: Module properly defined and called"
 exit 0

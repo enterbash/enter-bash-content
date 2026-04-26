@@ -31,6 +31,14 @@ grep -A3 'output "random_number"' *.tf | grep -q 'random_integer\.priority\.resu
 # Check description on random_number
 grep -A5 'output "random_number"' *.tf | grep -q 'description'
 
-terraform plan -input=false > /dev/null 2>&1
+EXIT_CODE=0
+terraform plan -input=false > /dev/null 2>&1 || EXIT_CODE=$?
+if [ "$EXIT_CODE" -eq 2 ]; then
+  echo "FAIL: terraform plan shows pending changes — your config may be incomplete"
+  exit 1
+elif [ "$EXIT_CODE" -ne 0 ]; then
+  echo "FAIL: terraform plan encountered an error"
+  exit 1
+fi
 echo "PASS: All outputs properly defined"
 exit 0

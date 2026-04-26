@@ -42,6 +42,14 @@ grep -A5 'variable "project_name"' *.tf | grep -q 'default.*"my-app"'
 grep -A5 'variable "environment"' *.tf | grep -q 'default.*"staging"'
 grep -A5 'variable "file_count"' *.tf | grep -q 'default.*3'
 
-terraform plan -input=false > /dev/null 2>&1
+EXIT_CODE=0
+terraform plan -input=false > /dev/null 2>&1 || EXIT_CODE=$?
+if [ "$EXIT_CODE" -eq 2 ]; then
+  echo "FAIL: terraform plan shows pending changes — your config may be incomplete"
+  exit 1
+elif [ "$EXIT_CODE" -ne 0 ]; then
+  echo "FAIL: terraform plan encountered an error"
+  exit 1
+fi
 echo "PASS: Variables properly defined and used"
 exit 0

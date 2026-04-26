@@ -15,6 +15,14 @@ grep -A2 'variable "port"' *.tf | grep -q 'type.*=.*number'
 grep -A2 'variable "allowed_hosts"' *.tf | grep -q 'list(string)'
 grep -A2 'variable "feature_flags"' *.tf | grep -q 'object'
 
-terraform plan -input=false > /dev/null 2>&1
+EXIT_CODE=0
+terraform plan -input=false > /dev/null 2>&1 || EXIT_CODE=$?
+if [ "$EXIT_CODE" -eq 2 ]; then
+  echo "FAIL: terraform plan shows pending changes — your config may be incomplete"
+  exit 1
+elif [ "$EXIT_CODE" -ne 0 ]; then
+  echo "FAIL: terraform plan encountered an error"
+  exit 1
+fi
 echo "PASS: Type constraints are correct"
 exit 0

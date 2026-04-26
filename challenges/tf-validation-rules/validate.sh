@@ -21,7 +21,15 @@ if ! grep -q 'error_message' *.tf; then
 fi
 
 # Valid defaults should pass
-terraform plan -input=false > /dev/null 2>&1
+EXIT_CODE=0
+terraform plan -input=false > /dev/null 2>&1 || EXIT_CODE=$?
+if [ "$EXIT_CODE" -eq 2 ]; then
+  echo "FAIL: terraform plan shows pending changes — your config may be incomplete"
+  exit 1
+elif [ "$EXIT_CODE" -ne 0 ]; then
+  echo "FAIL: terraform plan encountered an error"
+  exit 1
+fi
 
 # Invalid port should fail
 if terraform plan -input=false -var="port=80" > /dev/null 2>&1; then

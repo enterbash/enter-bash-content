@@ -41,6 +41,14 @@ if ! terraform validate > /dev/null 2>&1; then
   echo "FAIL: terraform validate failed — check your HCL syntax"
   exit 1
 fi
-terraform plan -input=false > /dev/null 2>&1
+EXIT_CODE=0
+terraform plan -input=false > /dev/null 2>&1 || EXIT_CODE=$?
+if [ "$EXIT_CODE" -eq 2 ]; then
+  echo "FAIL: terraform plan shows pending changes — your config may be incomplete"
+  exit 1
+elif [ "$EXIT_CODE" -ne 0 ]; then
+  echo "FAIL: terraform plan encountered an error"
+  exit 1
+fi
 echo "PASS: Moved blocks properly configured"
 exit 0

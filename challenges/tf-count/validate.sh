@@ -23,11 +23,19 @@ if ! grep -q 'length(var\.environments)' *.tf; then
   exit 1
 fi
 
-terraform plan -input=false > /dev/null 2>&1
 PLAN_OUTPUT=$(terraform plan -input=false 2>&1)
-echo "$PLAN_OUTPUT" | grep -q 'local_file.config\[0\]'
-echo "$PLAN_OUTPUT" | grep -q 'local_file.config\[1\]'
-echo "$PLAN_OUTPUT" | grep -q 'local_file.config\[2\]'
+if ! echo "$PLAN_OUTPUT" | grep -q 'local_file.config\[0\]'; then
+  echo "FAIL: Plan does not show local_file.config[0] — check count and var.environments"
+  exit 1
+fi
+if ! echo "$PLAN_OUTPUT" | grep -q 'local_file.config\[1\]'; then
+  echo "FAIL: Plan does not show local_file.config[1] — check count and var.environments"
+  exit 1
+fi
+if ! echo "$PLAN_OUTPUT" | grep -q 'local_file.config\[2\]'; then
+  echo "FAIL: Plan does not show local_file.config[2] — check count and var.environments"
+  exit 1
+fi
 
 echo "PASS: Count meta-argument properly configured"
 exit 0
