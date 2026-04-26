@@ -22,8 +22,8 @@ instructions: |
 
   ### Scenario
 
-  - There is a script at `/home/learner/app/deploy.sh`
-  - There is a config file at `/home/learner/app/config.txt`
+  - There is a script at `/home/runner/app/deploy.sh`
+  - There is a config file at `/home/runner/app/config.txt`
   - The deploy script needs to read the config and write to a log file
   - Currently, nothing works due to incorrect permissions
 
@@ -31,9 +31,9 @@ instructions: |
 
   1. Investigate the current permissions on the files
   2. Fix the permissions so that:
-     - `deploy.sh` is executable by the `learner` user
-     - `config.txt` is readable by the `learner` user
-     - The `logs/` directory is writable by the `learner` user
+     - `deploy.sh` is executable by the `runner` user
+     - `config.txt` is readable by the `runner` user
+     - The `logs/` directory is writable by the `runner` user
   3. Run the deploy script successfully
 
   ### Useful commands
