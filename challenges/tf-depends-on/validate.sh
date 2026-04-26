@@ -14,8 +14,14 @@ if ! grep -q 'depends_on' *.tf; then
   echo "FAIL: Expected to find: depends_on"
   exit 1
 fi
-grep -A2 'depends_on' *.tf | grep -q 'null_resource\.create_dir'
-grep -A2 'depends_on' *.tf | grep -q 'local_file\.app_config'
+if ! grep -A2 'depends_on' *.tf | grep -q 'null_resource\.create_dir'; then
+  echo "FAIL: depends_on should reference null_resource.create_dir"
+  exit 1
+fi
+if ! grep -A2 'depends_on' *.tf | grep -q 'local_file\.app_config'; then
+  echo "FAIL: depends_on should reference local_file.app_config"
+  exit 1
+fi
 
 # Apply should succeed with correct ordering
 terraform apply -auto-approve -input=false > /dev/null 2>&1

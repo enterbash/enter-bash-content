@@ -12,8 +12,14 @@ fi
 # Check correct types
 grep -A2 'variable "app_name"' *.tf | grep -q 'type.*=.*string'
 grep -A2 'variable "port"' *.tf | grep -q 'type.*=.*number'
-grep -A2 'variable "allowed_hosts"' *.tf | grep -q 'list(string)'
-grep -A2 'variable "feature_flags"' *.tf | grep -q 'object'
+if ! grep -A2 'variable "allowed_hosts"' *.tf | grep -q 'list(string)'; then
+  echo "FAIL: allowed_hosts variable should have type = list(string)"
+  exit 1
+fi
+if ! grep -A2 'variable "feature_flags"' *.tf | grep -q 'object'; then
+  echo "FAIL: feature_flags variable should have type = object(...)"
+  exit 1
+fi
 
 EXIT_CODE=0
 terraform plan -input=false > /dev/null 2>&1 || EXIT_CODE=$?

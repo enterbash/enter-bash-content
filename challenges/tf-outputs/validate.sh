@@ -24,12 +24,24 @@ if ! grep -q 'output "random_number"' *.tf; then
 fi
 
 # Check output values reference correct resources
-grep -A3 'output "pet_name"' *.tf | grep -q 'random_pet\.server\.id'
-grep -A3 'output "config_path"' *.tf | grep -q 'local_file\.config\.filename'
-grep -A3 'output "random_number"' *.tf | grep -q 'random_integer\.priority\.result'
+if ! grep -A3 'output "pet_name"' *.tf | grep -q 'random_pet\.server\.id'; then
+  echo "FAIL: pet_name output should reference random_pet.server.id"
+  exit 1
+fi
+if ! grep -A3 'output "config_path"' *.tf | grep -q 'local_file\.config\.filename'; then
+  echo "FAIL: config_path output should reference local_file.config.filename"
+  exit 1
+fi
+if ! grep -A3 'output "random_number"' *.tf | grep -q 'random_integer\.priority\.result'; then
+  echo "FAIL: random_number output should reference random_integer.priority.result"
+  exit 1
+fi
 
 # Check description on random_number
-grep -A5 'output "random_number"' *.tf | grep -q 'description'
+if ! grep -A5 'output "random_number"' *.tf | grep -q 'description'; then
+  echo "FAIL: random_number output should have a description"
+  exit 1
+fi
 
 EXIT_CODE=0
 terraform plan -input=false > /dev/null 2>&1 || EXIT_CODE=$?

@@ -38,9 +38,18 @@ if ! grep -q 'var\.file_count' *.tf; then
 fi
 
 # Check defaults
-grep -A5 'variable "project_name"' *.tf | grep -q 'default.*"my-app"'
-grep -A5 'variable "environment"' *.tf | grep -q 'default.*"staging"'
-grep -A5 'variable "file_count"' *.tf | grep -q 'default.*3'
+if ! grep -A5 'variable "project_name"' *.tf | grep -q 'default.*"my-app"'; then
+  echo "FAIL: project_name variable should have default = \"my-app\""
+  exit 1
+fi
+if ! grep -A5 'variable "environment"' *.tf | grep -q 'default.*"staging"'; then
+  echo "FAIL: environment variable should have default = \"staging\""
+  exit 1
+fi
+if ! grep -A5 'variable "file_count"' *.tf | grep -q 'default.*3'; then
+  echo "FAIL: file_count variable should have default = 3"
+  exit 1
+fi
 
 EXIT_CODE=0
 terraform plan -input=false > /dev/null 2>&1 || EXIT_CODE=$?

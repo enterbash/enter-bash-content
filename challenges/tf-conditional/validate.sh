@@ -28,10 +28,16 @@ if ! grep -q 'count' *.tf; then
 fi
 
 # Check config resource
-grep -A5 'resource "local_file" "config"' *.tf | grep -q 'production'
+if ! grep -A5 'resource "local_file" "config"' *.tf | grep -q 'production'; then
+  echo "FAIL: local_file.config resource should reference 'production' in its content"
+  exit 1
+fi
 
 # Check debug_log resource with count
-grep -A5 'resource "local_file" "debug_log"' *.tf | grep -q 'count'
+if ! grep -A5 'resource "local_file" "debug_log"' *.tf | grep -q 'count'; then
+  echo "FAIL: local_file.debug_log resource should use count"
+  exit 1
+fi
 
 # Plan with defaults (production, debug=false) should work
 EXIT_CODE=0
