@@ -14,7 +14,7 @@ if [ "$PERMS" != "600" ]; then
 fi
 
 # Check swap is active
-if ! swapon --show | grep -q '/swapfile'; then
+if ! sudo swapon --show | grep -q '/swapfile'; then
   echo "FAIL: /swapfile is not active as swap"
   exit 1
 fi

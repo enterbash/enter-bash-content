@@ -14,7 +14,7 @@ if [ "$LV_SIZE_KB" -lt 120000 ]; then
 fi
 
 # Check VG has minimal free space (most should be allocated)
-VG_FREE=$(vgs --noheadings -o vg_free --units m vg_data 2>/dev/null | tr -d ' m.' | cut -d, -f1)
+VG_FREE=$(sudo vgs --noheadings -o vg_free --units m vg_data 2>/dev/null | tr -d ' m.' | cut -d, -f1)
 if [ "${VG_FREE:-999}" -gt 20 ]; then
   echo "FAIL: Volume group still has significant free space (${VG_FREE}MB)"
   exit 1
