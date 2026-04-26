@@ -14,4 +14,16 @@ terraform {
 }
 TFEOF
 
+# Create the template file that users will reference
+cat > ~/terraform-project/config.tftpl << 'TFTPL'
+# Application Configuration
+app_name = "${app_name}"
+environment = "${environment}"
+ports = [
+%{ for port in ports ~}
+  ${port},
+%{ endfor ~}
+]
+TFTPL
+
 terraform init -input=false > /dev/null 2>&1
