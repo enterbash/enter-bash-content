@@ -3,8 +3,8 @@
 ## What the validator checks
 
 - limited container is not running
-- memory limit is not 128MB (got $MEM)
-- CPU limit is not 0.5 (got $CPU)
+- memory limit is not 128MB (got <value>)
+- CPU limit is not 0.5 (got <value>)
 
 ## Solution
 

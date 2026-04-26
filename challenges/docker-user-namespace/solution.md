@@ -4,7 +4,7 @@
 
 - safebox container is not running
 - container is running as root (uid 0)
-- container should run as uid 1001 (got $UID_CHECK)
+- container should run as uid 1001 (got <value>)
 
 ## Solution
 

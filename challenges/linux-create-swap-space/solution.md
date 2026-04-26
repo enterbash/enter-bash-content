@@ -3,7 +3,7 @@
 ## What the validator checks
 
 - **Check swap file exists**: /swapfile does not exist
-- /swapfile permissions should be 600, got $PERMS
+- /swapfile permissions should be 600, got <value>
 - **Check swap is active**: /swapfile is not active as swap
 - **Check fstab entry**: /swapfile not found in /etc/fstab
 

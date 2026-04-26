@@ -4,7 +4,7 @@
 
 - ~/report.txt not found
 - report.txt should have at least 4 lines
-- IP address $IP not found in report
+- IP address <value> not found in report
 - image name not found in report
 - hostname not found in report
 

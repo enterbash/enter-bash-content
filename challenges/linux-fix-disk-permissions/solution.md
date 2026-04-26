@@ -3,7 +3,7 @@
 ## What the validator checks
 
 - **Check mount point exists and is mounted**: /mnt/data is not mounted
-- /mnt/data should be owned by runner, got $OWNER
+- /mnt/data should be owned by runner, got <value>
 - /mnt/data is still restricted to root
 - **Check uploads directory exists**: /mnt/data/uploads/ does not exist
 - **Check logs directory exists**: /mnt/data/logs/ does not exist

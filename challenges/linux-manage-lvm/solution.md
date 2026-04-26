@@ -3,8 +3,8 @@
 ## What the validator checks
 
 - **Check LV is mounted**: /mnt/appdata is not mounted
-- Logical volume has not been extended (size: ${LV_SIZE_KB}KB)
-- Volume group still has significant free space (${VG_FREE}MB)
+- Logical volume has not been extended (size: <value>KB)
+- Volume group still has significant free space (<value>MB)
 - **Check data is preserved**: Original data.txt is missing
 
 ## Solution

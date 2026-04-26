@@ -7,9 +7,9 @@
 - **Check it's an Ed25519 key**: Key is not Ed25519 type
 - **Check authorized_keys exists and contains the public key**: ~/.ssh/authorized_keys does not exist
 - Public key not found in authorized_keys
-- ~/.ssh/ should be 700, got $DIR_PERMS
-- id_ed25519 should be 600, got $KEY_PERMS
-- authorized_keys should be 600 or 644, got $AK_PERMS
+- ~/.ssh/ should be 700, got <value>
+- id_ed25519 should be 600, got <value>
+- authorized_keys should be 600 or 644, got <value>
 
 ## Solution
 

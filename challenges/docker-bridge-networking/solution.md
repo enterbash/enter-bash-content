@@ -2,9 +2,9 @@
 
 ## What the validator checks
 
-- appnet subnet is not 172.20.0.0/16 (got $SUBNET)
+- appnet subnet is not 172.20.0.0/16 (got <value>)
 - webhost container is not running
-- webhost IP is not 172.20.0.10 (got $WEBIP)
+- webhost IP is not 172.20.0.10 (got <value>)
 - checker container is not running
 - checker cannot reach webhost
 

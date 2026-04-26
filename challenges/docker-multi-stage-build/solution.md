@@ -3,8 +3,8 @@
 ## What the validator checks
 
 - goapp:latest image not found
-- image is ${SIZE}, must be under 50MB
-- image is ${SIZE}, must be under 50MB
+- image is <value>, must be under 50MB
+- image is <value>, must be under 50MB
 
 ## Solution
 

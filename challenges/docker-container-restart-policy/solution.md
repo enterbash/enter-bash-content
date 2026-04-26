@@ -2,10 +2,10 @@
 
 ## What the validator checks
 
-- always-up restart policy is '$POL1' (expected 'always')
-- on-fail restart policy is '$POL2' (expected 'on-failure')
-- on-fail max retries is '$MAX2' (expected '3')
-- unless-manual restart policy is '$POL3' (expected 'unless-stopped')
+- always-up restart policy is '<value>' (expected 'always')
+- on-fail restart policy is '<value>' (expected 'on-failure')
+- on-fail max retries is '<value>' (expected '3')
+- unless-manual restart policy is '<value>' (expected 'unless-stopped')
 
 ## Solution
 

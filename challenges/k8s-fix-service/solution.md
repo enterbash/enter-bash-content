@@ -4,7 +4,7 @@
 
 - ~/service.yaml not found
 - service.yaml does not pass validation
-- apiVersion should be v1, got $API
+- apiVersion should be v1, got <value>
 - selector should match app: web-app
 - port should be 80 (integer)
 - targetPort should be 8080 (integer)

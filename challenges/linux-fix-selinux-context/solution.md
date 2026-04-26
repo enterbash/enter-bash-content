@@ -4,7 +4,7 @@
 
 - **Check .contexts file exists**: /srv/www/html/.contexts not found
 - **Check .contexts has content**: .contexts file does not reference httpd_sys_content_t
-- $f does not have correct selinux_type attribute (got: $ATTR)
+- <value> does not have correct selinux_type attribute (got: <value>)
 - **Check fix log exists**: /home/runner/selinux-fix.log not found
 - selinux-fix.log is empty
 

@@ -2,11 +2,11 @@
 
 ## What the validator checks
 
-- ~/.ssh/ should be 700, got $PERMS
-- id_rsa should be 600, got $PERMS
-- id_rsa.pub should be 644, got $PERMS
-- config should be 600, got $PERMS
-- authorized_keys should be 600 or 644, got $PERMS
+- ~/.ssh/ should be 700, got <value>
+- id_rsa should be 600, got <value>
+- id_rsa.pub should be 644, got <value>
+- config should be 600, got <value>
+- authorized_keys should be 600 or 644, got <value>
 
 ## Solution
 

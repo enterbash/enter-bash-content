@@ -8,7 +8,7 @@
 - **Check bob exists and is in devteam**: User 'bob' does not exist
 - User 'bob' is not in group 'devteam'
 - **Check /opt/project exists**: /opt/project does not exist
-- /opt/project group should be 'devteam', got '$DIR_GROUP'
+- /opt/project group should be 'devteam', got '<value>'
 - **Check group write permission**: /opt/project should be group-writable
 - **Check setgid bit**: /opt/project should have setgid bit set
 

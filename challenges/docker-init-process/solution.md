@@ -3,8 +3,8 @@
 ## What the validator checks
 
 - with-init container is not running
-- with-init doesn't have init as PID 1 (got: $PID1)
-- --init flag not set — PID 1 is '$PID1', expected init/tini
+- with-init doesn't have init as PID 1 (got: <value>)
+- --init flag not set — PID 1 is '<value>', expected init/tini
 
 ## Solution
 

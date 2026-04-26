@@ -3,7 +3,7 @@
 ## What the validator checks
 
 - dnsbox-fixed container is not running
-- DNS is not set to 8.8.8.8 (got $DNS)
+- DNS is not set to 8.8.8.8 (got <value>)
 
 ## Solution
 

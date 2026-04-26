@@ -3,7 +3,7 @@
 ## What the validator checks
 
 - optimized:latest image not found
-- optimized image ($OPTIMIZED_SIZE) is not smaller than bloated ($BLOATED_SIZE)
+- optimized image (<value>) is not smaller than bloated (<value>)
 
 ## Solution
 

@@ -2,11 +2,11 @@
 
 ## What the validator checks
 
-- Expected to find: ${var.project}
-- Expected to find: ${var.region}
-- Expected to find: ${random_id.suffix.hex}
-- Expected to find: ${path.module}
-- Found bare \$var. references without \${}
+- Expected to find: <value>.project}
+- Expected to find: <value>.region}
+- Expected to find: <value>.suffix.hex}
+- Expected to find: <value>.module}
+- Found bare \<value>. references without \${}
 - terraform plan shows pending changes — your config may be incomplete
 
 ## Solution

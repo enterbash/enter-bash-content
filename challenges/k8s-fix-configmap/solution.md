@@ -7,7 +7,7 @@
 - pod.yaml does not pass validation
 - DATABASE_PORT must be a string (wrap in quotes)
 - MAX_CONNECTIONS must be a string (wrap in quotes)
-- Pod configMapRef name must match ConfigMap name ($CM_NAME)
+- Pod configMapRef name must match ConfigMap name (<value>)
 
 ## Solution
 

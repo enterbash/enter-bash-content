@@ -3,8 +3,8 @@
 ## What the validator checks
 
 - argapp:latest image not found
-- version.txt doesn't contain 2.0.0 (got: $OUTPUT)
-- version.txt doesn't contain production (got: $OUTPUT)
+- version.txt doesn't contain 2.0.0 (got: <value>)
+- version.txt doesn't contain production (got: <value>)
 
 ## Solution
 

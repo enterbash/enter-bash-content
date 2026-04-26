@@ -2,7 +2,7 @@
 
 ## What the validator checks
 
-- Timezone is not America/New_York (got: $TZ_FILE)
+- Timezone is not America/New_York (got: <value>)
 
 ## Solution
 
