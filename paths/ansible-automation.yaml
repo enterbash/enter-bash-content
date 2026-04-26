@@ -1,0 +1,44 @@
+name: Ansible Automation
+slug: ansible-automation
+description: Automate infrastructure configuration with Ansible. From playbook basics to roles, vault, and advanced patterns used in real deployments.
+icon: ⚙️
+category: ansible
+difficulty: beginner-to-advanced
+estimated_hours: 7
+challenges:
+  # Playbook basics
+  - ansible-fix-syntax
+  - ansible-variables
+  - ansible-facts
+  - ansible-conditionals
+  - ansible-loops
+  - ansible-tags
+  # Modules
+  - ansible-copy-module
+  - ansible-file-module
+  - ansible-package-module
+  - ansible-service-module
+  - ansible-user-module
+  - ansible-command-vs-shell
+  # Output & control flow
+  - ansible-register
+  - ansible-set-fact
+  - ansible-handlers
+  - ansible-error-handling
+  - ansible-assert
+  # File management
+  - ansible-lineinfile
+  - ansible-blockinfile
+  - ansible-templates
+  # Structure & reuse
+  - ansible-include-import
+  - ansible-roles
+  - ansible-inventory-groups
+  # Advanced
+  - ansible-privilege-escalation
+  - ansible-delegation
+  - ansible-serial
+  - ansible-lookup
+  - ansible-vault
+  - ansible-callback
+  - fix-ansible-playbook

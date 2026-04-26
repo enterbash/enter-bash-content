@@ -1,0 +1,52 @@
+name: Kubernetes Core
+slug: kubernetes-core
+description: Learn Kubernetes from manifest writing to real cluster operations. Covers Pods, Deployments, Services, RBAC, storage, and advanced scheduling.
+icon: ☸️
+category: kubernetes
+difficulty: beginner-to-advanced
+estimated_hours: 9
+challenges:
+  # Manifest basics
+  - k8s-create-deployment
+  - k8s-create-namespace
+  - k8s-fix-service
+  - k8s-fix-labels-selectors
+  - k8s-fix-container-port
+  - k8s-fix-image-pull
+  # Configuration
+  - k8s-fix-configmap
+  - k8s-create-secret
+  - k8s-fix-env-vars
+  # Workloads
+  - k8s-create-job
+  - k8s-create-cronjob
+  - k8s-create-daemonset
+  - k8s-resource-limits
+  - k8s-create-limit-range
+  - k8s-create-resource-quota
+  # Debugging
+  - fix-crashlooping-pod
+  - k8s-fix-volume-mount
+  - k8s-fix-dns-policy
+  # Health & lifecycle
+  - k8s-liveness-probe
+  - k8s-rolling-update
+  - k8s-fix-hpa
+  # Multi-container patterns
+  - k8s-init-containers
+  - k8s-multi-container-pod
+  - k8s-sidecar-pattern
+  # Storage
+  - k8s-fix-pvc
+  - k8s-fix-statefulset
+  # Security & access
+  - k8s-fix-pod-security
+  - k8s-fix-rbac
+  - k8s-create-service-account
+  - k8s-fix-node-selector
+  - k8s-fix-tolerations
+  - k8s-create-priority-class
+  - k8s-create-pdb
+  # Networking
+  - k8s-fix-ingress
+  - k8s-fix-network-policy

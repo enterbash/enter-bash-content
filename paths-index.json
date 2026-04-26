@@ -1,0 +1,1395 @@
+[
+  {
+    "name": "Ansible Automation",
+    "slug": "ansible-automation",
+    "description": "Automate infrastructure configuration with Ansible. From playbook basics to roles, vault, and advanced patterns used in real deployments.",
+    "icon": "⚙️",
+    "category": "ansible",
+    "difficulty": "beginner-to-advanced",
+    "estimated_hours": 7,
+    "challenges": [
+      {
+        "dir_name": "ansible-fix-syntax",
+        "name": "Fix Ansible YAML Syntax",
+        "difficulty": "easy",
+        "category": "ansible",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "ansible-variables",
+        "name": "Ansible Variables",
+        "difficulty": "easy",
+        "category": "ansible",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "ansible-facts",
+        "name": "Ansible Facts",
+        "difficulty": "easy",
+        "category": "ansible",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "ansible-conditionals",
+        "name": "Ansible Conditionals",
+        "difficulty": "easy",
+        "category": "ansible",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "ansible-loops",
+        "name": "Ansible Loops",
+        "difficulty": "easy",
+        "category": "ansible",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "ansible-tags",
+        "name": "Ansible Tags",
+        "difficulty": "easy",
+        "category": "ansible",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "ansible-copy-module",
+        "name": "Ansible Copy Module",
+        "difficulty": "easy",
+        "category": "ansible",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "ansible-file-module",
+        "name": "Ansible File Module",
+        "difficulty": "easy",
+        "category": "ansible",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "ansible-package-module",
+        "name": "Ansible Package Module",
+        "difficulty": "easy",
+        "category": "ansible",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "ansible-service-module",
+        "name": "Ansible Service Module",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "ansible-user-module",
+        "name": "Ansible User Module",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "ansible-command-vs-shell",
+        "name": "Command vs Shell Module",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "ansible-register",
+        "name": "Ansible Register and Debug",
+        "difficulty": "easy",
+        "category": "ansible",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "ansible-set-fact",
+        "name": "Ansible set_fact Module",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "ansible-handlers",
+        "name": "Ansible Handlers",
+        "difficulty": "easy",
+        "category": "ansible",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "ansible-error-handling",
+        "name": "Ansible Error Handling",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "ansible-assert",
+        "name": "Ansible Assert Module",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "ansible-lineinfile",
+        "name": "Ansible Lineinfile",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "ansible-blockinfile",
+        "name": "Ansible Blockinfile",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "ansible-templates",
+        "name": "Ansible Templates",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "ansible-include-import",
+        "name": "Ansible Include and Import Tasks",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "ansible-roles",
+        "name": "Ansible Roles",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "ansible-inventory-groups",
+        "name": "Ansible Inventory Groups",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "ansible-privilege-escalation",
+        "name": "Ansible Privilege Escalation",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "ansible-delegation",
+        "name": "Ansible Delegation",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "ansible-serial",
+        "name": "Ansible Serial (Rolling Updates)",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "ansible-lookup",
+        "name": "Ansible Lookup Plugins",
+        "difficulty": "hard",
+        "category": "ansible",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "ansible-vault",
+        "name": "Ansible Vault",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "ansible-callback",
+        "name": "Ansible Callback Plugins",
+        "difficulty": "hard",
+        "category": "ansible",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "fix-ansible-playbook",
+        "name": "Fix Ansible Playbook",
+        "difficulty": "medium",
+        "category": "ansible",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      }
+    ],
+    "total_challenges": 30,
+    "total_xp": 4100
+  },
+  {
+    "name": "Docker Mastery",
+    "slug": "docker-mastery",
+    "description": "Go from Docker basics to production patterns. Covers images, containers, networking, volumes, Compose, and security best practices.",
+    "icon": "🐳",
+    "category": "docker",
+    "difficulty": "beginner-to-advanced",
+    "estimated_hours": 8,
+    "challenges": [
+      {
+        "dir_name": "docker-build-image",
+        "name": "Build a Docker Image",
+        "difficulty": "easy",
+        "category": "docker",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-fix-dockerfile",
+        "name": "Fix a Broken Dockerfile",
+        "difficulty": "easy",
+        "category": "docker",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-exec-into-container",
+        "name": "Execute Commands in Running Containers",
+        "difficulty": "easy",
+        "category": "docker",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-copy-files",
+        "name": "Copy Files In and Out of Containers",
+        "difficulty": "easy",
+        "category": "docker",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-expose-port",
+        "name": "Expose and Map Container Ports",
+        "difficulty": "easy",
+        "category": "docker",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-tag-and-push",
+        "name": "Tag Docker Images",
+        "difficulty": "easy",
+        "category": "docker",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-volume-mount",
+        "name": "Mount Volumes Correctly",
+        "difficulty": "easy",
+        "category": "docker",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-env-variables",
+        "name": "Pass Environment Variables to Containers",
+        "difficulty": "easy",
+        "category": "docker",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-copy-files",
+        "name": "Copy Files In and Out of Containers",
+        "difficulty": "easy",
+        "category": "docker",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-logs-and-debugging",
+        "name": "Use Docker Logs to Find Issues",
+        "difficulty": "easy",
+        "category": "docker",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-inspect-container",
+        "name": "Use Docker Inspect to Find Information",
+        "difficulty": "easy",
+        "category": "docker",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-debug-crashed-container",
+        "name": "Debug a Crashed Container",
+        "difficulty": "medium",
+        "category": "docker",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "docker-prune-resources",
+        "name": "Clean Up Unused Docker Resources",
+        "difficulty": "easy",
+        "category": "docker",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-create-network",
+        "name": "Create Custom Docker Networks",
+        "difficulty": "easy",
+        "category": "docker",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-bridge-networking",
+        "name": "Configure Bridge Networking",
+        "difficulty": "medium",
+        "category": "docker",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "docker-container-networking",
+        "name": "Docker Container Networking",
+        "difficulty": "medium",
+        "category": "docker",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "docker-container-linking",
+        "name": "Link Containers (Legacy)",
+        "difficulty": "medium",
+        "category": "docker",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "docker-fix-dns",
+        "name": "Fix DNS Resolution in Containers",
+        "difficulty": "medium",
+        "category": "docker",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "docker-container-restart-policy",
+        "name": "Set Container Restart Policies",
+        "difficulty": "easy",
+        "category": "docker",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-healthcheck",
+        "name": "Add a Healthcheck to a Container",
+        "difficulty": "medium",
+        "category": "docker",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "docker-resource-limits",
+        "name": "Set Resource Limits on Containers",
+        "difficulty": "medium",
+        "category": "docker",
+        "xp_reward": 100,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-build-args",
+        "name": "Use Build Arguments in Dockerfile",
+        "difficulty": "medium",
+        "category": "docker",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "docker-fix-build-context",
+        "name": "Fix Build Context Issues",
+        "difficulty": "medium",
+        "category": "docker",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "docker-compose-basics",
+        "name": "Fix a Docker Compose File",
+        "difficulty": "medium",
+        "category": "docker",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "docker-save-and-load",
+        "name": "Save and Load Docker Images",
+        "difficulty": "medium",
+        "category": "docker",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "docker-image-layers",
+        "name": "Optimize Docker Image Layers",
+        "difficulty": "medium",
+        "category": "docker",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "docker-multi-stage-build",
+        "name": "Multi-Stage Docker Build",
+        "difficulty": "medium",
+        "category": "docker",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "docker-fix-entrypoint",
+        "name": "Fix Broken ENTRYPOINT/CMD",
+        "difficulty": "easy",
+        "category": "docker",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-fix-permissions",
+        "name": "Fix File Permission Issues in Containers",
+        "difficulty": "medium",
+        "category": "docker",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "docker-user-namespace",
+        "name": "Run Containers as Non-Root",
+        "difficulty": "medium",
+        "category": "docker",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "docker-tmpfs-mount",
+        "name": "Use tmpfs Mounts",
+        "difficulty": "medium",
+        "category": "docker",
+        "xp_reward": 100,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "docker-read-only-filesystem",
+        "name": "Run Containers with Read-Only Filesystem",
+        "difficulty": "hard",
+        "category": "docker",
+        "xp_reward": 200,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "docker-fix-storage-driver",
+        "name": "Fix Docker Storage Issues",
+        "difficulty": "hard",
+        "category": "docker",
+        "xp_reward": 200,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "docker-signal-handling",
+        "name": "Handle Signals in Containers",
+        "difficulty": "hard",
+        "category": "docker",
+        "xp_reward": 200,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "docker-init-process",
+        "name": "Use Init Process in Containers",
+        "difficulty": "hard",
+        "category": "docker",
+        "xp_reward": 200,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "docker-overlay-network",
+        "name": "Create Overlay Networks",
+        "difficulty": "hard",
+        "category": "docker",
+        "xp_reward": 200,
+        "time_estimate": "20m"
+      }
+    ],
+    "total_challenges": 36,
+    "total_xp": 4225
+  },
+  {
+    "name": "Kubernetes Core",
+    "slug": "kubernetes-core",
+    "description": "Learn Kubernetes from manifest writing to real cluster operations. Covers Pods, Deployments, Services, RBAC, storage, and advanced scheduling.",
+    "icon": "☸️",
+    "category": "kubernetes",
+    "difficulty": "beginner-to-advanced",
+    "estimated_hours": 9,
+    "challenges": [
+      {
+        "dir_name": "k8s-create-deployment",
+        "name": "Create a Deployment",
+        "difficulty": "easy",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-create-namespace",
+        "name": "Create and Configure a Namespace",
+        "difficulty": "easy",
+        "category": "kubernetes",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "k8s-fix-service",
+        "name": "Fix a Broken Service",
+        "difficulty": "easy",
+        "category": "kubernetes",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "k8s-fix-labels-selectors",
+        "name": "Fix Label Selectors",
+        "difficulty": "easy",
+        "category": "kubernetes",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "k8s-fix-container-port",
+        "name": "Fix Container Port Configuration",
+        "difficulty": "easy",
+        "category": "kubernetes",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "k8s-fix-image-pull",
+        "name": "Fix ImagePullBackOff",
+        "difficulty": "easy",
+        "category": "kubernetes",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "k8s-fix-configmap",
+        "name": "Fix a Broken ConfigMap",
+        "difficulty": "easy",
+        "category": "kubernetes",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "k8s-create-secret",
+        "name": "Create a Secret",
+        "difficulty": "easy",
+        "category": "kubernetes",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "k8s-fix-env-vars",
+        "name": "Fix Environment Variables",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-create-job",
+        "name": "Create a Job",
+        "difficulty": "easy",
+        "category": "kubernetes",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "k8s-create-cronjob",
+        "name": "Create a CronJob",
+        "difficulty": "easy",
+        "category": "kubernetes",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "k8s-create-daemonset",
+        "name": "Create a DaemonSet",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-resource-limits",
+        "name": "Add Resource Limits",
+        "difficulty": "easy",
+        "category": "kubernetes",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "k8s-create-limit-range",
+        "name": "Create a LimitRange",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-create-resource-quota",
+        "name": "Create a ResourceQuota",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "fix-crashlooping-pod",
+        "name": "Fix CrashLooping Pod",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-fix-volume-mount",
+        "name": "Fix Volume Mounts",
+        "difficulty": "easy",
+        "category": "kubernetes",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "k8s-fix-dns-policy",
+        "name": "Fix DNS Policy",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-liveness-probe",
+        "name": "Add Liveness and Readiness Probes",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-rolling-update",
+        "name": "Configure Rolling Update Strategy",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-fix-hpa",
+        "name": "Fix HorizontalPodAutoscaler",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-init-containers",
+        "name": "Add Init Containers",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-multi-container-pod",
+        "name": "Create a Multi-Container Pod",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-sidecar-pattern",
+        "name": "Implement Sidecar Pattern",
+        "difficulty": "hard",
+        "category": "kubernetes",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "k8s-fix-pvc",
+        "name": "Fix a PersistentVolumeClaim",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "k8s-fix-statefulset",
+        "name": "Fix a StatefulSet",
+        "difficulty": "hard",
+        "category": "kubernetes",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "k8s-fix-pod-security",
+        "name": "Fix Pod Security Context",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-fix-rbac",
+        "name": "Fix RBAC Permissions",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-create-service-account",
+        "name": "Create a ServiceAccount",
+        "difficulty": "easy",
+        "category": "kubernetes",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "k8s-fix-node-selector",
+        "name": "Fix Node Selector and Affinity",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-fix-tolerations",
+        "name": "Fix Tolerations and Taints",
+        "difficulty": "hard",
+        "category": "kubernetes",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "k8s-create-priority-class",
+        "name": "Create a PriorityClass",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-create-pdb",
+        "name": "Create a PodDisruptionBudget",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-fix-ingress",
+        "name": "Fix an Ingress Manifest",
+        "difficulty": "medium",
+        "category": "kubernetes",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "k8s-fix-network-policy",
+        "name": "Fix a NetworkPolicy",
+        "difficulty": "hard",
+        "category": "kubernetes",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      }
+    ],
+    "total_challenges": 35,
+    "total_xp": 4850
+  },
+  {
+    "name": "Linux Fundamentals",
+    "slug": "linux-fundamentals",
+    "description": "Master the Linux command line from basics to production-ready skills. Covers file management, process control, networking, security, and system administration.",
+    "icon": "🐧",
+    "category": "linux",
+    "difficulty": "beginner-to-advanced",
+    "estimated_hours": 8,
+    "challenges": [
+      {
+        "dir_name": "linux-fix-environment-variables",
+        "name": "Fix Environment Variables",
+        "difficulty": "easy",
+        "category": "linux",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "linux-fix-symlinks",
+        "name": "Fix Broken Symlinks",
+        "difficulty": "easy",
+        "category": "linux",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "linux-redirect-output",
+        "name": "Fix Shell Redirections",
+        "difficulty": "easy",
+        "category": "linux",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "linux-compress-and-archive",
+        "name": "Compress and Archive Files",
+        "difficulty": "easy",
+        "category": "linux",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "linux-find-large-files",
+        "name": "Find Large Files",
+        "difficulty": "easy",
+        "category": "linux",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "linux-find-and-replace-text",
+        "name": "Find and Replace Text in Config Files",
+        "difficulty": "medium",
+        "category": "linux",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "linux-find-suid-binaries",
+        "name": "Find SUID Binaries",
+        "difficulty": "easy",
+        "category": "linux",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "debug-file-permissions",
+        "name": "Debug File Permissions",
+        "difficulty": "easy",
+        "category": "linux",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "linux-kill-runaway-process",
+        "name": "Kill Runaway Process",
+        "difficulty": "easy",
+        "category": "linux",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "linux-monitor-system-resources",
+        "name": "Monitor System Resources",
+        "difficulty": "medium",
+        "category": "linux",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "linux-manage-disk-space",
+        "name": "Manage Disk Space",
+        "difficulty": "medium",
+        "category": "linux",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "linux-analyze-logs",
+        "name": "Analyze System Logs",
+        "difficulty": "medium",
+        "category": "linux",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "linux-fix-dns-resolution",
+        "name": "Fix DNS Resolution",
+        "difficulty": "easy",
+        "category": "linux",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "linux-fix-ssh-config",
+        "name": "Fix SSH Config Permissions",
+        "difficulty": "easy",
+        "category": "linux",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "linux-setup-ssh-keys",
+        "name": "Set Up SSH Keys",
+        "difficulty": "medium",
+        "category": "linux",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "fix-broken-nginx",
+        "name": "Fix Broken Nginx Config",
+        "difficulty": "easy",
+        "category": "linux",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "linux-fix-locale",
+        "name": "Fix Locale Settings",
+        "difficulty": "easy",
+        "category": "linux",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "linux-fix-timezone",
+        "name": "Fix Timezone",
+        "difficulty": "easy",
+        "category": "linux",
+        "xp_reward": 75,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "linux-fix-apt-sources",
+        "name": "Fix Broken APT Sources",
+        "difficulty": "medium",
+        "category": "linux",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "linux-fix-crontab",
+        "name": "Fix Broken Crontab",
+        "difficulty": "medium",
+        "category": "linux",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "linux-set-up-logrotate",
+        "name": "Set Up Log Rotation",
+        "difficulty": "medium",
+        "category": "linux",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "linux-setup-rsync-backup",
+        "name": "Set Up rsync Backup",
+        "difficulty": "medium",
+        "category": "linux",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "linux-manage-users-groups",
+        "name": "Manage Users and Groups",
+        "difficulty": "medium",
+        "category": "linux",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "linux-configure-sudo",
+        "name": "Configure sudo Access",
+        "difficulty": "medium",
+        "category": "linux",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "linux-create-swap-space",
+        "name": "Create Swap Space",
+        "difficulty": "medium",
+        "category": "linux",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "linux-fix-disk-permissions",
+        "name": "Fix Disk Mount Permissions",
+        "difficulty": "medium",
+        "category": "linux",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "linux-manage-systemd-service",
+        "name": "Manage a systemd Service",
+        "difficulty": "medium",
+        "category": "linux",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "linux-recover-deleted-file",
+        "name": "Recover Deleted File",
+        "difficulty": "medium",
+        "category": "linux",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "linux-fix-boot-order",
+        "name": "Fix Boot Configuration",
+        "difficulty": "hard",
+        "category": "linux",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "linux-fix-fstab",
+        "name": "Fix Broken fstab",
+        "difficulty": "hard",
+        "category": "linux",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "linux-fix-iptables",
+        "name": "Fix iptables Rules",
+        "difficulty": "hard",
+        "category": "linux",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "linux-fix-network-interface",
+        "name": "Fix Network Interface",
+        "difficulty": "hard",
+        "category": "linux",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "linux-manage-lvm",
+        "name": "Manage LVM Volumes",
+        "difficulty": "hard",
+        "category": "linux",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "linux-setup-nfs-share",
+        "name": "Set Up NFS Share",
+        "difficulty": "hard",
+        "category": "linux",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "linux-fix-selinux-context",
+        "name": "Fix SELinux File Contexts",
+        "difficulty": "hard",
+        "category": "linux",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      }
+    ],
+    "total_challenges": 35,
+    "total_xp": 3600
+  },
+  {
+    "name": "Terraform Essentials",
+    "slug": "terraform-essentials",
+    "description": "Learn Infrastructure as Code with Terraform. From basic HCL syntax to modules, state management, and production patterns.",
+    "icon": "🏗️",
+    "category": "terraform",
+    "difficulty": "beginner-to-advanced",
+    "estimated_hours": 7,
+    "challenges": [
+      {
+        "dir_name": "tf-fix-syntax",
+        "name": "Fix Terraform Syntax Errors",
+        "difficulty": "easy",
+        "category": "terraform",
+        "xp_reward": 100,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "tf-terraform-fmt",
+        "name": "Fix Terraform Formatting",
+        "difficulty": "easy",
+        "category": "terraform",
+        "xp_reward": 100,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "tf-variables",
+        "name": "Define and Use Variables",
+        "difficulty": "easy",
+        "category": "terraform",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-outputs",
+        "name": "Create Output Values",
+        "difficulty": "easy",
+        "category": "terraform",
+        "xp_reward": 100,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "tf-string-interpolation",
+        "name": "Fix String Interpolation",
+        "difficulty": "easy",
+        "category": "terraform",
+        "xp_reward": 100,
+        "time_estimate": "10m"
+      },
+      {
+        "dir_name": "tf-local-values",
+        "name": "Use Local Values",
+        "difficulty": "easy",
+        "category": "terraform",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-random-provider",
+        "name": "Use the Random Provider",
+        "difficulty": "easy",
+        "category": "terraform",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-data-sources",
+        "name": "Use Data Sources",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-depends-on",
+        "name": "Fix Dependency Ordering",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-count",
+        "name": "Use Count Meta-Argument",
+        "difficulty": "easy",
+        "category": "terraform",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-for-each",
+        "name": "Use For Each Meta-Argument",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-conditional",
+        "name": "Use Conditional Expressions",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-dynamic-blocks",
+        "name": "Use Dynamic Blocks",
+        "difficulty": "hard",
+        "category": "terraform",
+        "xp_reward": 200,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "tf-type-constraints",
+        "name": "Fix Variable Type Constraints",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-validation-rules",
+        "name": "Add Variable Validation Rules",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-sensitive-variables",
+        "name": "Handle Sensitive Variables",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-splat-expressions",
+        "name": "Use Splat Expressions",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-try-function",
+        "name": "Use try and can Functions",
+        "difficulty": "hard",
+        "category": "terraform",
+        "xp_reward": 200,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "tf-template-file",
+        "name": "Use the templatefile Function",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-backend-config",
+        "name": "Configure Terraform Backend",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-workspace",
+        "name": "Use Terraform Workspaces",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-lifecycle-rules",
+        "name": "Configure Lifecycle Rules",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-state-management",
+        "name": "Work with Terraform State",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "tf-import-resource",
+        "name": "Import Existing Resources",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "tf-moved-blocks",
+        "name": "Use Moved Blocks for Refactoring",
+        "difficulty": "hard",
+        "category": "terraform",
+        "xp_reward": 200,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "tf-modules",
+        "name": "Create a Simple Module",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "tf-null-resource",
+        "name": "Use null_resource with Triggers",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-provisioners",
+        "name": "Use Provisioners",
+        "difficulty": "medium",
+        "category": "terraform",
+        "xp_reward": 150,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "tf-override-files",
+        "name": "Use Override Files",
+        "difficulty": "hard",
+        "category": "terraform",
+        "xp_reward": 200,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "fix-terraform-drift",
+        "name": "Fix Terraform Drift",
+        "difficulty": "hard",
+        "category": "terraform",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      }
+    ],
+    "total_challenges": 30,
+    "total_xp": 4350
+  }
+]

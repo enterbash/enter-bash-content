@@ -1,0 +1,51 @@
+name: Linux Fundamentals
+slug: linux-fundamentals
+description: Master the Linux command line from basics to production-ready skills. Covers file management, process control, networking, security, and system administration.
+icon: 🐧
+category: linux
+difficulty: beginner-to-advanced
+estimated_hours: 8
+challenges:
+  # Foundations
+  - linux-fix-environment-variables
+  - linux-fix-symlinks
+  - linux-redirect-output
+  - linux-compress-and-archive
+  - linux-find-large-files
+  # File & text operations
+  - linux-find-and-replace-text
+  - linux-find-suid-binaries
+  - debug-file-permissions
+  # Process & system management
+  - linux-kill-runaway-process
+  - linux-monitor-system-resources
+  - linux-manage-disk-space
+  - linux-analyze-logs
+  # Networking & services
+  - linux-fix-dns-resolution
+  - linux-fix-ssh-config
+  - linux-setup-ssh-keys
+  - fix-broken-nginx
+  # System configuration
+  - linux-fix-locale
+  - linux-fix-timezone
+  - linux-fix-apt-sources
+  - linux-fix-crontab
+  - linux-set-up-logrotate
+  - linux-setup-rsync-backup
+  # User & access management
+  - linux-manage-users-groups
+  - linux-configure-sudo
+  # Storage
+  - linux-create-swap-space
+  - linux-fix-disk-permissions
+  - linux-manage-systemd-service
+  - linux-recover-deleted-file
+  # Advanced
+  - linux-fix-boot-order
+  - linux-fix-fstab
+  - linux-fix-iptables
+  - linux-fix-network-interface
+  - linux-manage-lvm
+  - linux-setup-nfs-share
+  - linux-fix-selinux-context

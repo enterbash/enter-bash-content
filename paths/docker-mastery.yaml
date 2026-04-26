@@ -1,0 +1,50 @@
+name: Docker Mastery
+slug: docker-mastery
+description: Go from Docker basics to production patterns. Covers images, containers, networking, volumes, Compose, and security best practices.
+icon: 🐳
+category: docker
+difficulty: beginner-to-advanced
+estimated_hours: 8
+challenges:
+  # Core concepts
+  - docker-build-image
+  - docker-fix-dockerfile
+  - docker-exec-into-container
+  - docker-copy-files
+  - docker-expose-port
+  - docker-tag-and-push
+  # Data & configuration
+  - docker-volume-mount
+  - docker-env-variables
+  - docker-copy-files
+  # Debugging
+  - docker-logs-and-debugging
+  - docker-inspect-container
+  - docker-debug-crashed-container
+  - docker-prune-resources
+  # Networking
+  - docker-create-network
+  - docker-bridge-networking
+  - docker-container-networking
+  - docker-container-linking
+  - docker-fix-dns
+  # Intermediate
+  - docker-container-restart-policy
+  - docker-healthcheck
+  - docker-resource-limits
+  - docker-build-args
+  - docker-fix-build-context
+  - docker-compose-basics
+  - docker-save-and-load
+  - docker-image-layers
+  - docker-multi-stage-build
+  # Advanced
+  - docker-fix-entrypoint
+  - docker-fix-permissions
+  - docker-user-namespace
+  - docker-tmpfs-mount
+  - docker-read-only-filesystem
+  - docker-fix-storage-driver
+  - docker-signal-handling
+  - docker-init-process
+  - docker-overlay-network

@@ -1,0 +1,44 @@
+name: Terraform Essentials
+slug: terraform-essentials
+description: Learn Infrastructure as Code with Terraform. From basic HCL syntax to modules, state management, and production patterns.
+icon: 🏗️
+category: terraform
+difficulty: beginner-to-advanced
+estimated_hours: 7
+challenges:
+  # HCL basics
+  - tf-fix-syntax
+  - tf-terraform-fmt
+  - tf-variables
+  - tf-outputs
+  - tf-string-interpolation
+  - tf-local-values
+  # Providers & resources
+  - tf-random-provider
+  - tf-data-sources
+  - tf-depends-on
+  - tf-count
+  - tf-for-each
+  # Configuration patterns
+  - tf-conditional
+  - tf-dynamic-blocks
+  - tf-type-constraints
+  - tf-validation-rules
+  - tf-sensitive-variables
+  # Functions
+  - tf-splat-expressions
+  - tf-try-function
+  - tf-template-file
+  # State & lifecycle
+  - tf-backend-config
+  - tf-workspace
+  - tf-lifecycle-rules
+  - tf-state-management
+  - tf-import-resource
+  - tf-moved-blocks
+  # Advanced
+  - tf-modules
+  - tf-null-resource
+  - tf-provisioners
+  - tf-override-files
+  - fix-terraform-drift
