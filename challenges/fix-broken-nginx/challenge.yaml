@@ -1,0 +1,54 @@
+name: "Fix Broken Nginx Config"
+type: skill
+category: linux
+difficulty: easy
+tags: [nginx, debugging, linux, web-server]
+time_estimate: "15m"
+xp_reward: 100
+packages: [nginx]
+pre_install: []
+namespace: ""
+files:
+  - source: files/broken-nginx.conf
+    dest: /etc/nginx/sites-available/default
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix the Broken Nginx Configuration
+
+  The Nginx web server on this machine is failing to start. Your task is to diagnose and fix the configuration issue so that Nginx serves a simple web page on port 80.
+
+  ### What you know
+
+  - Nginx has been installed but won't start
+  - The configuration file is at `/etc/nginx/sites-available/default`
+  - There should be a simple HTML page served from `/var/www/html/`
+
+  ### Your task
+
+  1. Try to start Nginx and observe the error
+  2. Check the Nginx configuration for syntax errors
+  3. Fix the configuration
+  4. Ensure Nginx starts successfully and serves the page
+
+  ### Useful commands
+
+  ```bash
+  sudo systemctl start nginx
+  sudo nginx -t
+  curl http://localhost
+  ```
+
+  Good luck!
+hints:
+  - "Run `sudo nginx -t` to check for configuration syntax errors"
+  - "Look at the `server` block — is the `listen` directive correct?"
+  - "The listen directive should be `listen 80;` not `listen 80 80;`"
+validation:
+  script: validate.sh
+  success_message: "Nginx is running and serving the page correctly!"
+  failure_message: "Nginx is not serving content on port 80 yet. Keep trying!"

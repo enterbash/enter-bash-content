@@ -1,0 +1,53 @@
+name: "Debug File Permissions"
+type: skill
+category: linux
+difficulty: easy
+tags: [linux, permissions, debugging, filesystem]
+time_estimate: "10m"
+xp_reward: 75
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Debug File Permissions
+
+  A script needs to be executed but it's failing due to permission issues. Your task is to fix the permissions so the script runs correctly and produces the expected output.
+
+  ### Scenario
+
+  - There is a script at `/home/learner/app/deploy.sh`
+  - There is a config file at `/home/learner/app/config.txt`
+  - The deploy script needs to read the config and write to a log file
+  - Currently, nothing works due to incorrect permissions
+
+  ### Your task
+
+  1. Investigate the current permissions on the files
+  2. Fix the permissions so that:
+     - `deploy.sh` is executable by the `learner` user
+     - `config.txt` is readable by the `learner` user
+     - The `logs/` directory is writable by the `learner` user
+  3. Run the deploy script successfully
+
+  ### Useful commands
+
+  ```bash
+  ls -la ~/app/
+  chmod +x script.sh
+  ./app/deploy.sh
+  ```
+hints:
+  - "Use `ls -la ~/app/` to see current permissions on all files"
+  - "The deploy.sh script needs execute permission: `chmod +x ~/app/deploy.sh`"
+  - "The config.txt needs read permission and the logs directory needs write permission"
+validation:
+  script: validate.sh
+  success_message: "All permissions are correct and the deploy script ran successfully!"
+  failure_message: "The deploy script hasn't run successfully yet. Check file permissions."

@@ -1,0 +1,51 @@
+name: "Docker Container Networking"
+type: skill
+category: docker
+difficulty: medium
+tags: [docker, networking, containers, debugging]
+time_estimate: "20m"
+xp_reward: 150
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Docker Container Networking
+
+  Two Docker containers need to communicate with each other, but they're on different networks. Your task is to fix the networking so they can talk.
+
+  ### Scenario
+
+  - A `web` container is running an HTTP server on port 8080
+  - A `client` container needs to reach the `web` container
+  - Currently they are on separate Docker networks and can't communicate
+
+  ### Your task
+
+  1. Inspect the current Docker networks and containers
+  2. Connect both containers to the same network so they can communicate
+  3. Verify the `client` container can reach the `web` container by name
+
+  ### Useful commands
+
+  ```bash
+  docker ps
+  docker network ls
+  docker network inspect <network>
+  docker network connect <network> <container>
+  docker exec client curl http://web:8080
+  ```
+hints:
+  - "Run `docker network ls` to see available networks and `docker ps` to see running containers"
+  - "Use `docker network inspect` on each network to see which containers are connected"
+  - "Connect both containers to the same network using `docker network connect`"
+validation:
+  script: validate.sh
+  success_message: "The containers can communicate! Networking fixed."
+  failure_message: "The client still can't reach the web container. Check the network setup."
