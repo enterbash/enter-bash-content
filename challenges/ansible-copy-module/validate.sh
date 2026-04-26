@@ -4,9 +4,13 @@ cd ~/ansible-project
 
 ansible-playbook -i inventory.ini playbook.yml --syntax-check > /dev/null 2>&1
 
+set +e
 RESULT=$(ansible-playbook -i inventory.ini playbook.yml 2>&1)
-if ! echo "$RESULT" | grep -q "failed=0"; then
+RC=$?
+set -e
+if [ $RC -ne 0 ] || ! echo "$RESULT" | grep -q "failed=0"; then
   echo "FAIL: Playbook had failures"
+  echo "$RESULT" | tail -20
   exit 1
 fi
 
