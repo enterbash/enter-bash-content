@@ -8,8 +8,8 @@
 - Expected to find: var.project_name
 - Expected to find: var.environment
 - Expected to find: var.file_count
-- project_name variable should have default = \"my-app\"
-- environment variable should have default = \"staging\"
+- project_name variable should have default = "my-app"
+- environment variable should have default = "staging"
 - file_count variable should have default = 3
 - terraform plan shows pending changes — your config may be incomplete
 

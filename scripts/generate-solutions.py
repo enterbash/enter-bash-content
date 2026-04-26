@@ -46,8 +46,8 @@ def parse_checks(validate_sh: str) -> list[dict]:
             if not fail_match:
                 fail_match = re.search(r"echo \"FAIL: (.+)\"", block)
             if fail_match:
-                # Clean up regex escape artifacts (e.g. \. -> .)
-                msg = fail_match.group(1).replace('\\.', '.').replace('\\*', '*')
+                # Clean up regex escape artifacts (e.g. \. -> ., \" -> ")
+                msg = fail_match.group(1).replace('\\.', '.').replace('\\*', '*').replace('\\"', '"')
                 checks.append({
                     'fail_msg': msg,
                     'condition': line,
