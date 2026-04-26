@@ -10,7 +10,10 @@ if ! terraform validate > /dev/null 2>&1; then
 fi
 
 # Check validation blocks exist
-grep -c 'validation' *.tf | grep -q '[3-9]'
+if ! grep -c 'validation' *.tf | grep -q '[3-9]'; then
+  echo "FAIL: Expected at least 3 validation blocks in your .tf files"
+  exit 1
+fi
 if ! grep -q 'condition' *.tf; then
   echo "FAIL: Expected to find: condition"
   exit 1

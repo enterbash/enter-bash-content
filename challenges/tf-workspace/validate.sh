@@ -12,7 +12,10 @@ if ! grep -q 'terraform\.workspace' main.tf; then
 fi
 
 # Check staging workspace exists
-terraform workspace list | grep -q 'staging'
+if ! terraform workspace list 2>/dev/null | grep -q 'staging'; then
+  echo "FAIL: 'staging' workspace not found — run: terraform workspace new staging"
+  exit 1
+fi
 
 if ! terraform validate > /dev/null 2>&1; then
   echo "FAIL: terraform validate failed — check your HCL syntax"

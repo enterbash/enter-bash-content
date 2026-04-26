@@ -45,7 +45,12 @@ elif [ "$EXIT_CODE" -ne 0 ]; then
 fi
 
 # Plan with non-production should also work
-terraform plan -input=false -var="environment=staging" -var="enable_debug=true" > /dev/null 2>&1
+EXIT_CODE2=0
+terraform plan -input=false -var="environment=staging" -var="enable_debug=true" > /dev/null 2>&1 || EXIT_CODE2=$?
+if [ "$EXIT_CODE2" -ne 0 ] && [ "$EXIT_CODE2" -ne 2 ]; then
+  echo "FAIL: terraform plan with staging vars encountered an error"
+  exit 1
+fi
 
 echo "PASS: Conditional expressions properly configured"
 exit 0
