@@ -1,6 +1,9 @@
 #!/bin/bash
 cd ~/terraform-project
-terraform init -input=false > /dev/null 2>&1
+if ! terraform init -input=false > /dev/null 2>&1; then
+  echo "FAIL: terraform init failed — check provider configuration"
+  exit 1
+fi
 
 # Check resource was renamed in state
 if ! terraform state list 2>/dev/null | grep -q 'random_pet.app_server'; then

@@ -1,18 +1,39 @@
 #!/bin/bash
 cd ~/terraform-project
-terraform init -input=false > /dev/null 2>&1
-terraform validate > /dev/null 2>&1
+if ! terraform init -input=false > /dev/null 2>&1; then
+  echo "FAIL: terraform init failed — check provider configuration"
+  exit 1
+fi
+if ! terraform validate > /dev/null 2>&1; then
+  echo "FAIL: terraform validate failed — check your HCL syntax"
+  exit 1
+fi
 
 # Check data sources exist
-grep -q 'data "local_file" "source_config"' *.tf
-grep -q 'data "local_file" "source_version"' *.tf
+if ! grep -q 'data "local_file" "source_config"' *.tf; then
+  echo "FAIL: Expected to find: data "local_file" "source_config""
+  exit 1
+fi
+if ! grep -q 'data "local_file" "source_version"' *.tf; then
+  echo "FAIL: Expected to find: data "local_file" "source_version""
+  exit 1
+fi
 
 # Check combined resource exists
-grep -q 'resource "local_file" "combined"' *.tf
+if ! grep -q 'resource "local_file" "combined"' *.tf; then
+  echo "FAIL: Expected to find: resource "local_file" "combined""
+  exit 1
+fi
 
 # Check data sources are referenced
-grep -q 'data\.local_file\.source_config' *.tf
-grep -q 'data\.local_file\.source_version' *.tf
+if ! grep -q 'data\.local_file\.source_config' *.tf; then
+  echo "FAIL: Expected to find: data\.local_file\.source_config"
+  exit 1
+fi
+if ! grep -q 'data\.local_file\.source_version' *.tf; then
+  echo "FAIL: Expected to find: data\.local_file\.source_version"
+  exit 1
+fi
 
 terraform plan -input=false > /dev/null 2>&1
 echo "PASS: Data sources properly configured"

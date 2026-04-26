@@ -1,14 +1,35 @@
 #!/bin/bash
 cd ~/terraform-project
-terraform init -input=false > /dev/null 2>&1
-terraform validate > /dev/null 2>&1
+if ! terraform init -input=false > /dev/null 2>&1; then
+  echo "FAIL: terraform init failed — check provider configuration"
+  exit 1
+fi
+if ! terraform validate > /dev/null 2>&1; then
+  echo "FAIL: terraform validate failed — check your HCL syntax"
+  exit 1
+fi
 
 # Check lifecycle blocks exist
-grep -q 'lifecycle' *.tf
-grep -q 'create_before_destroy.*=.*true' *.tf
-grep -q 'ignore_changes' *.tf
-grep -q 'content' *.tf
-grep -q 'prevent_destroy.*=.*true' *.tf
+if ! grep -q 'lifecycle' *.tf; then
+  echo "FAIL: Expected to find: lifecycle"
+  exit 1
+fi
+if ! grep -q 'create_before_destroy.*=.*true' *.tf; then
+  echo "FAIL: Expected to find: create_before_destroy.*=.*true"
+  exit 1
+fi
+if ! grep -q 'ignore_changes' *.tf; then
+  echo "FAIL: Expected to find: ignore_changes"
+  exit 1
+fi
+if ! grep -q 'content' *.tf; then
+  echo "FAIL: Expected to find: content"
+  exit 1
+fi
+if ! grep -q 'prevent_destroy.*=.*true' *.tf; then
+  echo "FAIL: Expected to find: prevent_destroy.*=.*true"
+  exit 1
+fi
 
 terraform plan -input=false > /dev/null 2>&1
 echo "PASS: Lifecycle rules properly configured"

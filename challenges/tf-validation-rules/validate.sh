@@ -1,12 +1,24 @@
 #!/bin/bash
 cd ~/terraform-project
-terraform init -input=false > /dev/null 2>&1
-terraform validate > /dev/null 2>&1
+if ! terraform init -input=false > /dev/null 2>&1; then
+  echo "FAIL: terraform init failed — check provider configuration"
+  exit 1
+fi
+if ! terraform validate > /dev/null 2>&1; then
+  echo "FAIL: terraform validate failed — check your HCL syntax"
+  exit 1
+fi
 
 # Check validation blocks exist
 grep -c 'validation' *.tf | grep -q '[3-9]'
-grep -q 'condition' *.tf
-grep -q 'error_message' *.tf
+if ! grep -q 'condition' *.tf; then
+  echo "FAIL: Expected to find: condition"
+  exit 1
+fi
+if ! grep -q 'error_message' *.tf; then
+  echo "FAIL: Expected to find: error_message"
+  exit 1
+fi
 
 # Valid defaults should pass
 terraform plan -input=false > /dev/null 2>&1

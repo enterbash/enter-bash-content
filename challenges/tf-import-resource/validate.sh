@@ -1,12 +1,18 @@
 #!/bin/bash
 cd ~/terraform-project
-terraform init -input=false > /dev/null 2>&1
+if ! terraform init -input=false > /dev/null 2>&1; then
+  echo "FAIL: terraform init failed — check provider configuration"
+  exit 1
+fi
 
 # Check resource exists in state
 terraform state list | grep -q 'local_file.app_config'
 
 # Check resource block exists in config
-grep -q 'resource "local_file" "app_config"' main.tf
+if ! grep -q 'resource "local_file" "app_config"' main.tf; then
+  echo "FAIL: Expected to find: resource "local_file" "app_config""
+  exit 1
+fi
 
 # Plan should show no changes
 PLAN=$(terraform plan -detailed-exitcode -input=false 2>&1) || EXIT_CODE=$?

@@ -1,12 +1,27 @@
 #!/bin/bash
 cd ~/terraform-project
-terraform init -input=false > /dev/null 2>&1
-terraform validate > /dev/null 2>&1
+if ! terraform init -input=false > /dev/null 2>&1; then
+  echo "FAIL: terraform init failed — check provider configuration"
+  exit 1
+fi
+if ! terraform validate > /dev/null 2>&1; then
+  echo "FAIL: terraform validate failed — check your HCL syntax"
+  exit 1
+fi
 
 # Check outputs exist
-grep -q 'output "pet_name"' *.tf
-grep -q 'output "config_path"' *.tf
-grep -q 'output "random_number"' *.tf
+if ! grep -q 'output "pet_name"' *.tf; then
+  echo "FAIL: Expected to find: output "pet_name""
+  exit 1
+fi
+if ! grep -q 'output "config_path"' *.tf; then
+  echo "FAIL: Expected to find: output "config_path""
+  exit 1
+fi
+if ! grep -q 'output "random_number"' *.tf; then
+  echo "FAIL: Expected to find: output "random_number""
+  exit 1
+fi
 
 # Check output values reference correct resources
 grep -A3 'output "pet_name"' *.tf | grep -q 'random_pet\.server\.id'

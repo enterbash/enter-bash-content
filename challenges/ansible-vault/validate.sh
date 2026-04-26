@@ -8,7 +8,10 @@ cd ~/ansible-project
 head -1 secrets.yml | grep -q "^\$ANSIBLE_VAULT" || { echo "FAIL: secrets.yml is not encrypted"; exit 1; }
 
 # Run playbook with vault
-ansible-playbook -i inventory.ini playbook.yml --vault-password-file .vault_pass --syntax-check > /dev/null 2>&1
+if ! ansible-playbook -i inventory.ini playbook.yml --vault-password-file .vault_pass --syntax-check > /dev/null 2>&1; then
+  echo "FAIL: Playbook has syntax errors — run ansible-playbook --syntax-check to see details"
+  exit 1
+fi
 
 RESULT=$(ansible-playbook -i inventory.ini playbook.yml --vault-password-file .vault_pass 2>&1)
 if ! echo "$RESULT" | grep -q "failed=0"; then

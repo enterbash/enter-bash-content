@@ -1,7 +1,10 @@
 #!/bin/bash
 cd ~/ansible-project
 
-ansible-playbook -i inventory.ini playbook.yml --syntax-check > /dev/null 2>&1
+if ! ansible-playbook -i inventory.ini playbook.yml --syntax-check > /dev/null 2>&1; then
+  echo "FAIL: Playbook has syntax errors — run ansible-playbook --syntax-check to see details"
+  exit 1
+fi
 
 set +e
 RESULT=$(ansible-playbook -i inventory.ini playbook.yml 2>&1)

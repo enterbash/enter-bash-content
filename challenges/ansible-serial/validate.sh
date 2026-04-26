@@ -4,7 +4,10 @@ cd ~/ansible-project
 # Check that serial is defined in the playbook
 grep -q "serial:" ~/ansible-project/playbook.yml || { echo "FAIL: serial not defined in playbook"; exit 1; }
 
-ansible-playbook -i inventory.ini playbook.yml --syntax-check > /dev/null 2>&1
+if ! ansible-playbook -i inventory.ini playbook.yml --syntax-check > /dev/null 2>&1; then
+  echo "FAIL: Playbook has syntax errors — run ansible-playbook --syntax-check to see details"
+  exit 1
+fi
 
 RESULT=$(ansible-playbook -i inventory.ini playbook.yml 2>&1)
 if ! echo "$RESULT" | grep -q "failed=0"; then

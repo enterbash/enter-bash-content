@@ -1,17 +1,41 @@
 #!/bin/bash
 cd ~/terraform-project
-terraform init -input=false > /dev/null 2>&1
-terraform validate > /dev/null 2>&1
+if ! terraform init -input=false > /dev/null 2>&1; then
+  echo "FAIL: terraform init failed — check provider configuration"
+  exit 1
+fi
+if ! terraform validate > /dev/null 2>&1; then
+  echo "FAIL: terraform validate failed — check your HCL syntax"
+  exit 1
+fi
 
 # Check that variables are defined
-grep -q 'variable "project_name"' *.tf
-grep -q 'variable "environment"' *.tf
-grep -q 'variable "file_count"' *.tf
+if ! grep -q 'variable "project_name"' *.tf; then
+  echo "FAIL: Expected to find: variable "project_name""
+  exit 1
+fi
+if ! grep -q 'variable "environment"' *.tf; then
+  echo "FAIL: Expected to find: variable "environment""
+  exit 1
+fi
+if ! grep -q 'variable "file_count"' *.tf; then
+  echo "FAIL: Expected to find: variable "file_count""
+  exit 1
+fi
 
 # Check that variables are used
-grep -q 'var\.project_name' *.tf
-grep -q 'var\.environment' *.tf
-grep -q 'var\.file_count' *.tf
+if ! grep -q 'var\.project_name' *.tf; then
+  echo "FAIL: Expected to find: var\.project_name"
+  exit 1
+fi
+if ! grep -q 'var\.environment' *.tf; then
+  echo "FAIL: Expected to find: var\.environment"
+  exit 1
+fi
+if ! grep -q 'var\.file_count' *.tf; then
+  echo "FAIL: Expected to find: var\.file_count"
+  exit 1
+fi
 
 # Check defaults
 grep -A5 'variable "project_name"' *.tf | grep -q 'default.*"my-app"'

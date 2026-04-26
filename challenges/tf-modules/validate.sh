@@ -1,23 +1,59 @@
 #!/bin/bash
 cd ~/terraform-project
-terraform init -input=false > /dev/null 2>&1
-terraform validate > /dev/null 2>&1
+if ! terraform init -input=false > /dev/null 2>&1; then
+  echo "FAIL: terraform init failed — check provider configuration"
+  exit 1
+fi
+if ! terraform validate > /dev/null 2>&1; then
+  echo "FAIL: terraform validate failed — check your HCL syntax"
+  exit 1
+fi
 
 # Check module call in root
-grep -q 'module "app_config"' main.tf
-grep -q 'source.*modules/config' main.tf
-grep -q 'app_name' main.tf
-grep -q 'environment' main.tf
+if ! grep -q 'module "app_config"' main.tf; then
+  echo "FAIL: Expected to find: module "app_config""
+  exit 1
+fi
+if ! grep -q 'source.*modules/config' main.tf; then
+  echo "FAIL: Expected to find: source.*modules/config"
+  exit 1
+fi
+if ! grep -q 'app_name' main.tf; then
+  echo "FAIL: Expected to find: app_name"
+  exit 1
+fi
+if ! grep -q 'environment' main.tf; then
+  echo "FAIL: Expected to find: environment"
+  exit 1
+fi
 
 # Check module definition
-grep -q 'variable "app_name"' modules/config/main.tf
-grep -q 'variable "environment"' modules/config/main.tf
-grep -q 'resource "local_file"' modules/config/main.tf
-grep -q 'output "config_path"' modules/config/main.tf
+if ! grep -q 'variable "app_name"' modules/config/main.tf; then
+  echo "FAIL: Expected to find: variable "app_name""
+  exit 1
+fi
+if ! grep -q 'variable "environment"' modules/config/main.tf; then
+  echo "FAIL: Expected to find: variable "environment""
+  exit 1
+fi
+if ! grep -q 'resource "local_file"' modules/config/main.tf; then
+  echo "FAIL: Expected to find: resource "local_file""
+  exit 1
+fi
+if ! grep -q 'output "config_path"' modules/config/main.tf; then
+  echo "FAIL: Expected to find: output "config_path""
+  exit 1
+fi
 
 # Check root output
-grep -q 'output "config_file"' main.tf
-grep -q 'module\.app_config' main.tf
+if ! grep -q 'output "config_file"' main.tf; then
+  echo "FAIL: Expected to find: output "config_file""
+  exit 1
+fi
+if ! grep -q 'module\.app_config' main.tf; then
+  echo "FAIL: Expected to find: module\.app_config"
+  exit 1
+fi
 
 terraform plan -input=false > /dev/null 2>&1
 echo "PASS: Module properly defined and called"

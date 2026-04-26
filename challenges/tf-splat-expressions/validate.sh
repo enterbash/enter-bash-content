@@ -1,13 +1,34 @@
 #!/bin/bash
 cd ~/terraform-project
-terraform init -input=false > /dev/null 2>&1
-terraform validate > /dev/null 2>&1
+if ! terraform init -input=false > /dev/null 2>&1; then
+  echo "FAIL: terraform init failed — check provider configuration"
+  exit 1
+fi
+if ! terraform validate > /dev/null 2>&1; then
+  echo "FAIL: terraform validate failed — check your HCL syntax"
+  exit 1
+fi
 
-grep -q '\[\*\]' *.tf
-grep -q 'output "all_pet_names"' *.tf
-grep -q 'output "all_file_paths"' *.tf
-grep -q 'local_file.*summary' *.tf
-grep -q 'join' *.tf
+if ! grep -q '\[\*\]' *.tf; then
+  echo "FAIL: Expected to find: \[\*\]"
+  exit 1
+fi
+if ! grep -q 'output "all_pet_names"' *.tf; then
+  echo "FAIL: Expected to find: output "all_pet_names""
+  exit 1
+fi
+if ! grep -q 'output "all_file_paths"' *.tf; then
+  echo "FAIL: Expected to find: output "all_file_paths""
+  exit 1
+fi
+if ! grep -q 'local_file.*summary' *.tf; then
+  echo "FAIL: Expected to find: local_file.*summary"
+  exit 1
+fi
+if ! grep -q 'join' *.tf; then
+  echo "FAIL: Expected to find: join"
+  exit 1
+fi
 
 terraform plan -input=false > /dev/null 2>&1
 echo "PASS: Splat expressions properly used"

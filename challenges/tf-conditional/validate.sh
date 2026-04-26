@@ -1,13 +1,31 @@
 #!/bin/bash
 cd ~/terraform-project
-terraform init -input=false > /dev/null 2>&1
-terraform validate > /dev/null 2>&1
+if ! terraform init -input=false > /dev/null 2>&1; then
+  echo "FAIL: terraform init failed — check provider configuration"
+  exit 1
+fi
+if ! terraform validate > /dev/null 2>&1; then
+  echo "FAIL: terraform validate failed — check your HCL syntax"
+  exit 1
+fi
 
 # Check conditional expressions exist
-grep -q '?' *.tf
-grep -q 'var\.environment' *.tf
-grep -q 'var\.enable_debug' *.tf
-grep -q 'count' *.tf
+if ! grep -q '?' *.tf; then
+  echo "FAIL: Expected to find: ?"
+  exit 1
+fi
+if ! grep -q 'var\.environment' *.tf; then
+  echo "FAIL: Expected to find: var\.environment"
+  exit 1
+fi
+if ! grep -q 'var\.enable_debug' *.tf; then
+  echo "FAIL: Expected to find: var\.enable_debug"
+  exit 1
+fi
+if ! grep -q 'count' *.tf; then
+  echo "FAIL: Expected to find: count"
+  exit 1
+fi
 
 # Check config resource
 grep -A5 'resource "local_file" "config"' *.tf | grep -q 'production'

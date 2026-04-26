@@ -8,7 +8,10 @@ grep -q "yaml" ~/ansible-project/ansible.cfg || { echo "FAIL: yaml callback not 
 # Check for callbacks_enabled or callback_whitelist
 (grep -q "callbacks_enabled" ~/ansible-project/ansible.cfg || grep -q "callback_whitelist" ~/ansible-project/ansible.cfg) || { echo "FAIL: callback_whitelist/callbacks_enabled not configured"; exit 1; }
 
-ansible-playbook -i inventory.ini playbook.yml --syntax-check > /dev/null 2>&1
+if ! ansible-playbook -i inventory.ini playbook.yml --syntax-check > /dev/null 2>&1; then
+  echo "FAIL: Playbook has syntax errors — run ansible-playbook --syntax-check to see details"
+  exit 1
+fi
 
 RESULT=$(ansible-playbook -i inventory.ini playbook.yml 2>&1)
 if ! echo "$RESULT" | grep -q "failed=0"; then
