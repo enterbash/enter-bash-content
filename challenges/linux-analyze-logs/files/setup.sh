@@ -2,6 +2,7 @@
 set -e
 
 sudo mkdir -p /var/log/webapp
+sudo chown "$(whoami):$(whoami)" /var/log/webapp
 
 # Generate a realistic log file
 cat > /tmp/gen_logs.py <<'PYTHON'
