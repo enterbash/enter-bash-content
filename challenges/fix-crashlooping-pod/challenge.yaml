@@ -1,0 +1,50 @@
+name: "Fix CrashLooping Pod"
+type: skill
+category: kubernetes
+difficulty: medium
+tags: [kubernetes, debugging, pods, containers]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: default
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix the CrashLooping Pod
+
+  A pod in the Kubernetes cluster is stuck in a CrashLoopBackOff state. Your task is to diagnose the issue and fix it so the pod runs successfully.
+
+  ### What you know
+
+  - There is a pod called `web-app` in the `default` namespace
+  - It's supposed to run a simple web server
+  - The pod keeps crashing and restarting
+
+  ### Your task
+
+  1. Check the pod status and identify the issue
+  2. Look at the pod logs and events
+  3. Fix the problem so the pod reaches a `Running` state
+
+  ### Useful commands
+
+  ```bash
+  kubectl get pods
+  kubectl describe pod web-app
+  kubectl logs web-app
+  kubectl edit pod web-app
+  ```
+hints:
+  - "Run `kubectl describe pod web-app` and look at the Events section"
+  - "Check the container command — is it valid?"
+  - "The container is trying to run a command that doesn't exist. Fix the command in the pod spec."
+validation:
+  script: validate.sh
+  success_message: "The pod is running successfully!"
+  failure_message: "The web-app pod is not in Running state yet."

@@ -1,0 +1,55 @@
+name: "Fix Ansible Playbook"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, automation, debugging, yaml]
+time_estimate: "20m"
+xp_reward: 150
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix the Ansible Playbook
+
+  An Ansible playbook has several errors preventing it from running successfully. Your task is to fix all the issues so the playbook completes without errors.
+
+  ### What you know
+
+  - There is an Ansible project in `~/ansible-project/`
+  - The playbook has syntax and logic errors
+  - It should install nginx, create a config file, and start the service
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Try running the playbook and observe the errors
+  3. Fix all issues in `playbook.yml`
+  4. Run the playbook successfully to completion
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml --check
+  ansible-playbook -i inventory.ini playbook.yml
+  ansible-lint playbook.yml
+  ```
+hints:
+  - "Run `ansible-playbook -i inventory.ini playbook.yml --syntax-check` first"
+  - "Check YAML indentation — Ansible is very strict about it"
+  - "Look for incorrect module names and missing required parameters"
+validation:
+  script: validate.sh
+  success_message: "Ansible playbook ran successfully!"
+  failure_message: "The playbook still has errors. Check the syntax and try again."

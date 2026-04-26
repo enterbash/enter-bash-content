@@ -1,0 +1,57 @@
+name: "Fix Terraform Drift"
+type: skill
+category: terraform
+difficulty: hard
+tags: [terraform, iac, troubleshooting, drift]
+time_estimate: "25m"
+xp_reward: 200
+packages: []
+pre_install: [terraform]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+  - source: files/terraform.tfstate
+    dest: ~/terraform-project/terraform.tfstate
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Terraform Drift
+
+  Your Terraform-managed infrastructure has drifted from the desired state. Someone made manual changes outside of Terraform, and now `terraform plan` shows unexpected differences.
+
+  ### What you know
+
+  - There is a Terraform project in `~/terraform-project/`
+  - The state file exists but doesn't match the actual resources
+  - Manual changes were made outside of Terraform
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Run `terraform plan` to see the drift
+  3. Decide whether to import the changes or revert them
+  4. Get Terraform to a clean state where `terraform plan` shows no changes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform plan
+  terraform apply
+  terraform state list
+  terraform state show <resource>
+  ```
+hints:
+  - "Run `terraform init` first, then `terraform plan` to see what's different"
+  - "Compare the state file with the actual config — look for mismatched values"
+  - "You may need to update the .tf file to match reality, or use `terraform apply` to force the desired state"
+validation:
+  script: validate.sh
+  success_message: "Terraform state is clean — no drift detected!"
+  failure_message: "Terraform still shows drift. Run `terraform plan` to see what's left."

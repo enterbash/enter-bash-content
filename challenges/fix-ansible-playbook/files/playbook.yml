@@ -1,0 +1,21 @@
+---
+- name: Setup web server
+  hosts: local
+  become: yes
+  tasks:
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: presents
+        update_cache: yes
+
+    - name: Create config
+       copy:
+        content: "server_name localhost;"
+        dest: /etc/nginx/conf.d/custom.conf
+
+    - name: Start nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
