@@ -6,7 +6,7 @@
 - Expected to find: project_name
 - Expected to find: environment
 - Expected to find: common_tags
-- Expected to find: local\.
+- Expected to find: local.
 - terraform plan shows pending changes — your config may be incomplete
 
 ## Solution

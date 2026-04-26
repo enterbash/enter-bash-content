@@ -5,7 +5,7 @@
 - Expected to find: development
 - Expected to find: random_pet
 - Expected to find: length.*=.*3
-- Expected to find: separator.*=.*
+- Expected to find: separator.*=.*"_"
 - terraform plan shows pending changes — your config may be incomplete
 
 ## Solution

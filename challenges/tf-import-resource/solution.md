@@ -3,7 +3,7 @@
 ## What the validator checks
 
 - local_file.app_config not found in state — run: terraform import local_file.app_config ~/terraform-project/app-config.txt
-- Expected to find: resource 
+- Expected to find: resource "local_file" "app_config"
 - terraform plan still shows changes
 
 ## Solution

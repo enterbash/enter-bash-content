@@ -2,11 +2,11 @@
 
 ## What the validator checks
 
-- Expected to find: data 
-- Expected to find: data 
-- Expected to find: resource 
-- Expected to find: data\.local_file\.source_config
-- Expected to find: data\.local_file\.source_version
+- Expected to find: data "local_file" "source_config"
+- Expected to find: data "local_file" "source_version"
+- Expected to find: resource "local_file" "combined"
+- Expected to find: data.local_file.source_config
+- Expected to find: data.local_file.source_version
 - terraform plan shows pending changes — your config may be incomplete
 
 ## Solution

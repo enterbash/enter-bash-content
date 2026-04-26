@@ -3,7 +3,7 @@
 ## What the validator checks
 
 - random_pet.app_server not found in state — run: terraform state mv random_pet.server random_pet.app_server
-- main.tf still has 'random_pet \
+- main.tf still has 'random_pet \"server\"' — rename the resource block to 'app_server'
 - main.tf still references random_pet.server — update all references to random_pet.app_server
 - terraform plan shows pending changes — state and config are out of sync
 

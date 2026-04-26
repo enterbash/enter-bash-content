@@ -3,9 +3,9 @@
 ## What the validator checks
 
 - Expected to find: for_each
-- Expected to find: each\.key
-- Expected to find: each\.value
-- Expected to find: var\.services
+- Expected to find: each.key
+- Expected to find: each.value
+- Expected to find: var.services
 
 ## Solution
 

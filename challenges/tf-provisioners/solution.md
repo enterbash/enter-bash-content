@@ -3,7 +3,7 @@
 ## What the validator checks
 
 - Expected to find: null_resource
-- Expected to find: provisioner 
+- Expected to find: provisioner "local-exec"
 - Expected to find: when.*=.*destroy
 - Expected to find: provisioned
 

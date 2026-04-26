@@ -3,7 +3,7 @@
 ## What the validator checks
 
 - Expected to find: templatefile
-- Expected to find: config\.tftpl
+- Expected to find: config.tftpl
 - Expected to find: app_name
 - Expected to find: environment
 - Expected to find: ports

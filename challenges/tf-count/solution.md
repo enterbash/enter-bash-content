@@ -3,8 +3,8 @@
 ## What the validator checks
 
 - Expected to find: count
-- Expected to find: count\.index
-- Expected to find: length(var\.environments)
+- Expected to find: count.index
+- Expected to find: length(var.environments)
 - Plan does not show local_file.config[0] — check count and var.environments
 - Plan does not show local_file.config[1] — check count and var.environments
 - Plan does not show local_file.config[2] — check count and var.environments

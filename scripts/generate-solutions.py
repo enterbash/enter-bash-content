@@ -41,11 +41,15 @@ def parse_checks(validate_sh: str) -> list[dict]:
                 block_lines.append(lines[j].strip())
                 j += 1
             block = '\n'.join(block_lines)
-            # Extract FAIL message
-            fail_match = re.search(r'echo "FAIL: ([^"]+)"', block)
+            # Extract FAIL message — use greedy match up to last " on the line
+            fail_match = re.search(r'echo "FAIL: (.+?)"(?:\s*$|\s*;)', block, re.MULTILINE)
+            if not fail_match:
+                fail_match = re.search(r"echo \"FAIL: (.+)\"", block)
             if fail_match:
+                # Clean up regex escape artifacts (e.g. \. -> .)
+                msg = fail_match.group(1).replace('\\.', '.').replace('\\*', '*')
                 checks.append({
-                    'fail_msg': fail_match.group(1),
+                    'fail_msg': msg,
                     'condition': line,
                     'comment': pending_comment,
                     'block': block,
@@ -55,10 +59,11 @@ def parse_checks(validate_sh: str) -> list[dict]:
             continue
         # Pattern: [ -f file ] || { echo "FAIL..." }
         if '|| {' in line or "|| { echo" in line:
-            fail_match = re.search(r'echo "FAIL: ([^"]+)"', line)
+            fail_match = re.search(r'echo "FAIL: (.+?)"', line)
             if fail_match:
+                msg = fail_match.group(1).replace('\\.', '.').replace('\\*', '*')
                 checks.append({
-                    'fail_msg': fail_match.group(1),
+                    'fail_msg': msg,
                     'condition': line,
                     'comment': pending_comment,
                     'block': line,

@@ -2,9 +2,9 @@
 
 ## What the validator checks
 
-- Expected to find: output 
-- Expected to find: output 
-- Expected to find: output 
+- Expected to find: output "pet_name"
+- Expected to find: output "config_path"
+- Expected to find: output "random_number"
 - pet_name output should reference random_pet.server.id
 - config_path output should reference local_file.config.filename
 - random_number output should reference random_integer.priority.result

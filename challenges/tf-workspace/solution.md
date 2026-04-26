@@ -2,7 +2,7 @@
 
 ## What the validator checks
 
-- Expected to find: terraform\.workspace
+- Expected to find: terraform.workspace
 - 'staging' workspace not found — run: terraform workspace new staging
 
 ## Solution

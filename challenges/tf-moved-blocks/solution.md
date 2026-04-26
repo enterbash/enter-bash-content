@@ -3,12 +3,12 @@
 ## What the validator checks
 
 - Expected to find: moved
-- Expected to find: random_pet\.server_name
-- Expected to find: random_pet\.app_name
-- Expected to find: local_file\.server_config
-- Expected to find: local_file\.app_config
-- Expected to find: resource 
-- Expected to find: resource 
+- Expected to find: random_pet.server_name
+- Expected to find: random_pet.app_name
+- Expected to find: local_file.server_config
+- Expected to find: local_file.app_config
+- Expected to find: resource "random_pet" "app_name"
+- Expected to find: resource "local_file" "app_config"
 - terraform plan shows pending changes — your config may be incomplete
 
 ## Solution

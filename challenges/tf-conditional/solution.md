@@ -3,8 +3,8 @@
 ## What the validator checks
 
 - Expected to find: ?
-- Expected to find: var\.environment
-- Expected to find: var\.enable_debug
+- Expected to find: var.environment
+- Expected to find: var.enable_debug
 - Expected to find: count
 - local_file.config resource should reference 'production' in its content
 - local_file.debug_log resource should use count

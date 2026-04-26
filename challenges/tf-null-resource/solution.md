@@ -7,7 +7,7 @@
 - Expected to find: triggers
 - Expected to find: config_version
 - Expected to find: timestamp()
-- Expected to find: provisioner 
+- Expected to find: provisioner "local-exec"
 - terraform plan shows pending changes — your config may be incomplete
 
 ## Solution

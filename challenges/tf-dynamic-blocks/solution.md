@@ -5,7 +5,7 @@
 - No dynamic block found — use 'dynamic' keyword
 - Expected to find: for_each
 - Expected to find: content
-- Expected to find: provisioner\.value
+- Expected to find: provisioner.value
 - terraform plan shows pending changes — your config may be incomplete
 
 ## Solution

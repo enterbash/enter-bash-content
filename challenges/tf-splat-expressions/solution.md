@@ -2,9 +2,9 @@
 
 ## What the validator checks
 
-- Expected to find: \[\*\]
-- Expected to find: output 
-- Expected to find: output 
+- Expected to find: \[*\]
+- Expected to find: output "all_pet_names"
+- Expected to find: output "all_file_paths"
 - Expected to find: local_file.*summary
 - Expected to find: join
 - terraform plan shows pending changes — your config may be incomplete

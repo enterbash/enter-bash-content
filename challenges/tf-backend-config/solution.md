@@ -2,7 +2,7 @@
 
 ## What the validator checks
 
-- Expected to find: backend 
+- Expected to find: backend "local"
 - Expected to find: state/terraform.tfstate
 - terraform plan shows pending changes — your config may be incomplete
 

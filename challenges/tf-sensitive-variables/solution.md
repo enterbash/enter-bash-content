@@ -4,8 +4,8 @@
 
 - db_password variable should have sensitive = true
 - api_key variable should have sensitive = true
-- Expected to find: output 
-- Expected to find: output 
+- Expected to find: output "app_id"
+- Expected to find: output "password_set"
 - password_set output should have sensitive = true
 - Expected to find: local_file.*config
 - terraform plan shows pending changes — your config may be incomplete
