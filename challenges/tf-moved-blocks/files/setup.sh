@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 mkdir -p ~/terraform-project
 cd ~/terraform-project
 
