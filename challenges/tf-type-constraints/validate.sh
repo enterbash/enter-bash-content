@@ -10,8 +10,14 @@ if ! terraform validate > /dev/null 2>&1; then
 fi
 
 # Check correct types
-grep -A2 'variable "app_name"' *.tf | grep -q 'type.*=.*string'
-grep -A2 'variable "port"' *.tf | grep -q 'type.*=.*number'
+if ! grep -A2 'variable "app_name"' *.tf | grep -q 'type.*=.*string'; then
+  echo "FAIL: app_name variable should have type = string"
+  exit 1
+fi
+if ! grep -A2 'variable "port"' *.tf | grep -q 'type.*=.*number'; then
+  echo "FAIL: port variable should have type = number"
+  exit 1
+fi
 if ! grep -A2 'variable "allowed_hosts"' *.tf | grep -q 'list(string)'; then
   echo "FAIL: allowed_hosts variable should have type = list(string)"
   exit 1
