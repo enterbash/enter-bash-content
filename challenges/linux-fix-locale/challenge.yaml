@@ -1,0 +1,51 @@
+name: "Fix Locale Settings"
+type: skill
+category: linux
+difficulty: easy
+tags: [linux, locale, i18n, configuration]
+time_estimate: "10m"
+xp_reward: 75
+packages: [locales]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Locale Settings
+
+  The system locale is misconfigured, causing applications to display warnings and errors about locale settings. You need to fix the locale configuration.
+
+  ### What you know
+
+  - Running almost any command shows locale warnings
+  - The desired locale is `en_US.UTF-8`
+  - The locale needs to be generated and set as default
+
+  ### Your task
+
+  1. Observe the locale warnings by running `locale`
+  2. Generate the `en_US.UTF-8` locale
+  3. Set it as the default system locale
+  4. Verify the warnings are gone
+
+  ### Useful commands
+
+  ```bash
+  locale
+  locale -a
+  sudo locale-gen en_US.UTF-8
+  sudo update-locale LANG=en_US.UTF-8
+  ```
+hints:
+  - "Run `locale` to see the current broken settings"
+  - "Generate the locale with `sudo locale-gen en_US.UTF-8`"
+  - "Set it as default with `sudo update-locale LANG=en_US.UTF-8` and export `LANG=en_US.UTF-8`"
+validation:
+  script: validate.sh
+  success_message: "Locale is correctly configured!"
+  failure_message: "Locale settings are still broken."

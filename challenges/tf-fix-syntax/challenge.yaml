@@ -1,0 +1,52 @@
+name: "Fix Terraform Syntax Errors"
+type: skill
+category: terraform
+difficulty: easy
+tags: [terraform, hcl, syntax, debugging]
+time_estimate: "10m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Terraform Syntax Errors
+
+  A colleague wrote a Terraform configuration but it has several HCL syntax errors. Your job is to fix them so that `terraform validate` passes.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - The `main.tf` file has multiple syntax errors
+  - The configuration uses the `local` and `random` providers
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Run `terraform init` and `terraform validate` to see the errors
+  3. Fix all syntax errors in `main.tf`
+  4. Ensure `terraform validate` passes cleanly
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  ```
+hints:
+  - "Look for missing closing braces, commas, and equals signs"
+  - "Check that all string values are properly quoted"
+  - "The `resource` block syntax is: resource \"type\" \"name\" { ... }"
+validation:
+  script: validate.sh
+  success_message: "All syntax errors fixed — terraform validate passes!"
+  failure_message: "There are still syntax errors. Run `terraform validate` to see what's left."

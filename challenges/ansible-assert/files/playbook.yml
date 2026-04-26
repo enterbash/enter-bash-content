@@ -1,0 +1,40 @@
+---
+- name: Validate system configuration
+  hosts: local
+  become: yes
+  vars:
+    app_port: 8080
+    app_name: webapp
+    max_workers: 4
+    deploy_env: production
+  tasks:
+    - name: Validate port range
+      assert:
+        condition:
+          - app_port > 1024
+          - app_port < 65535
+        msg: "Port must be between 1024 and 65535"
+
+    - name: Validate app name
+      assert:
+        that:
+          - "{{ app_name }} is defined"
+          - "{{ app_name | length }} > 0"
+        fail_msg: "App name must be defined and non-empty"
+
+    - name: Validate workers
+      assert:
+        that:
+          - max_workers >= 1
+          - max_workers <= 16
+        fail_msg: "Workers must be between 1 and 16"
+        success_msg: "Worker count is valid"
+
+    - name: Write validation result
+      copy:
+        content: |
+          port={{ app_port }} VALID
+          name={{ app_name }} VALID
+          workers={{ max_workers }} VALID
+          env={{ deploy_env }} VALID
+        dest: /tmp/assert_results.txt

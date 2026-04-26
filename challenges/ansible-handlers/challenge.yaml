@@ -1,0 +1,61 @@
+name: "Ansible Handlers"
+type: skill
+category: ansible
+difficulty: easy
+tags: [ansible, handlers, notify, events]
+time_estimate: "15m"
+xp_reward: 100
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Ansible Handlers
+
+  Handlers are special tasks that only run when notified by other tasks. A playbook in `~/ansible-project/playbook.yml` has broken handler definitions.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the handler definitions and notify directives
+  3. Handlers must be defined under a `handlers:` section (not under `tasks:`)
+  4. The `notify` directive must match the handler name exactly
+  5. Run the playbook successfully
+
+  ### Handler syntax
+
+  ```yaml
+  tasks:
+    - name: Update config
+      copy: ...
+      notify: Restart app
+
+  handlers:
+    - name: Restart app
+      command: echo "restarted"
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Handlers go under `handlers:` at the play level, not inside `tasks:`"
+  - "The `notify` value must exactly match the handler's `name`"
+  - "Handlers only run when the notifying task reports 'changed'"
+validation:
+  script: validate.sh
+  success_message: "Handlers are working correctly!"
+  failure_message: "Handler issues remain. Check notify names match handler names exactly."

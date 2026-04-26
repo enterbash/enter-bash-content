@@ -1,0 +1,50 @@
+name: "Create and Configure a Namespace"
+type: skill
+category: kubernetes
+difficulty: easy
+tags: [kubernetes, namespaces, organization]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create and Configure a Namespace
+
+  Create a Kubernetes Namespace manifest with proper labels and annotations.
+
+  ### Requirements
+
+  - File: `~/namespace.yaml`
+  - Namespace name: `staging`
+  - Labels:
+    - `env: staging`
+    - `team: backend`
+  - Annotations:
+    - `description: "Staging environment for backend services"`
+
+  ### Your task
+
+  1. Create `~/namespace.yaml` with the Namespace manifest
+  2. It must pass `kubectl apply --dry-run=client -f ~/namespace.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/namespace.yaml
+  ```
+hints:
+  - "Namespaces use apiVersion: v1 and kind: Namespace"
+  - "Labels go under metadata.labels"
+  - "Annotations go under metadata.annotations"
+validation:
+  script: validate.sh
+  success_message: "Namespace is correctly configured!"
+  failure_message: "The Namespace manifest is missing or incorrect."

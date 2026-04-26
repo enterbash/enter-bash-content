@@ -1,0 +1,56 @@
+name: "Define and Use Variables"
+type: skill
+category: terraform
+difficulty: easy
+tags: [terraform, variables, hcl, basics]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Define and Use Terraform Variables
+
+  You have a Terraform configuration that has hardcoded values. Your task is to extract them into proper input variables and use them correctly.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - The `main.tf` file has hardcoded values that should be variables
+  - You need to create variables for: `project_name`, `environment`, and `file_count`
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Define three variables in the configuration:
+     - `project_name` (string, default: `"my-app"`)
+     - `environment` (string, default: `"staging"`)
+     - `file_count` (number, default: `3`)
+  3. Update the resources to use these variables instead of hardcoded values
+  4. Ensure `terraform validate` and `terraform plan` succeed
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  ```
+hints:
+  - "Define variables with: variable \"name\" { type = string; default = \"value\" }"
+  - "Reference variables with var.variable_name"
+  - "You can define variables in main.tf or in a separate variables.tf file"
+validation:
+  script: validate.sh
+  success_message: "Variables are properly defined and used!"
+  failure_message: "Check that all three variables are defined with correct types and defaults."

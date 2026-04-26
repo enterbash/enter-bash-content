@@ -1,0 +1,50 @@
+name: "Use Build Arguments in Dockerfile"
+type: skill
+category: docker
+difficulty: medium
+tags: [docker, build, args, dockerfile]
+time_estimate: "15m"
+xp_reward: 100
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Build Arguments in Dockerfile
+
+  Build arguments let you parameterize your Docker builds. Create a Dockerfile that uses build args.
+
+  ### Scenario
+
+  A project at `~/argapp` needs a Dockerfile that accepts build arguments to customize the build.
+
+  ### Your task
+
+  1. Edit the Dockerfile at `~/argapp/Dockerfile` to:
+     - Accept a build arg `APP_VERSION` with default value `1.0.0`
+     - Accept a build arg `APP_ENV` with default value `production`
+     - Write both values to `/app/version.txt` during build
+  2. Build the image as `argapp:latest` passing `APP_VERSION=2.0.0`
+  3. Verify the version inside the image
+
+  ### Useful commands
+
+  ```bash
+  cat ~/argapp/Dockerfile
+  cd ~/argapp && docker build --build-arg APP_VERSION=2.0.0 -t argapp:latest .
+  docker run --rm argapp:latest cat /app/version.txt
+  ```
+hints:
+  - "Use `ARG APP_VERSION=1.0.0` to declare a build argument with a default"
+  - "Use `RUN echo \"version=$APP_VERSION env=$APP_ENV\" > /app/version.txt`"
+  - "Pass the arg at build time: `docker build --build-arg APP_VERSION=2.0.0 -t argapp:latest .`"
+validation:
+  script: validate.sh
+  success_message: "Build arguments working! Image built with custom version."
+  failure_message: "Check that the image exists and version.txt contains the correct values."

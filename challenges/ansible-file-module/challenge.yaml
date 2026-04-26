@@ -1,0 +1,55 @@
+name: "Ansible File Module"
+type: skill
+category: ansible
+difficulty: easy
+tags: [ansible, file, module, permissions]
+time_estimate: "15m"
+xp_reward: 100
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use the File Module
+
+  The `file` module manages files, directories, symlinks, and permissions. A playbook in `~/ansible-project/playbook.yml` has incorrect file module usage.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the file module parameters in the playbook
+  3. The playbook should create directories, set permissions, and create a symlink
+  4. Run the playbook successfully
+
+  ### File module states
+
+  - `state: directory` — create a directory
+  - `state: file` — manage an existing file's attributes
+  - `state: link` — create a symlink (requires `src`)
+  - `state: absent` — remove file/directory
+  - `state: touch` — create an empty file
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Use `state: directory` to create directories, not `state: dir`"
+  - "Symlinks need both `src` (target) and `dest` (link path) with `state: link`"
+  - "Permissions use `mode:` with octal strings like `\"0755\"`"
+validation:
+  script: validate.sh
+  success_message: "File module used correctly!"
+  failure_message: "File module issues remain. Check state values and parameters."

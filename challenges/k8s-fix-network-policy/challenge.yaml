@@ -1,0 +1,48 @@
+name: "Fix a NetworkPolicy"
+type: skill
+category: kubernetes
+difficulty: hard
+tags: [kubernetes, network-policy, security, networking]
+time_estimate: "25m"
+xp_reward: 200
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix the NetworkPolicy
+
+  A NetworkPolicy manifest has errors. Fix it to correctly restrict traffic.
+
+  ### What you know
+
+  - The manifest is at `~/netpol.yaml`
+  - It should allow ingress traffic to pods with label `app: api` only from pods with label `app: frontend`
+  - It should allow ingress only on port 8080
+  - It should allow all egress traffic
+
+  ### Your task
+
+  1. Examine `~/netpol.yaml` and fix all errors
+  2. The manifest must pass `kubectl apply --dry-run=client -f ~/netpol.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/netpol.yaml
+  ```
+hints:
+  - "NetworkPolicy uses apiVersion: networking.k8s.io/v1"
+  - "The podSelector selects which pods the policy applies TO"
+  - "The ingress.from[].podSelector selects which pods can send traffic"
+  - "policyTypes should list both Ingress and Egress if you define both"
+validation:
+  script: validate.sh
+  success_message: "NetworkPolicy is correctly configured!"
+  failure_message: "The NetworkPolicy still has errors."

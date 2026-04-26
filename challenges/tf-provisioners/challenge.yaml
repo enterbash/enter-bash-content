@@ -1,0 +1,56 @@
+name: "Use Provisioners"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, provisioners, local-exec, null-resource]
+time_estimate: "15m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Terraform Provisioners
+
+  Provisioners run scripts or commands as part of resource creation or destruction. Your task is to use `local-exec` provisioners with a `null_resource`.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - You need to use `null_resource` with `local-exec` provisioners
+  - Provisioners should run commands on create and destroy
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Create a `null_resource` named `setup` with:
+     - A `local-exec` provisioner that runs: `echo "provisioned" > ${path.module}/provisioned.txt`
+     - A `local-exec` provisioner with `when = destroy` that runs: `rm -f ${path.module}/provisioned.txt`
+  3. Ensure `terraform validate` passes
+  4. Run `terraform apply` to test the provisioners
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform apply -auto-approve
+  cat provisioned.txt
+  ```
+hints:
+  - "Provisioner syntax: provisioner \"local-exec\" { command = \"...\" }"
+  - "For destroy provisioner: provisioner \"local-exec\" { when = destroy; command = \"...\" }"
+  - "null_resource requires the null provider"
+validation:
+  script: validate.sh
+  success_message: "Provisioners are properly configured!"
+  failure_message: "Check that both create and destroy provisioners are defined."

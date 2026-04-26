@@ -1,0 +1,52 @@
+name: "Run Containers with Read-Only Filesystem"
+type: skill
+category: docker
+difficulty: hard
+tags: [docker, security, read-only, filesystem]
+time_estimate: "20m"
+xp_reward: 200
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Run Containers with Read-Only Filesystem
+
+  Running containers with a read-only root filesystem is a security best practice. It prevents attackers from modifying the container's filesystem.
+
+  ### Your task
+
+  1. Run an nginx container named `readonly-web` with:
+     - Read-only root filesystem (`--read-only`)
+     - tmpfs mount at `/var/cache/nginx` (nginx needs to write cache)
+     - tmpfs mount at `/var/run` (nginx needs to write PID file)
+     - tmpfs mount at `/tmp`
+  2. Verify nginx is running and serving content
+  3. Verify the root filesystem is actually read-only
+
+  ### Useful commands
+
+  ```bash
+  docker run -d --name readonly-web \
+    --read-only \
+    --tmpfs /var/cache/nginx \
+    --tmpfs /var/run \
+    --tmpfs /tmp \
+    nginx:alpine
+  docker exec readonly-web touch /test.txt  # should fail
+  curl localhost  # if port mapped
+  ```
+hints:
+  - "Use `--read-only` to make the root filesystem read-only"
+  - "nginx needs writable directories for cache, PID, and temp files"
+  - "Add `--tmpfs` for each directory nginx needs to write to"
+validation:
+  script: validate.sh
+  success_message: "Read-only container running! Secure configuration."
+  failure_message: "Check that the container is running with --read-only and necessary tmpfs mounts."

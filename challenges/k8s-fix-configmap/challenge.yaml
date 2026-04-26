@@ -1,0 +1,49 @@
+name: "Fix a Broken ConfigMap"
+type: skill
+category: kubernetes
+difficulty: easy
+tags: [kubernetes, configmap, configuration, debugging]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix the Broken ConfigMap
+
+  A ConfigMap manifest and a Pod that references it both have errors. Fix them so they pass validation.
+
+  ### What you know
+
+  - The ConfigMap manifest is at `~/configmap.yaml`
+  - A Pod that uses the ConfigMap is at `~/pod.yaml`
+  - The ConfigMap should store application configuration data
+  - The Pod should mount the ConfigMap as environment variables
+
+  ### Your task
+
+  1. Fix `~/configmap.yaml` so it's a valid ConfigMap
+  2. Fix `~/pod.yaml` so it correctly references the ConfigMap
+  3. Both files must pass `kubectl apply --dry-run=client -f`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/configmap.yaml
+  kubectl apply --dry-run=client -f ~/pod.yaml
+  ```
+hints:
+  - "ConfigMaps use apiVersion: v1"
+  - "The data field values must be strings — wrap numbers in quotes"
+  - "The configMapRef name in the Pod must match the ConfigMap's metadata.name"
+validation:
+  script: validate.sh
+  success_message: "ConfigMap and Pod manifests are valid!"
+  failure_message: "One or both manifests still have errors."

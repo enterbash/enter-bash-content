@@ -1,0 +1,45 @@
+name: "Set Container Restart Policies"
+type: skill
+category: docker
+difficulty: easy
+tags: [docker, restart, policy, reliability]
+time_estimate: "10m"
+xp_reward: 75
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Set Container Restart Policies
+
+  Configure containers with different restart policies to ensure they recover from failures.
+
+  ### Your task
+
+  1. Run a container named `always-up` with restart policy `always` running `nginx:alpine`
+  2. Run a container named `on-fail` with restart policy `on-failure` (max 3 retries) running `alpine sleep infinity`
+  3. Run a container named `unless-manual` with restart policy `unless-stopped` running `alpine sleep infinity`
+  4. Verify the policies with `docker inspect`
+
+  ### Useful commands
+
+  ```bash
+  docker run -d --name always-up --restart always nginx:alpine
+  docker run -d --name on-fail --restart on-failure:3 alpine sleep infinity
+  docker run -d --name unless-manual --restart unless-stopped alpine sleep infinity
+  docker inspect always-up --format '{{.HostConfig.RestartPolicy.Name}}'
+  ```
+hints:
+  - "Use `--restart always` for the first container"
+  - "Use `--restart on-failure:3` for max 3 retries"
+  - "Use `--restart unless-stopped` for the third container"
+validation:
+  script: validate.sh
+  success_message: "Restart policies configured correctly!"
+  failure_message: "Check the restart policies on each container."

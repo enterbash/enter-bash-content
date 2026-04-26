@@ -1,0 +1,50 @@
+name: "Ansible Variables"
+type: skill
+category: ansible
+difficulty: easy
+tags: [ansible, variables, vars, basics]
+time_estimate: "15m"
+xp_reward: 100
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Ansible Variables Correctly
+
+  A playbook in `~/ansible-project/playbook.yml` attempts to use variables but has several issues. Variables are referenced incorrectly and some are undefined.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the variable definitions and references in the playbook
+  3. The playbook should use `vars` to define variables and reference them with `{{ }}` syntax
+  4. Run the playbook successfully
+
+  The playbook should create a config file at `/tmp/app/config.ini` using the defined variables.
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml --syntax-check
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Variables in Ansible must be referenced with double curly braces: {{ variable_name }}"
+  - "When a value starts with {{ }}, it must be quoted: dest: \"{{ app_dir }}/config.ini\""
+  - "Define variables under the `vars` section at the play level"
+validation:
+  script: validate.sh
+  success_message: "Variables are working correctly!"
+  failure_message: "Variable issues remain. Check your {{ }} syntax and var definitions."

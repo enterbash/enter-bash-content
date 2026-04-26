@@ -1,0 +1,59 @@
+name: "Ansible Register and Debug"
+type: skill
+category: ansible
+difficulty: easy
+tags: [ansible, register, debug, output]
+time_estimate: "15m"
+xp_reward: 100
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Register and Debug
+
+  The `register` keyword captures task output into a variable. The `debug` module displays it. A playbook in `~/ansible-project/playbook.yml` has broken register/debug usage.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the `register` and `debug` usage in the playbook
+  3. The playbook should capture command output and write it to a file
+  4. Run the playbook successfully
+
+  ### Register syntax
+
+  ```yaml
+  - name: Get date
+    command: date
+    register: date_output
+
+  - name: Show date
+    debug:
+      msg: "{{ date_output.stdout }}"
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Use `register: var_name` on the task, not `register: {{ var_name }}`"
+  - "Access output with `.stdout`, `.stderr`, `.rc`, or `.stdout_lines`"
+  - "In debug, use `msg:` or `var:` — not both"
+validation:
+  script: validate.sh
+  success_message: "Register and debug working correctly!"
+  failure_message: "Register/debug issues remain. Check variable references."

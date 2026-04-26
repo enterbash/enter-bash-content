@@ -1,0 +1,30 @@
+---
+- name: Manage files and directories
+  hosts: local
+  become: yes
+  tasks:
+    - name: Create application directory
+      file:
+        path: /tmp/filemod-app
+        state: dir
+        mode: 755
+
+    - name: Create data directory
+      file:
+        path: /tmp/filemod-app/data
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Create empty log file
+      file:
+        path: /tmp/filemod-app/app.log
+        state: present
+        mode: "0644"
+
+    - name: Create symlink to data
+      file:
+        dest: /tmp/filemod-app/data
+        path: /tmp/filemod-data-link
+        state: link

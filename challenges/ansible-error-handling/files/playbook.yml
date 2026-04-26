@@ -1,0 +1,36 @@
+---
+- name: Error handling demo
+  hosts: local
+  become: yes
+  tasks:
+    - name: Create work directory
+      file:
+        path: /tmp/errorhandling
+        state: directory
+
+    - block:
+        - name: Attempt to read nonexistent file
+          command: cat /tmp/nonexistent_file_12345.txt
+          register: file_content
+
+        - name: This should not run
+          copy:
+            content: "this should not exist\n"
+            dest: /tmp/errorhandling/should_not_exist.txt
+
+      rescue:
+          - name: Handle the error
+            copy:
+              content: "Error caught: file not found\n"
+              dest: /tmp/errorhandling/error.log
+
+          - name: Create fallback data
+            copy:
+              content: "fallback data\n"
+              dest: /tmp/errorhandling/data.txt
+
+        always:
+          - name: Write completion marker
+            copy:
+              content: "completed\n"
+              dest: /tmp/errorhandling/done.txt

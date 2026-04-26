@@ -1,0 +1,51 @@
+name: "Compress and Archive Files"
+type: skill
+category: linux
+difficulty: easy
+tags: [linux, tar, compression, archive]
+time_estimate: "10m"
+xp_reward: 75
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create a Compressed Archive
+
+  You need to create a compressed backup archive of a project directory and verify its contents.
+
+  ### What you know
+
+  - The project files are in `/home/runner/webapp/`
+  - You need to create a `.tar.gz` archive at `/home/runner/webapp-backup.tar.gz`
+  - The archive should preserve file permissions
+  - After creating the archive, verify it contains all expected files
+
+  ### Your task
+
+  1. Examine the files in `/home/runner/webapp/`
+  2. Create a tar.gz archive at `/home/runner/webapp-backup.tar.gz`
+  3. Verify the archive contents with `tar -tzf`
+  4. The archive should contain all files from the webapp directory
+
+  ### Useful commands
+
+  ```bash
+  ls -la ~/webapp/
+  tar -czf archive.tar.gz -C /home/runner webapp
+  tar -tzf archive.tar.gz
+  ```
+hints:
+  - "Use `tar -czf ~/webapp-backup.tar.gz -C /home/runner webapp` to create the archive"
+  - "The `-c` flag creates, `-z` compresses with gzip, `-f` specifies the filename"
+  - "Verify with `tar -tzf ~/webapp-backup.tar.gz` to list contents"
+validation:
+  script: validate.sh
+  success_message: "Archive created and verified successfully!"
+  failure_message: "The archive is missing or doesn't contain the expected files."

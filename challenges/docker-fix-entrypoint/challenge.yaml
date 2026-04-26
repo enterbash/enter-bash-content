@@ -1,0 +1,52 @@
+name: "Fix Broken ENTRYPOINT/CMD"
+type: skill
+category: docker
+difficulty: easy
+tags: [docker, entrypoint, cmd, debugging]
+time_estimate: "10m"
+xp_reward: 75
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Broken ENTRYPOINT/CMD
+
+  A Docker image has been built at `~/server` but the container exits immediately when started. The ENTRYPOINT and CMD are misconfigured.
+
+  ### Scenario
+
+  - The image `broken-server:latest` has already been built
+  - When you run it, the container exits immediately
+  - The Dockerfile has issues with how ENTRYPOINT and CMD are defined
+
+  ### Your task
+
+  1. Inspect the Dockerfile at `~/server/Dockerfile`
+  2. Fix the ENTRYPOINT/CMD so the server starts correctly
+  3. Rebuild the image as `fixed-server:latest`
+  4. Run a container named `myserver` from the fixed image
+  5. The container should stay running
+
+  ### Useful commands
+
+  ```bash
+  cat ~/server/Dockerfile
+  docker run --name test broken-server:latest
+  docker logs test
+  cd ~/server && docker build -t fixed-server:latest .
+  ```
+hints:
+  - "Check the Dockerfile - ENTRYPOINT uses shell form with a typo in the command"
+  - "The ENTRYPOINT should use exec form: `ENTRYPOINT [\"python\", \"app.py\"]` or fix the command name"
+  - "After fixing, rebuild as fixed-server:latest and run: `docker run -d --name myserver fixed-server:latest`"
+validation:
+  script: validate.sh
+  success_message: "Container is running! ENTRYPOINT/CMD fixed."
+  failure_message: "The myserver container is not running. Fix the Dockerfile and try again."

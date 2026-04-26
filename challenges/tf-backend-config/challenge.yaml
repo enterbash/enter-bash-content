@@ -1,0 +1,56 @@
+name: "Configure Terraform Backend"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, backend, state, configuration]
+time_estimate: "15m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Configure Terraform Backend
+
+  Terraform backends determine where state is stored. Your task is to configure a local backend with a custom state file path.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - State is currently stored in the default location
+  - You need to configure a local backend with a custom path
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Add a `backend "local"` block inside the `terraform` block
+  3. Set the path to `"state/terraform.tfstate"`
+  4. Create the `state/` directory
+  5. Run `terraform init` to initialize the backend
+  6. Ensure `terraform validate` passes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  mkdir -p state
+  terraform init
+  terraform validate
+  terraform plan
+  ```
+hints:
+  - "The backend block goes inside the terraform {} block"
+  - "Syntax: backend \"local\" { path = \"state/terraform.tfstate\" }"
+  - "You may need to run terraform init -reconfigure if changing backends"
+validation:
+  script: validate.sh
+  success_message: "Backend is properly configured!"
+  failure_message: "Make sure the local backend is configured with the correct path."

@@ -1,0 +1,47 @@
+name: "Fix a PersistentVolumeClaim"
+type: skill
+category: kubernetes
+difficulty: medium
+tags: [kubernetes, storage, pvc, volumes, debugging]
+time_estimate: "15m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix the PersistentVolumeClaim
+
+  A PVC manifest has errors that prevent it from being valid. Fix them.
+
+  ### What you know
+
+  - The manifest is at `~/pvc.yaml`
+  - It should request 5Gi of storage
+  - Access mode should be `ReadWriteOnce` (single node read-write)
+  - Storage class: `standard`
+
+  ### Your task
+
+  1. Examine `~/pvc.yaml` and fix all errors
+  2. The manifest must pass `kubectl apply --dry-run=client -f ~/pvc.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/pvc.yaml
+  ```
+hints:
+  - "PVC resources.requests should only contain `storage`, not `cpu`"
+  - "ReadWriteMany means multiple nodes can write — the requirement says ReadWriteOnce"
+  - "Check that only valid fields are in the resources.requests section"
+validation:
+  script: validate.sh
+  success_message: "PVC manifest is valid and correct!"
+  failure_message: "The PVC manifest still has errors."

@@ -1,0 +1,24 @@
+---
+- name: Setup application environment
+  hosts: local
+  become: yes
+  tasks:
+    - name: Create app directory
+      file:
+        path: /tmp/tagapp
+        state: directory
+
+    - name: Create log directory
+      file:
+        path: /tmp/tagapp/logs
+        state: directory
+
+    - name: Create app config
+      copy:
+        content: "app=tagapp\nport=8080\n"
+        dest: /tmp/tagapp/app.conf
+
+    - name: Create log config
+      copy:
+        content: "log_level=info\n"
+        dest: /tmp/tagapp/logs/log.conf

@@ -1,0 +1,50 @@
+name: "Configure sudo Access"
+type: skill
+category: linux
+difficulty: medium
+tags: [linux, sudo, sudoers, security]
+time_estimate: "15m"
+xp_reward: 100
+packages: [sudo]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Configure sudo Access
+
+  A new developer needs specific sudo privileges. You need to configure sudoers correctly without breaking the system.
+
+  ### What you know
+
+  - User `developer` exists but has no sudo access
+  - They need to run `systemctl` and `journalctl` without a password
+  - They should NOT have full root access
+  - The sudoers file must be edited safely using `visudo`
+
+  ### Your task
+
+  1. Create a sudoers drop-in file at `/etc/sudoers.d/developer`
+  2. Allow user `developer` to run `/usr/bin/systemctl` and `/usr/bin/journalctl` without a password
+  3. Verify the configuration is valid with `visudo -c`
+
+  ### Useful commands
+
+  ```bash
+  sudo visudo -f /etc/sudoers.d/developer
+  sudo visudo -c
+  sudo -l -U developer
+  ```
+hints:
+  - "Create a file at `/etc/sudoers.d/developer` with the sudo rules"
+  - "The format is: `developer ALL=(ALL) NOPASSWD: /usr/bin/systemctl, /usr/bin/journalctl`"
+  - "Always validate with `sudo visudo -c` to check for syntax errors"
+validation:
+  script: validate.sh
+  success_message: "sudo access is correctly configured for the developer!"
+  failure_message: "sudo configuration is incorrect or missing."

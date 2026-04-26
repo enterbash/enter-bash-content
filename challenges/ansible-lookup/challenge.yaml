@@ -1,0 +1,56 @@
+name: "Ansible Lookup Plugins"
+type: skill
+category: ansible
+difficulty: hard
+tags: [ansible, lookup, plugins, data]
+time_estimate: "25m"
+xp_reward: 200
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Ansible Lookup Plugins
+
+  Lookup plugins access data from outside sources (files, env vars, etc.). A playbook in `~/ansible-project/playbook.yml` has broken lookup usage.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. The setup creates test files for lookups
+  3. Fix the lookup plugin syntax in the playbook
+  4. Run the playbook successfully
+
+  ### Lookup syntax
+
+  ```yaml
+  vars:
+    file_content: "{{ lookup('file', '/tmp/myfile.txt') }}"
+    env_value: "{{ lookup('env', 'HOME') }}"
+    items: "{{ lookup('lines', 'cat /tmp/list.txt') }}"
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Lookups use `lookup('plugin_name', 'argument')` syntax"
+  - "The `file` lookup reads a file: `lookup('file', '/path/to/file')`"
+  - "The `env` lookup reads environment variables: `lookup('env', 'HOME')`"
+validation:
+  script: validate.sh
+  success_message: "Lookup plugins working correctly!"
+  failure_message: "Lookup issues remain. Check the lookup syntax."

@@ -1,0 +1,47 @@
+name: "Fix Node Selector and Affinity"
+type: skill
+category: kubernetes
+difficulty: medium
+tags: [kubernetes, scheduling, node-selector, affinity]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Node Selector and Affinity
+
+  A Pod manifest has a broken node affinity configuration. Fix it so it passes validation.
+
+  ### What you know
+
+  - The manifest is at `~/pod.yaml`
+  - The pod should be scheduled on nodes with `disktype: ssd` and `gpu: "true"` labels
+  - It should also have a node affinity rule requiring Linux nodes
+
+  ### Your task
+
+  1. Examine `~/pod.yaml` and fix the structural errors
+  2. The `affinity` block must be inside `spec` (at the same level as `containers`)
+  3. The manifest must pass `kubectl apply --dry-run=client -f ~/pod.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/pod.yaml
+  ```
+hints:
+  - "The `affinity` field must be under `spec`, not at the same level as `containers`"
+  - "Check the YAML indentation — affinity should be a sibling of containers, not outside spec"
+  - "Use `kubectl apply --dry-run=client -f ~/pod.yaml` to check for validation errors"
+validation:
+  script: validate.sh
+  success_message: "Node selector and affinity are correctly configured!"
+  failure_message: "The pod manifest still has structural errors."

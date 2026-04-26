@@ -1,0 +1,56 @@
+name: "Manage a systemd Service"
+type: skill
+category: linux
+difficulty: medium
+tags: [linux, systemd, services, init]
+time_estimate: "15m"
+xp_reward: 100
+packages: [python3]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create and Manage a systemd Service
+
+  You need to create a systemd service unit for a simple web application and ensure it starts correctly.
+
+  ### What you know
+
+  - The application script is at `/opt/myapp/server.py`
+  - It's a simple Python HTTP server that listens on port 8080
+  - You need to create a systemd service file for it
+  - The service should start automatically and restart on failure
+
+  ### Your task
+
+  1. Create a systemd service file at `/etc/systemd/system/myapp.service`
+  2. The service should:
+     - Run as user `runner`
+     - Execute `/usr/bin/python3 /opt/myapp/server.py`
+     - Restart on failure
+     - Be part of the `multi-user.target`
+  3. Reload systemd, enable and start the service
+  4. Verify the service is running
+
+  ### Useful commands
+
+  ```bash
+  sudo systemctl daemon-reload
+  sudo systemctl enable myapp
+  sudo systemctl start myapp
+  sudo systemctl status myapp
+  ```
+hints:
+  - "Create the unit file at `/etc/systemd/system/myapp.service` with [Unit], [Service], and [Install] sections"
+  - "Key directives: ExecStart, User, Restart=on-failure, WantedBy=multi-user.target"
+  - "After creating the file: `sudo systemctl daemon-reload && sudo systemctl enable --now myapp`"
+validation:
+  script: validate.sh
+  success_message: "systemd service is running and enabled!"
+  failure_message: "The myapp service is not properly configured or running."

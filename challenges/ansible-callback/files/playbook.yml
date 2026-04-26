@@ -1,0 +1,25 @@
+---
+- name: Test callback plugins
+  hosts: local
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: Create output directory
+      file:
+        path: /tmp/callback-test
+        state: directory
+
+    - name: Write system info
+      copy:
+        content: |
+          hostname={{ ansible_hostname }}
+          os={{ ansible_distribution }}
+        dest: /tmp/callback-test/info.txt
+
+    - name: Pause briefly
+      command: sleep 1
+
+    - name: Write completion marker
+      copy:
+        content: "done\n"
+        dest: /tmp/callback-test/done.txt

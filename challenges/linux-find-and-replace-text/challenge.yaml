@@ -1,0 +1,51 @@
+name: "Find and Replace Text in Config Files"
+type: skill
+category: linux
+difficulty: medium
+tags: [linux, sed, awk, text-processing]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Find and Replace Text in Config Files
+
+  Several configuration files have incorrect values that need to be updated. You need to use text processing tools to fix them efficiently.
+
+  ### What you know
+
+  - Config files are in `/home/runner/configs/`
+  - All files reference the old server `old-server.example.com` which should be `new-server.example.com`
+  - The database port `3306` needs to be changed to `5432` in all configs
+  - The log level `DEBUG` should be changed to `INFO` in production configs (files ending in `.prod.conf`)
+
+  ### Your task
+
+  1. Replace all occurrences of `old-server.example.com` with `new-server.example.com`
+  2. Replace database port `3306` with `5432` in all config files
+  3. Change `DEBUG` to `INFO` only in `.prod.conf` files
+  4. Verify the changes are correct
+
+  ### Useful commands
+
+  ```bash
+  sed -i 's/old/new/g' file
+  find . -name "*.conf" -exec sed -i 's/old/new/g' {} +
+  grep -r "pattern" /home/runner/configs/
+  ```
+hints:
+  - "Use `sed -i 's/old-server.example.com/new-server.example.com/g'` on all config files"
+  - "Use `find` with `-exec sed` to process multiple files at once"
+  - "For .prod.conf files only: `find ~/configs -name '*.prod.conf' -exec sed -i 's/DEBUG/INFO/g' {} +`"
+validation:
+  script: validate.sh
+  success_message: "All configuration files have been updated correctly!"
+  failure_message: "Some config files still have incorrect values."

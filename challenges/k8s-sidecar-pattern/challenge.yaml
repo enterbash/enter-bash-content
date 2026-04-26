@@ -1,0 +1,54 @@
+name: "Implement Sidecar Pattern"
+type: skill
+category: kubernetes
+difficulty: hard
+tags: [kubernetes, sidecar, design-patterns, pods]
+time_estimate: "25m"
+xp_reward: 200
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Implement the Sidecar Pattern
+
+  Add a logging sidecar container to an existing Pod that collects and forwards logs.
+
+  ### What you know
+
+  - The manifest is at `~/pod.yaml`
+  - The main container writes logs to `/var/log/app/app.log`
+  - A shared volume `log-volume` is already defined
+
+  ### Requirements
+
+  Add a sidecar container:
+  - Name: `log-shipper`
+  - Image: `busybox:1.36`
+  - Command: `["sh", "-c", "tail -f /var/log/app/app.log"]`
+  - Mount the `log-volume` at `/var/log/app` (readOnly: true)
+
+  ### Your task
+
+  1. Edit `~/pod.yaml` to add the sidecar container
+  2. The manifest must pass `kubectl apply --dry-run=client -f ~/pod.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/pod.yaml
+  ```
+hints:
+  - "The sidecar is just another container in the spec.containers array"
+  - "Mount the same volume as the main container but with readOnly: true"
+  - "The sidecar reads logs that the main container writes"
+validation:
+  script: validate.sh
+  success_message: "Sidecar pattern is correctly implemented!"
+  failure_message: "The sidecar container is missing or incorrectly configured."

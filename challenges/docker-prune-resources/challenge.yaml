@@ -1,0 +1,58 @@
+name: "Clean Up Unused Docker Resources"
+type: skill
+category: docker
+difficulty: easy
+tags: [docker, prune, cleanup, disk]
+time_estimate: "10m"
+xp_reward: 75
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Clean Up Unused Docker Resources
+
+  Your Docker environment is cluttered with stopped containers, dangling images, and unused networks. Clean it all up.
+
+  ### Scenario
+
+  Several stopped containers, unused images, and orphaned networks are wasting disk space.
+
+  ### Your task
+
+  1. List all stopped containers and remove them
+  2. Remove all dangling (untagged) images
+  3. Remove unused networks (except default ones)
+  4. Verify the cleanup with `docker system df`
+
+  After cleanup, there should be:
+  - No stopped containers
+  - No dangling images
+  - No unused custom networks
+
+  ### Useful commands
+
+  ```bash
+  docker ps -a
+  docker images -f dangling=true
+  docker network ls
+  docker container prune -f
+  docker image prune -f
+  docker network prune -f
+  docker system prune -f
+  docker system df
+  ```
+hints:
+  - "Use `docker container prune -f` to remove all stopped containers"
+  - "Use `docker image prune -f` to remove dangling images"
+  - "Or use `docker system prune -f` to clean everything at once"
+validation:
+  script: validate.sh
+  success_message: "All cleaned up! Docker resources pruned."
+  failure_message: "There are still stopped containers or dangling images. Keep pruning."

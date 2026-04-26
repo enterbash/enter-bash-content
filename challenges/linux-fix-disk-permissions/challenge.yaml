@@ -1,0 +1,54 @@
+name: "Fix Disk Mount Permissions"
+type: skill
+category: linux
+difficulty: medium
+tags: [linux, mount, permissions, filesystem]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Disk Mount Permissions
+
+  A data disk has been mounted but the permissions are wrong. The application user can't read or write to the mounted filesystem.
+
+  ### What you know
+
+  - A disk image is mounted at `/mnt/data`
+  - The mount point is owned by root with restrictive permissions
+  - The `runner` user needs read-write access to `/mnt/data`
+  - There should be a `uploads/` and `logs/` directory inside
+  - The `runner` user should own the contents
+
+  ### Your task
+
+  1. Check the current mount and permissions at `/mnt/data`
+  2. Fix the ownership so `runner:runner` owns `/mnt/data`
+  3. Set permissions to `755` on the mount point
+  4. Create `uploads/` and `logs/` directories inside
+  5. Ensure the runner user can write a test file
+
+  ### Useful commands
+
+  ```bash
+  ls -la /mnt/data
+  sudo chown -R runner:runner /mnt/data
+  sudo chmod 755 /mnt/data
+  mkdir -p /mnt/data/{uploads,logs}
+  ```
+hints:
+  - "Check permissions with `ls -la /mnt/` and `ls -la /mnt/data/`"
+  - "Fix ownership: `sudo chown -R runner:runner /mnt/data`"
+  - "Create directories and write a test file to verify access"
+validation:
+  script: validate.sh
+  success_message: "Disk mount permissions are correctly configured!"
+  failure_message: "The mount permissions are still incorrect."

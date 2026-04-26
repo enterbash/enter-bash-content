@@ -1,0 +1,52 @@
+name: "Fix Broken fstab"
+type: skill
+category: linux
+difficulty: hard
+tags: [linux, fstab, filesystem, mounting]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix a Broken fstab Entry
+
+  The `/etc/fstab` file has been misconfigured with an invalid entry. This would prevent the system from booting correctly. Your task is to fix the fstab file.
+
+  ### What you know
+
+  - The `/etc/fstab` file has a broken entry for `/mnt/data`
+  - The entry references a non-existent device and has wrong options
+  - There is a valid disk image at `/opt/disk.img` that should be loop-mounted to `/mnt/data`
+
+  ### Your task
+
+  1. Examine the current `/etc/fstab` for errors
+  2. Fix the broken entry so `/mnt/data` mounts correctly
+  3. Create the mount point if it doesn't exist
+  4. Mount the filesystem to verify it works
+  5. Ensure `mount -a` succeeds without errors
+
+  ### Useful commands
+
+  ```bash
+  cat /etc/fstab
+  sudo mount -a
+  sudo mount -o loop /opt/disk.img /mnt/data
+  findmnt
+  ```
+hints:
+  - "Check `/etc/fstab` — the broken entry likely has a wrong device path or filesystem type"
+  - "The disk image needs to be loop-mounted: use `/opt/disk.img /mnt/data ext4 loop,defaults 0 0`"
+  - "Make sure `/mnt/data` exists with `sudo mkdir -p /mnt/data` before mounting"
+validation:
+  script: validate.sh
+  success_message: "fstab is fixed and the filesystem is mounted!"
+  failure_message: "The fstab entry is still broken or the filesystem isn't mounted."

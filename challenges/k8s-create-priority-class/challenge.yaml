@@ -1,0 +1,55 @@
+name: "Create a PriorityClass"
+type: skill
+category: kubernetes
+difficulty: medium
+tags: [kubernetes, priority-class, scheduling, pods]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create a PriorityClass
+
+  Create a PriorityClass and a Pod that uses it to ensure high-priority scheduling.
+
+  ### Requirements
+
+  - PriorityClass file: `~/priorityclass.yaml`
+    - Name: `high-priority`
+    - Value: 1000000
+    - Global default: false
+    - Description: `"Priority class for critical workloads"`
+
+  - Pod file: `~/pod.yaml`
+    - Name: `critical-app`
+    - Image: `nginx:1.25`
+    - Use the `high-priority` PriorityClass
+
+  ### Your task
+
+  1. Create `~/priorityclass.yaml` with the PriorityClass
+  2. Create `~/pod.yaml` with the Pod referencing the PriorityClass
+  3. Both must pass `kubectl apply --dry-run=client -f`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/priorityclass.yaml
+  kubectl apply --dry-run=client -f ~/pod.yaml
+  ```
+hints:
+  - "PriorityClass uses apiVersion: scheduling.k8s.io/v1"
+  - "The Pod references the PriorityClass via spec.priorityClassName"
+  - "globalDefault: false means this won't be the default for all pods"
+validation:
+  script: validate.sh
+  success_message: "PriorityClass and Pod are correctly configured!"
+  failure_message: "The PriorityClass or Pod has errors."

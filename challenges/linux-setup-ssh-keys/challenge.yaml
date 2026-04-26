@@ -1,0 +1,53 @@
+name: "Set Up SSH Keys"
+type: skill
+category: linux
+difficulty: medium
+tags: [linux, ssh, keys, security]
+time_estimate: "15m"
+xp_reward: 100
+packages: [openssh-client]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Generate and Configure SSH Keys
+
+  You need to set up SSH key-based authentication for the runner user. Generate a new key pair and configure it properly.
+
+  ### What you know
+
+  - No SSH keys currently exist for the runner user
+  - You need to generate an Ed25519 SSH key pair
+  - The key should have no passphrase (for automation)
+  - The public key should be added to `authorized_keys`
+  - All file permissions must be correct for SSH to accept them
+
+  ### Your task
+
+  1. Generate an Ed25519 SSH key pair at `~/.ssh/id_ed25519`
+  2. Set correct permissions on all SSH files
+  3. Add the public key to `~/.ssh/authorized_keys`
+  4. Verify the setup by checking permissions and file contents
+
+  ### Useful commands
+
+  ```bash
+  ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N ""
+  chmod 700 ~/.ssh
+  chmod 600 ~/.ssh/id_ed25519
+  cat ~/.ssh/id_ed25519.pub >> ~/.ssh/authorized_keys
+  ```
+hints:
+  - "Generate the key with `ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N ''`"
+  - "Set permissions: `chmod 700 ~/.ssh && chmod 600 ~/.ssh/id_ed25519 ~/.ssh/authorized_keys && chmod 644 ~/.ssh/id_ed25519.pub`"
+  - "Add to authorized_keys: `cat ~/.ssh/id_ed25519.pub >> ~/.ssh/authorized_keys`"
+validation:
+  script: validate.sh
+  success_message: "SSH keys are generated and configured correctly!"
+  failure_message: "SSH key setup is incomplete or has wrong permissions."

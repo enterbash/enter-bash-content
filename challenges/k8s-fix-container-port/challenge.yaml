@@ -1,0 +1,50 @@
+name: "Fix Container Port Configuration"
+type: skill
+category: kubernetes
+difficulty: easy
+tags: [kubernetes, ports, networking, debugging]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Container Port Configuration
+
+  A Pod and Service manifest have mismatched port configurations. Fix them.
+
+  ### What you know
+
+  - The Pod manifest is at `~/pod.yaml`
+  - The Service manifest is at `~/service.yaml`
+  - The app listens on port 3000 inside the container
+  - The Service should expose port 80 and forward to the container's port 3000
+
+  ### Your task
+
+  1. Fix `~/pod.yaml` so the containerPort is 3000
+  2. Fix `~/service.yaml` so port is 80 and targetPort is 3000
+  3. Ensure the Service selector matches the Pod labels
+  4. Both must pass `kubectl apply --dry-run=client -f`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/pod.yaml
+  kubectl apply --dry-run=client -f ~/service.yaml
+  ```
+hints:
+  - "containerPort in the Pod should match the port the app actually listens on"
+  - "The Service targetPort should match the Pod's containerPort"
+  - "The Service selector labels must match the Pod's metadata.labels"
+validation:
+  script: validate.sh
+  success_message: "Port configuration is correct!"
+  failure_message: "Port configuration still has mismatches."

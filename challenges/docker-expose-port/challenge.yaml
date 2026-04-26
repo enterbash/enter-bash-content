@@ -1,0 +1,51 @@
+name: "Expose and Map Container Ports"
+type: skill
+category: docker
+difficulty: easy
+tags: [docker, ports, networking, containers]
+time_estimate: "10m"
+xp_reward: 75
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Expose and Map Container Ports
+
+  A web server container is running but its port is not mapped to the host. You need to stop it and re-run it with the correct port mapping.
+
+  ### Scenario
+
+  - An nginx container named `webserver` is running but not accessible from the host
+  - The nginx server listens on port 80 inside the container
+  - You need to map it to port 8080 on the host
+
+  ### Your task
+
+  1. Stop and remove the current `webserver` container
+  2. Re-run it with port 80 mapped to host port 8080
+  3. Verify you can access it with `curl localhost:8080`
+
+  ### Useful commands
+
+  ```bash
+  docker ps
+  docker stop webserver
+  docker rm webserver
+  docker run -d --name webserver -p 8080:80 nginx:alpine
+  curl localhost:8080
+  ```
+hints:
+  - "Use `docker ps` to see the running container and its port mappings"
+  - "Stop and remove the container, then re-run with `-p 8080:80`"
+  - "The format is `-p HOST_PORT:CONTAINER_PORT`"
+validation:
+  script: validate.sh
+  success_message: "Port mapping configured correctly! The web server is accessible."
+  failure_message: "Cannot reach the web server on port 8080. Check your port mapping."

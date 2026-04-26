@@ -1,0 +1,56 @@
+name: "Configure Lifecycle Rules"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, lifecycle, meta-argument, management]
+time_estimate: "15m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Configure Terraform Lifecycle Rules
+
+  Lifecycle rules control how Terraform creates, updates, and destroys resources. Your task is to add lifecycle blocks to existing resources.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - Two resources need lifecycle rules
+  - Each resource needs different lifecycle configurations
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Add a `lifecycle` block to `local_file.config`:
+     - `create_before_destroy = true`
+     - `ignore_changes = [content]`
+  3. Add a `lifecycle` block to `random_pet.protected`:
+     - `prevent_destroy = true`
+  4. Ensure `terraform validate` passes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  ```
+hints:
+  - "Lifecycle blocks go inside the resource block: lifecycle { ... }"
+  - "ignore_changes takes a list of attributes: ignore_changes = [content]"
+  - "prevent_destroy = true will cause terraform destroy to fail for that resource"
+validation:
+  script: validate.sh
+  success_message: "Lifecycle rules are properly configured!"
+  failure_message: "Check that both resources have the correct lifecycle rules."

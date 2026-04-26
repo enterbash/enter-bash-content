@@ -1,0 +1,47 @@
+name: "Fix HorizontalPodAutoscaler"
+type: skill
+category: kubernetes
+difficulty: medium
+tags: [kubernetes, hpa, autoscaling, debugging]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix the HorizontalPodAutoscaler
+
+  An HPA manifest has errors. Fix it so it correctly autoscales a Deployment.
+
+  ### What you know
+
+  - The manifest is at `~/hpa.yaml`
+  - It should target a Deployment called `web-app`
+  - Min replicas: 2, Max replicas: 10
+  - Scale based on CPU utilization at 70%
+
+  ### Your task
+
+  1. Examine `~/hpa.yaml` and fix all errors
+  2. The manifest must pass `kubectl apply --dry-run=client -f ~/hpa.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/hpa.yaml
+  ```
+hints:
+  - "HPA uses apiVersion: autoscaling/v2"
+  - "The scaleTargetRef must have apiVersion, kind, and name"
+  - "Metrics should use type: Resource with resource.name and resource.target"
+validation:
+  script: validate.sh
+  success_message: "HPA manifest is valid and correct!"
+  failure_message: "The HPA manifest still has errors."

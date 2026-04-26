@@ -1,0 +1,54 @@
+name: "Use Dynamic Blocks"
+type: skill
+category: terraform
+difficulty: hard
+tags: [terraform, dynamic-blocks, meta-programming, hcl]
+time_estimate: "20m"
+xp_reward: 200
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Terraform Dynamic Blocks
+
+  Dynamic blocks let you generate repeated nested blocks from a collection. Your task is to replace hardcoded provisioner blocks with a dynamic block.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - A variable `provisioner_commands` contains a list of commands
+  - Currently, provisioners are hardcoded — you need to make them dynamic
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Replace the hardcoded `provisioner "local-exec"` blocks with a `dynamic "provisioner"` block
+  3. Use `for_each = var.provisioner_commands` to iterate
+  4. Access values with `provisioner.value.command` and `provisioner.value.working_dir`
+  5. Ensure `terraform validate` passes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  ```
+hints:
+  - "Dynamic block syntax: dynamic \"provisioner\" { for_each = var.list; content { ... } }"
+  - "Inside the content block, use provisioner.value to access each item"
+  - "The label after dynamic must match the block type you're generating"
+validation:
+  script: validate.sh
+  success_message: "Dynamic blocks are properly configured!"
+  failure_message: "Replace the hardcoded provisioners with a dynamic block."

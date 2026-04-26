@@ -1,0 +1,22 @@
+---
+- name: Configure application
+  hosts: local
+  become: yes
+  vars:
+    app_name: myapp
+    app_port: 8080
+  tasks:
+    - name: Create app directory
+      file:
+        path: /tmp/app
+        state: directory
+
+    - name: Create config file
+      copy:
+        content: |
+          [application]
+          name={{ app_name }}
+          port={{ app_port }}
+          env={{ app_env }}
+          log_dir={{ log_directory }}
+        dest: {{ app_dir }}/config.ini

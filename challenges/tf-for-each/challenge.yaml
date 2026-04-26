@@ -1,0 +1,54 @@
+name: "Use For Each Meta-Argument"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, for-each, meta-argument, loops, maps]
+time_estimate: "15m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use the for_each Meta-Argument
+
+  You have a map of services and need to create a configuration file for each one using `for_each`. Unlike `count`, `for_each` works with maps and sets, giving you access to both keys and values.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - A variable `services` is defined as a map of objects with `port` and `enabled` fields
+  - No resources are created yet
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Create a `local_file` resource named `service_config` that uses `for_each = var.services`
+  3. Each file should be named `${path.module}/<service-name>-config.txt`
+  4. Content should include the service name, port, and enabled status
+  5. Ensure `terraform validate` and `terraform plan` succeed
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  ```
+hints:
+  - "Use for_each = var.services on the resource block"
+  - "Access the key with each.key and values with each.value.port, each.value.enabled"
+  - "The filename should use each.key for the service name"
+validation:
+  script: validate.sh
+  success_message: "for_each is working correctly with the services map!"
+  failure_message: "Make sure for_each iterates over var.services and uses each.key/each.value."

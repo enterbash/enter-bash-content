@@ -1,0 +1,23 @@
+---
+- name: Capture and use command output
+  hosts: local
+  become: yes
+  tasks:
+    - name: Get hostname
+      command: hostname
+      register: {{ hostname_result }}
+
+    - name: Get kernel version
+      command: uname -r
+      register: kernel_result
+
+    - name: Show hostname
+      debug:
+        msg: "Hostname is {{ hostname_result }}"
+
+    - name: Write system info
+      copy:
+        content: |
+          hostname={{ hostname_result }}
+          kernel={{ kernel_result }}
+        dest: /tmp/register_output.txt

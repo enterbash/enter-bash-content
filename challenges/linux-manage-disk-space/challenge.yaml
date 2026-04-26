@@ -1,0 +1,52 @@
+name: "Manage Disk Space"
+type: skill
+category: linux
+difficulty: medium
+tags: [linux, disk, filesystem, cleanup]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Manage Disk Space
+
+  The system is running low on disk space. You need to identify what's consuming space and clean it up. There are old log files, temporary files, and package caches that can be removed.
+
+  ### What you know
+
+  - Old log files have accumulated in `/var/log/myapp/`
+  - Temporary files are in `/tmp/build-cache/`
+  - There are old package files in `/home/runner/downloads/`
+  - You need to free at least 200MB of space total
+
+  ### Your task
+
+  1. Investigate disk usage to find the biggest space consumers
+  2. Remove old log files from `/var/log/myapp/`
+  3. Clean up the build cache in `/tmp/build-cache/`
+  4. Remove old downloads from `/home/runner/downloads/`
+
+  ### Useful commands
+
+  ```bash
+  df -h
+  du -sh /path/*
+  du -sh * | sort -rh
+  rm -rf /path/to/junk
+  ```
+hints:
+  - "Use `du -sh /var/log/myapp/ /tmp/build-cache/ /home/runner/downloads/` to see sizes"
+  - "Remove old logs with `rm -rf /var/log/myapp/*.log.old`"
+  - "Clean everything with `rm -rf /tmp/build-cache/* /home/runner/downloads/*.deb /var/log/myapp/*.log.old`"
+validation:
+  script: validate.sh
+  success_message: "Disk space cleaned up successfully!"
+  failure_message: "There are still junk files consuming space. Keep cleaning!"

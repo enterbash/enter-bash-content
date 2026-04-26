@@ -1,0 +1,48 @@
+name: "Fix RBAC Permissions"
+type: skill
+category: kubernetes
+difficulty: medium
+tags: [kubernetes, rbac, security, authorization]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix RBAC Permissions
+
+  A Role and RoleBinding have been created but the binding doesn't work correctly. Fix the issues.
+
+  ### What you know
+
+  - A Role `pod-reader` is defined in `~/role.yaml`
+  - A RoleBinding `read-pods` is defined in `~/rolebinding.yaml`
+  - The RoleBinding should grant user `jane` the permissions defined in the `pod-reader` Role
+
+  ### Your task
+
+  1. Examine both manifests and identify the mismatches
+  2. Fix `~/rolebinding.yaml` so it correctly references the Role
+  3. Both files must pass `kubectl apply --dry-run=client -f`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/role.yaml
+  kubectl apply --dry-run=client -f ~/rolebinding.yaml
+  ```
+hints:
+  - "The roleRef.kind must match the actual kind of the role being referenced"
+  - "The roleRef.name must match the Role's metadata.name exactly"
+  - "A RoleBinding can reference a Role (not ClusterRole) in the same namespace"
+validation:
+  script: validate.sh
+  success_message: "RBAC permissions are correctly configured!"
+  failure_message: "The RBAC configuration still has errors."

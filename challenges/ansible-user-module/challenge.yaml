@@ -1,0 +1,59 @@
+name: "Ansible User Module"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, user, module, accounts]
+time_estimate: "20m"
+xp_reward: 150
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Manage Users with Ansible
+
+  The `user` module manages user accounts. A playbook in `~/ansible-project/playbook.yml` has incorrect user management tasks.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the user module parameters in the playbook
+  3. The playbook should create users with specific properties
+  4. Run the playbook successfully
+
+  ### User module syntax
+
+  ```yaml
+  - name: Create user
+    user:
+      name: deploy
+      shell: /bin/bash
+      groups: sudo
+      append: yes
+      create_home: yes
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Use `name:` not `username:` for the user module"
+  - "Use `groups:` for supplementary groups and `group:` for primary group"
+  - "Use `append: yes` to add to groups without removing from existing ones"
+validation:
+  script: validate.sh
+  success_message: "User management working correctly!"
+  failure_message: "User module issues remain. Check parameter names."

@@ -1,0 +1,38 @@
+---
+- name: Configure application with handlers
+  hosts: local
+  become: yes
+  tasks:
+    - name: Create app directory
+      file:
+        path: /tmp/myapp
+        state: directory
+
+    - name: Write app config
+      copy:
+        content: |
+          [app]
+          name=myapp
+          port=8080
+          debug=false
+        dest: /tmp/myapp/app.conf
+      notify: restart app
+
+    - name: Write logging config
+      copy:
+        content: |
+          [logging]
+          level=info
+          file=/tmp/myapp/app.log
+        dest: /tmp/myapp/logging.conf
+      notify: reload logging
+
+    - name: restart app
+      copy:
+        content: "app restarted at {{ ansible_date_time.iso8601 }}\n"
+        dest: /tmp/myapp/restart.log
+
+    - name: reload logging
+      copy:
+        content: "logging reloaded\n"
+        dest: /tmp/myapp/reload.log

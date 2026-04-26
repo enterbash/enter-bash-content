@@ -1,0 +1,50 @@
+name: "Fix a Docker Compose File"
+type: skill
+category: docker
+difficulty: medium
+tags: [docker, compose, yaml, debugging]
+time_estimate: "15m"
+xp_reward: 150
+packages: [docker.io, docker-compose-v2]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix a Docker Compose File
+
+  A `docker-compose.yml` file at `~/project/docker-compose.yml` has several errors. Fix them so the services start correctly.
+
+  ### Scenario
+
+  The compose file defines two services:
+  - `web`: An nginx web server on port 8080
+  - `api`: A Python API server on port 5000
+
+  ### Your task
+
+  1. Read the compose file and identify the errors
+  2. Fix all issues in `~/project/docker-compose.yml`
+  3. Start the services with `docker compose up -d`
+  4. Both services should be running
+
+  ### Useful commands
+
+  ```bash
+  cat ~/project/docker-compose.yml
+  cd ~/project && docker compose up -d
+  docker compose -f ~/project/docker-compose.yml ps
+  ```
+hints:
+  - "Check the YAML indentation - services should be properly nested"
+  - "The `image` field has a typo: `ngix` should be `nginx`, and port mapping format should be `\"8080:80\"`"
+  - "The api service is missing the `image` field and has wrong indentation"
+validation:
+  script: validate.sh
+  success_message: "Docker Compose file fixed! Both services are running."
+  failure_message: "Not all services are running. Check the compose file for errors."

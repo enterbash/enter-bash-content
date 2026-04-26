@@ -1,0 +1,55 @@
+name: "Handle Signals in Containers"
+type: skill
+category: docker
+difficulty: hard
+tags: [docker, signals, graceful-shutdown, process]
+time_estimate: "20m"
+xp_reward: 200
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Handle Signals in Containers
+
+  Proper signal handling ensures containers shut down gracefully. A poorly written Dockerfile can prevent SIGTERM from reaching the application.
+
+  ### Scenario
+
+  The image `signalapp:broken` at `~/signalapp` uses a shell form ENTRYPOINT, which means the app runs as a child of `/bin/sh` and never receives SIGTERM. The container takes 10 seconds to stop (Docker's kill timeout).
+
+  ### Your task
+
+  1. Inspect the Dockerfile at `~/signalapp/Dockerfile`
+  2. Fix it so the application receives signals directly (use exec form)
+  3. Build the fixed image as `signalapp:fixed`
+  4. Run a container named `sigtest` from the fixed image
+  5. Verify the container stops quickly (under 3 seconds) with `docker stop sigtest`
+
+  ### Key concepts
+
+  - Shell form: `ENTRYPOINT command arg` - runs via `/bin/sh -c`, signals go to shell
+  - Exec form: `ENTRYPOINT ["command", "arg"]` - runs directly, signals go to app
+
+  ### Useful commands
+
+  ```bash
+  cat ~/signalapp/Dockerfile
+  cd ~/signalapp && docker build -t signalapp:fixed .
+  docker run -d --name sigtest signalapp:fixed
+  time docker stop sigtest
+  ```
+hints:
+  - "The issue is shell form vs exec form in ENTRYPOINT"
+  - "Change `ENTRYPOINT python app.py` to `ENTRYPOINT [\"python\", \"app.py\"]`"
+  - "Exec form ensures PID 1 is your app, not /bin/sh"
+validation:
+  script: validate.sh
+  success_message: "Signal handling fixed! Container shuts down gracefully."
+  failure_message: "Build the fixed image and run a container named sigtest."

@@ -1,0 +1,55 @@
+name: "Set Up Log Rotation"
+type: skill
+category: linux
+difficulty: medium
+tags: [linux, logrotate, logging, maintenance]
+time_estimate: "15m"
+xp_reward: 100
+packages: [logrotate]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Set Up Log Rotation
+
+  An application is generating large log files that are filling up the disk. You need to configure logrotate to manage these logs.
+
+  ### What you know
+
+  - The application writes logs to `/var/log/myapp/app.log`
+  - The log file is already 500MB and growing
+  - There is no logrotate configuration for this application
+
+  ### Your task
+
+  1. Create a logrotate configuration file at `/etc/logrotate.d/myapp`
+  2. Configure it to:
+     - Rotate daily
+     - Keep 7 rotated files
+     - Compress rotated files
+     - Handle missing log files gracefully
+     - Create new log file after rotation
+  3. Test the configuration with `logrotate -d`
+  4. Force a rotation to verify it works
+
+  ### Useful commands
+
+  ```bash
+  cat /etc/logrotate.d/nginx  # example config
+  sudo logrotate -d /etc/logrotate.d/myapp  # dry run
+  sudo logrotate -f /etc/logrotate.d/myapp  # force rotation
+  ```
+hints:
+  - "Create `/etc/logrotate.d/myapp` with the log path and rotation options"
+  - "The config should include: daily, rotate 7, compress, missingok, notifempty, create"
+  - "Test with `sudo logrotate -f /etc/logrotate.d/myapp` to force a rotation"
+validation:
+  script: validate.sh
+  success_message: "Log rotation is properly configured!"
+  failure_message: "Logrotate configuration is missing or incorrect."

@@ -1,0 +1,48 @@
+name: "Find Large Files"
+type: skill
+category: linux
+difficulty: easy
+tags: [linux, filesystem, disk, find]
+time_estimate: "10m"
+xp_reward: 75
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Find Large Files
+
+  A server is running low on disk space. Several large files (over 100MB) have been scattered across the filesystem. Your task is to find them all and remove them to free up space.
+
+  ### What you know
+
+  - There are several files larger than 100MB hidden in various directories under `/home/runner`
+  - These files are junk data that can be safely deleted
+  - You need to free up the space by removing all files over 100MB
+
+  ### Your task
+
+  1. Find all files larger than 100MB under `/home/runner`
+  2. Remove all of them
+
+  ### Useful commands
+
+  ```bash
+  find / -size +100M -type f
+  du -sh *
+  df -h
+  ```
+hints:
+  - "Use `find /home/runner -size +100M -type f` to locate large files"
+  - "Check hidden directories too — files might be in dotfiles or nested paths"
+  - "Use `find /home/runner -size +100M -type f -delete` to find and remove them in one command"
+validation:
+  script: validate.sh
+  success_message: "All large files have been removed! Disk space recovered."
+  failure_message: "There are still files larger than 100MB under /home/runner."

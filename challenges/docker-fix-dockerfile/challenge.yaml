@@ -1,0 +1,49 @@
+name: "Fix a Broken Dockerfile"
+type: skill
+category: docker
+difficulty: easy
+tags: [docker, dockerfile, debugging, syntax]
+time_estimate: "10m"
+xp_reward: 75
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix a Broken Dockerfile
+
+  A Dockerfile at `~/webapp/Dockerfile` has several errors that prevent it from building. Your task is to fix them.
+
+  ### Your task
+
+  1. Read the Dockerfile at `~/webapp/Dockerfile`
+  2. Identify and fix the errors
+  3. Successfully build the image as `webapp:latest`
+
+  ### Common Dockerfile issues to look for
+
+  - Typos in instructions (e.g., `FORM` instead of `FROM`)
+  - Missing or incorrect base images
+  - Wrong syntax for COPY/ADD commands
+  - Invalid RUN commands
+
+  ### Useful commands
+
+  ```bash
+  cat ~/webapp/Dockerfile
+  cd ~/webapp && docker build -t webapp:latest .
+  ```
+hints:
+  - "Read the Dockerfile carefully - there are typos in the instruction keywords"
+  - "The first line should be `FROM` not `FORM`, and `COPY` not `COPPY`"
+  - "The RUN command has a typo: `echoo` should be `echo`"
+validation:
+  script: validate.sh
+  success_message: "Dockerfile fixed and image built! Good eye for debugging."
+  failure_message: "The webapp:latest image was not found. Fix all errors in the Dockerfile and rebuild."

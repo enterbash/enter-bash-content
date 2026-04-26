@@ -1,0 +1,55 @@
+name: "Analyze System Logs"
+type: skill
+category: linux
+difficulty: medium
+tags: [linux, logs, debugging, grep]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Analyze System Logs
+
+  The application has been experiencing intermittent failures. You need to analyze the log files to identify the root cause and create a summary report.
+
+  ### What you know
+
+  - Application logs are at `/var/log/webapp/app.log`
+  - The log contains a mix of INFO, WARN, and ERROR messages
+  - There are specific error patterns that indicate the root cause
+  - You need to create a report at `/home/runner/log-analysis.txt`
+
+  ### Your task
+
+  1. Examine the log file at `/var/log/webapp/app.log`
+  2. Count the number of ERROR, WARN, and INFO messages
+  3. Find the most common error message
+  4. Create a report at `/home/runner/log-analysis.txt` containing:
+     - Total number of ERROR lines
+     - Total number of WARN lines
+     - The most frequent error message
+  5. The report should contain the word "ERROR" and a count
+
+  ### Useful commands
+
+  ```bash
+  grep -c 'ERROR' /var/log/webapp/app.log
+  grep 'ERROR' /var/log/webapp/app.log | sort | uniq -c | sort -rn
+  awk '/ERROR/ {count++} END {print count}' logfile
+  ```
+hints:
+  - "Use `grep -c 'ERROR' /var/log/webapp/app.log` to count errors"
+  - "Use `grep 'ERROR' /var/log/webapp/app.log | sort | uniq -c | sort -rn | head -5` to find common errors"
+  - "Write the report with counts and the most common error to ~/log-analysis.txt"
+validation:
+  script: validate.sh
+  success_message: "Log analysis complete!"
+  failure_message: "The log analysis report is missing or incomplete."

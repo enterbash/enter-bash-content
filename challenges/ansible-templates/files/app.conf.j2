@@ -1,0 +1,16 @@
+# Application Configuration
+[general]
+name = {{ app_name }
+port = {{ app_port }}
+environment = {{ app_env }}
+
+[performance]
+max_connections = {{ max_connections }}
+
+[security]
+{% if enable_ssl
+ssl_enabled = true
+ssl_cert = /etc/ssl/{{ app_name }}.crt
+{% else %}
+ssl_enabled = false
+{% endif %}

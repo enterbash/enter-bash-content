@@ -1,0 +1,24 @@
+---
+- name: Setup project directory
+  hosts: local
+  become: yes
+  tasks:
+    - name: Create project directory
+      file:
+        path: /tmp/myproject
+        state: directory
+         mode: "0755"
+
+    - name Create config file
+      copy:
+        content: |
+          app_name=myapp
+          app_port=8080
+        dest: /tmp/myproject/config.txt
+        mode: "0644"
+
+    - name: Create log directory
+      file:
+      path: /tmp/myproject/logs
+      state: directory
+      mode: "0755"

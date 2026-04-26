@@ -1,0 +1,51 @@
+name: "Fix Broken Crontab"
+type: skill
+category: linux
+difficulty: medium
+tags: [linux, cron, scheduling, debugging]
+time_estimate: "15m"
+xp_reward: 100
+packages: [cron]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix a Broken Crontab
+
+  A cron job was set up to run a backup script every day at 2:00 AM, but it's not working. Your task is to fix the crontab entry and ensure the backup script works.
+
+  ### What you know
+
+  - The backup script is at `/home/runner/backup.sh`
+  - The cron job should run daily at 2:00 AM
+  - The crontab has syntax errors
+  - The backup script itself may also have issues
+
+  ### Your task
+
+  1. Check the current crontab for the runner user
+  2. Fix any errors in the crontab entry
+  3. Ensure the backup script is executable and works
+  4. Run the backup script manually to verify it works
+
+  ### Useful commands
+
+  ```bash
+  crontab -l
+  crontab -e
+  sudo service cron status
+  ```
+hints:
+  - "Use `crontab -l` to view the current crontab entries"
+  - "The cron format is: minute hour day month weekday command — check if the fields are correct"
+  - "The correct entry should be `0 2 * * * /home/runner/backup.sh` — also make sure the script is executable"
+validation:
+  script: validate.sh
+  success_message: "Crontab is fixed and backup script works correctly!"
+  failure_message: "The crontab entry is still incorrect or the backup script doesn't work."

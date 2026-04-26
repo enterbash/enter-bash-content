@@ -1,0 +1,54 @@
+name: "Fix Network Interface"
+type: skill
+category: linux
+difficulty: hard
+tags: [linux, networking, interfaces, ip]
+time_estimate: "20m"
+xp_reward: 150
+packages: [iproute2, net-tools]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Network Interface Configuration
+
+  A network interface has been misconfigured. You need to fix the IP address configuration so the system can communicate on the local network.
+
+  ### What you know
+
+  - The interface `dummy0` has been created but has a wrong IP address
+  - The correct IP should be `10.0.0.10/24`
+  - A route to `10.0.0.0/24` should exist via `dummy0`
+  - The interface should be UP
+
+  ### Your task
+
+  1. Check the current interface configuration with `ip addr`
+  2. Remove the incorrect IP address from `dummy0`
+  3. Assign the correct IP `10.0.0.10/24` to `dummy0`
+  4. Ensure the interface is UP
+  5. Verify the routing table has the correct entry
+
+  ### Useful commands
+
+  ```bash
+  ip addr show dummy0
+  sudo ip addr del <wrong-ip>/24 dev dummy0
+  sudo ip addr add 10.0.0.10/24 dev dummy0
+  sudo ip link set dummy0 up
+  ip route
+  ```
+hints:
+  - "Use `ip addr show dummy0` to see the current (wrong) IP address"
+  - "Remove the wrong IP with `sudo ip addr flush dev dummy0`"
+  - "Add the correct IP with `sudo ip addr add 10.0.0.10/24 dev dummy0` and bring it up"
+validation:
+  script: validate.sh
+  success_message: "Network interface is correctly configured!"
+  failure_message: "The network interface configuration is still incorrect."

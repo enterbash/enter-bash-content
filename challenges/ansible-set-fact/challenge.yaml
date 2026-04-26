@@ -1,0 +1,59 @@
+name: "Ansible set_fact Module"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, set_fact, variables, dynamic]
+time_estimate: "20m"
+xp_reward: 150
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use the set_fact Module
+
+  The `set_fact` module creates or updates variables dynamically during playbook execution. A playbook in `~/ansible-project/playbook.yml` has broken set_fact usage.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the set_fact tasks to correctly create dynamic variables
+  3. The playbook should compute values and write them to a file
+  4. Run the playbook successfully
+
+  ### set_fact syntax
+
+  ```yaml
+  - name: Set a fact
+    set_fact:
+      my_var: "some value"
+
+  - name: Compute a fact
+    set_fact:
+      full_name: "{{ first_name }} {{ last_name }}"
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "set_fact uses `key: value` pairs, not `fact:` and `value:` parameters"
+  - "You can reference other variables in set_fact: `my_var: \"{{ other_var }}\"`"
+  - "set_fact variables persist for the rest of the play"
+validation:
+  script: validate.sh
+  success_message: "set_fact working correctly!"
+  failure_message: "set_fact issues remain. Check the syntax."

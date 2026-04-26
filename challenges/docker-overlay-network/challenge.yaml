@@ -1,0 +1,50 @@
+name: "Create Overlay Networks"
+type: skill
+category: docker
+difficulty: hard
+tags: [docker, networking, overlay, swarm]
+time_estimate: "20m"
+xp_reward: 200
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create Overlay Networks
+
+  Overlay networks enable communication between containers across multiple Docker hosts. They require Docker Swarm mode.
+
+  ### Scenario
+
+  You need to initialize Docker Swarm and create an overlay network for multi-service communication.
+
+  ### Your task
+
+  1. Initialize Docker Swarm mode with `docker swarm init`
+  2. Create an overlay network named `app-overlay`
+  3. Create a service named `web-service` on the overlay network running nginx with 2 replicas
+  4. Verify the service is running and connected to the overlay network
+
+  ### Useful commands
+
+  ```bash
+  docker swarm init
+  docker network create --driver overlay app-overlay
+  docker service create --name web-service --network app-overlay --replicas 2 nginx:alpine
+  docker service ls
+  docker network inspect app-overlay
+  ```
+hints:
+  - "First initialize swarm mode: `docker swarm init`"
+  - "Create overlay network: `docker network create --driver overlay app-overlay`"
+  - "Create service: `docker service create --name web-service --network app-overlay --replicas 2 nginx:alpine`"
+validation:
+  script: validate.sh
+  success_message: "Overlay network created with services running!"
+  failure_message: "Check that swarm is initialized and the overlay network and service exist."

@@ -1,0 +1,50 @@
+name: "Fix Environment Variables"
+type: skill
+category: kubernetes
+difficulty: medium
+tags: [kubernetes, env-vars, configuration, debugging]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Environment Variables
+
+  A Pod manifest has broken environment variable references. Fix them.
+
+  ### What you know
+
+  - The manifest is at `~/pod.yaml`
+  - The pod uses various env var sources: direct values, secrets, configmaps, and field refs
+
+  ### Issues to fix
+
+  - `POD_NAME` should use `metadata.name` (not `metadata.labels`)
+  - `NODE_NAME` should use `spec.nodeName` (note the capital N)
+
+  ### Your task
+
+  1. Fix the fieldRef paths in `~/pod.yaml`
+  2. The manifest must pass `kubectl apply --dry-run=client -f ~/pod.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/pod.yaml
+  ```
+hints:
+  - "fieldRef.fieldPath for pod name is `metadata.name`"
+  - "fieldRef.fieldPath for node name is `spec.nodeName` (camelCase)"
+  - "Valid fieldPath values include: metadata.name, metadata.namespace, spec.nodeName, spec.serviceAccountName"
+validation:
+  script: validate.sh
+  success_message: "Environment variables are correctly configured!"
+  failure_message: "Environment variable references still have errors."

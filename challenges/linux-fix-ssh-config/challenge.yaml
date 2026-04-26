@@ -1,0 +1,54 @@
+name: "Fix SSH Config Permissions"
+type: skill
+category: linux
+difficulty: easy
+tags: [linux, ssh, permissions, security]
+time_estimate: "10m"
+xp_reward: 75
+packages: [openssh-server]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix SSH Config Permissions
+
+  SSH is refusing to use the configuration and key files because the permissions are too open. SSH requires strict permissions on its config files for security.
+
+  ### What you know
+
+  - The SSH config directory is at `/home/runner/.ssh/`
+  - SSH refuses to use keys or config when permissions are wrong
+  - The `.ssh` directory, `authorized_keys`, and `config` files all have incorrect permissions
+
+  ### Your task
+
+  1. Check the current permissions on `~/.ssh/` and its contents
+  2. Fix the permissions to meet SSH's requirements:
+     - `~/.ssh/` directory: `700`
+     - `~/.ssh/config`: `600`
+     - `~/.ssh/authorized_keys`: `600`
+     - `~/.ssh/id_rsa` (private key): `600`
+     - `~/.ssh/id_rsa.pub` (public key): `644`
+  3. Verify SSH no longer complains about permissions
+
+  ### Useful commands
+
+  ```bash
+  ls -la ~/.ssh/
+  chmod 700 ~/.ssh
+  chmod 600 ~/.ssh/config
+  ```
+hints:
+  - "Use `ls -la ~/.ssh/` to see current permissions"
+  - "The .ssh directory must be 700, private keys must be 600"
+  - "Run `chmod 700 ~/.ssh && chmod 600 ~/.ssh/id_rsa ~/.ssh/config ~/.ssh/authorized_keys && chmod 644 ~/.ssh/id_rsa.pub`"
+validation:
+  script: validate.sh
+  success_message: "SSH permissions are correctly configured!"
+  failure_message: "SSH file permissions are still incorrect."

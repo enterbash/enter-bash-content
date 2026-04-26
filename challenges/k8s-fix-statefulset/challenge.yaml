@@ -1,0 +1,48 @@
+name: "Fix a StatefulSet"
+type: skill
+category: kubernetes
+difficulty: hard
+tags: [kubernetes, statefulset, storage, debugging]
+time_estimate: "25m"
+xp_reward: 200
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix the StatefulSet
+
+  A StatefulSet manifest has multiple errors. Fix them all.
+
+  ### What you know
+
+  - The manifest is at `~/statefulset.yaml`
+  - It should run a 3-replica PostgreSQL cluster
+  - Each replica needs its own persistent storage
+  - A headless Service is required (already in the file)
+
+  ### Your task
+
+  1. Examine `~/statefulset.yaml` and fix all errors
+  2. The manifest must pass `kubectl apply --dry-run=client -f ~/statefulset.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/statefulset.yaml
+  ```
+hints:
+  - "StatefulSets use apiVersion: apps/v1"
+  - "A StatefulSet requires a `serviceName` field matching the headless Service"
+  - "The headless Service must have `clusterIP: None`"
+  - "volumeClaimTemplates define PVC templates for each pod"
+validation:
+  script: validate.sh
+  success_message: "StatefulSet manifest is valid and correct!"
+  failure_message: "The StatefulSet manifest still has errors."

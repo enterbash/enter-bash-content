@@ -1,0 +1,34 @@
+---
+- name: Dynamic variable creation
+  hosts: local
+  become: yes
+  vars:
+    app_name: webapp
+    app_version: "2.1"
+  tasks:
+    - name: Set deployment timestamp
+      set_fact:
+        fact: deploy_time
+        value: "{{ ansible_date_time.iso8601 }}"
+
+    - name: Set full app identifier
+      set_fact:
+        fact: app_id
+        value: "{{ app_name }}-{{ app_version }}"
+
+    - name: Set config path
+      set_fact:
+        config_path: "/tmp/setfact-test/{{ app_name }}"
+
+    - name: Create config directory
+      file:
+        path: "{{ config_path }}"
+        state: directory
+
+    - name: Write deployment info
+      copy:
+        content: |
+          app_id={{ app_id }}
+          deploy_time={{ deploy_time }}
+          config_path={{ config_path }}
+        dest: "{{ config_path }}/deploy_info.txt"

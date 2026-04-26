@@ -1,0 +1,59 @@
+name: "Use the templatefile Function"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, templatefile, functions, templates]
+time_estimate: "15m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+  - source: files/config.tftpl
+    dest: ~/terraform-project/config.tftpl
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use the templatefile Function
+
+  The `templatefile` function reads a file and renders it as a template, substituting variables. Your task is to use it to generate configuration files.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - A template file `config.tftpl` exists with placeholders
+  - You need to render it using `templatefile()`
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Use the `templatefile` function in the `local_file.config` resource
+  3. Pass the required variables to the template:
+     - `app_name = var.app_name`
+     - `environment = var.environment`
+     - `ports = var.ports`
+  4. The rendered content should be written to `${path.module}/app-config.txt`
+  5. Ensure `terraform validate` passes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  ```
+hints:
+  - "Syntax: templatefile(\"${path.module}/config.tftpl\", { var1 = value1 })"
+  - "The template uses ${variable} for simple values and %{ for } for loops"
+  - "Check the .tftpl file to see what variables it expects"
+validation:
+  script: validate.sh
+  success_message: "templatefile is properly configured!"
+  failure_message: "Make sure templatefile references the correct template and passes all variables."

@@ -1,0 +1,49 @@
+name: "Fix DNS Resolution"
+type: skill
+category: linux
+difficulty: easy
+tags: [linux, networking, dns, resolv.conf]
+time_estimate: "10m"
+xp_reward: 75
+packages: [dnsutils]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix DNS Resolution
+
+  DNS resolution is broken on this system. No domain names can be resolved. Your task is to fix the DNS configuration.
+
+  ### What you know
+
+  - `ping google.com` and `nslookup google.com` fail with DNS errors
+  - The DNS configuration file is `/etc/resolv.conf`
+  - The file has been misconfigured with invalid nameservers
+
+  ### Your task
+
+  1. Check the current DNS configuration
+  2. Fix `/etc/resolv.conf` with valid nameservers
+  3. Verify DNS resolution works
+
+  ### Useful commands
+
+  ```bash
+  cat /etc/resolv.conf
+  nslookup google.com
+  dig google.com
+  ```
+hints:
+  - "Check `/etc/resolv.conf` — the nameserver entries are probably wrong"
+  - "Use well-known public DNS servers like `8.8.8.8` (Google) or `1.1.1.1` (Cloudflare)"
+  - "The file should contain `nameserver 8.8.8.8` — edit it with `sudo nano /etc/resolv.conf`"
+validation:
+  script: validate.sh
+  success_message: "DNS resolution is working again!"
+  failure_message: "DNS resolution is still broken. Check /etc/resolv.conf."

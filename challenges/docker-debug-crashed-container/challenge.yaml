@@ -1,0 +1,49 @@
+name: "Debug a Crashed Container"
+type: skill
+category: docker
+difficulty: medium
+tags: [docker, debugging, logs, troubleshooting]
+time_estimate: "15m"
+xp_reward: 150
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Debug a Crashed Container
+
+  A container named `webapp` keeps crashing. Your task is to figure out why and fix it.
+
+  ### Scenario
+
+  - A container named `webapp` was started but keeps restarting/crashing
+  - You need to investigate the logs and fix the issue
+  - The app expects a config file at `/app/config.json` inside the container
+
+  ### Your task
+
+  1. Check the container status and logs to understand why it's crashing
+  2. The app needs a config file - create it and mount it correctly
+  3. Run a working container named `webapp-fixed` with the config file
+
+  ### Useful commands
+
+  ```bash
+  docker ps -a
+  docker logs webapp
+  docker inspect webapp
+  ```
+hints:
+  - "Use `docker logs webapp` to see the error messages"
+  - "The app is crashing because /app/config.json is missing. Create a config file on the host."
+  - "Create ~/config.json with `{\"port\": 8080, \"debug\": true}` and mount it: `docker run -d --name webapp-fixed -v ~/config.json:/app/config.json crashtest:latest`"
+validation:
+  script: validate.sh
+  success_message: "Container is running! Great debugging skills."
+  failure_message: "The webapp-fixed container is not running. Check the logs for clues."

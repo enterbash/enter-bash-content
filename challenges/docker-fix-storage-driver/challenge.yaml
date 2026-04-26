@@ -1,0 +1,53 @@
+name: "Fix Docker Storage Issues"
+type: skill
+category: docker
+difficulty: hard
+tags: [docker, storage, troubleshooting, disk]
+time_estimate: "20m"
+xp_reward: 200
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Docker Storage Issues
+
+  A container is having storage problems. Diagnose and fix the issue.
+
+  ### Scenario
+
+  A container named `storebox` was started with a volume, but the application inside can't write data because the volume mount point has wrong ownership. Additionally, the container's writable layer is filling up with temp files.
+
+  ### Your task
+
+  1. Check the storage usage with `docker system df`
+  2. Inspect the `storebox` container to find the volume mount
+  3. Fix the volume permissions so the app (running as uid 1000) can write
+  4. Run a new container named `storebox-fixed` that:
+     - Mounts `~/storage` to `/data` with correct permissions
+     - Runs as uid 1000
+     - Uses `--tmpfs /tmp` to avoid filling the writable layer
+  5. Verify the container can write to `/data`
+
+  ### Useful commands
+
+  ```bash
+  docker system df
+  docker inspect storebox
+  sudo chown 1000:1000 ~/storage
+  docker run -d --name storebox-fixed -v ~/storage:/data --tmpfs /tmp -u 1000 alpine sh -c 'echo test > /data/test.txt && sleep infinity'
+  ```
+hints:
+  - "Check `docker system df` to see disk usage"
+  - "The ~/storage directory needs to be owned by uid 1000"
+  - "Use `sudo chown 1000:1000 ~/storage` then run the fixed container"
+validation:
+  script: validate.sh
+  success_message: "Storage issues fixed! Container can write data."
+  failure_message: "The storebox-fixed container can't write to /data. Check permissions."

@@ -1,0 +1,50 @@
+name: "Find SUID Binaries"
+type: skill
+category: linux
+difficulty: easy
+tags: [linux, security, suid, audit]
+time_estimate: "10m"
+xp_reward: 75
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Find SUID Binaries for Security Audit
+
+  During a security audit, you need to find all SUID binaries on the system and identify any suspicious ones. SUID binaries run with the permissions of the file owner (often root), making them potential security risks.
+
+  ### What you know
+
+  - Some suspicious SUID binaries have been planted on the system
+  - Legitimate SUID binaries include things like `passwd`, `sudo`, `ping`
+  - Suspicious binaries are in unusual locations like `/tmp` or `/home`
+
+  ### Your task
+
+  1. Find all SUID binaries on the system
+  2. Identify the suspicious ones (in non-standard locations)
+  3. Remove the SUID bit from the suspicious binaries
+  4. Write a report of what you found to `/home/runner/suid-audit.txt`
+
+  ### Useful commands
+
+  ```bash
+  find / -perm -4000 -type f 2>/dev/null
+  find / -perm -u=s -type f 2>/dev/null
+  chmod u-s /path/to/suspicious/binary
+  ```
+hints:
+  - "Use `find / -perm -4000 -type f 2>/dev/null` to find all SUID binaries"
+  - "Suspicious binaries are in `/tmp/` and `/home/` — legitimate ones are in `/usr/bin/` or `/usr/sbin/`"
+  - "Remove SUID with `chmod u-s <file>` and write findings to ~/suid-audit.txt"
+validation:
+  script: validate.sh
+  success_message: "Security audit complete! Suspicious SUID binaries neutralized."
+  failure_message: "There are still suspicious SUID binaries or the audit report is missing."

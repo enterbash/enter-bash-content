@@ -1,0 +1,51 @@
+name: "Multi-Stage Docker Build"
+type: skill
+category: docker
+difficulty: medium
+tags: [docker, multi-stage, build, optimization]
+time_estimate: "15m"
+xp_reward: 150
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Multi-Stage Docker Build
+
+  You have a Go application at `~/goapp` with a single-stage Dockerfile that produces a very large image. Your task is to convert it to a multi-stage build.
+
+  ### Scenario
+
+  - The current Dockerfile builds a Go binary but includes the entire Go toolchain in the final image
+  - The resulting image is hundreds of MB when it could be under 20MB
+  - You need to rewrite the Dockerfile to use multi-stage builds
+
+  ### Your task
+
+  1. Edit `~/goapp/Dockerfile` to use a multi-stage build
+  2. Stage 1: Use `golang:1.21-alpine` to compile the binary
+  3. Stage 2: Use `alpine:latest` as the final image, copying only the compiled binary
+  4. Build the image as `goapp:latest`
+  5. The final image must be under 50MB
+
+  ### Useful commands
+
+  ```bash
+  cat ~/goapp/Dockerfile
+  cd ~/goapp && docker build -t goapp:latest .
+  docker images goapp
+  ```
+hints:
+  - "Use `FROM golang:1.21-alpine AS builder` for the first stage"
+  - "In the second stage, use `FROM alpine:latest` and `COPY --from=builder /app/main /app/main`"
+  - "Make sure to set CGO_ENABLED=0 for a static binary"
+validation:
+  script: validate.sh
+  success_message: "Multi-stage build working! Your image is nice and small."
+  failure_message: "Either the image doesn't exist or it's too large. Use multi-stage builds to reduce size."

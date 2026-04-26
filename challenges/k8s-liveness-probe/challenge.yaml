@@ -1,0 +1,59 @@
+name: "Add Liveness and Readiness Probes"
+type: skill
+category: kubernetes
+difficulty: medium
+tags: [kubernetes, probes, health-checks, pods]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Add Liveness and Readiness Probes
+
+  A Pod manifest is missing health check probes. Add both liveness and readiness probes.
+
+  ### What you know
+
+  - The manifest is at `~/pod.yaml`
+  - The pod runs nginx on port 80
+
+  ### Requirements
+
+  Add the following probes to the nginx container:
+
+  **Liveness Probe:**
+  - HTTP GET on path `/` port `80`
+  - Initial delay: 10 seconds
+  - Period: 5 seconds
+
+  **Readiness Probe:**
+  - HTTP GET on path `/` port `80`
+  - Initial delay: 5 seconds
+  - Period: 3 seconds
+
+  ### Your task
+
+  1. Edit `~/pod.yaml` to add both probes
+  2. The manifest must pass `kubectl apply --dry-run=client -f ~/pod.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/pod.yaml
+  ```
+hints:
+  - "Probes go under spec.containers[].livenessProbe and spec.containers[].readinessProbe"
+  - "Use httpGet with path and port fields"
+  - "Don't forget initialDelaySeconds and periodSeconds"
+validation:
+  script: validate.sh
+  success_message: "Probes are correctly configured!"
+  failure_message: "Probes are missing or incorrectly configured."

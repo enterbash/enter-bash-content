@@ -1,0 +1,50 @@
+name: "Fix File Permission Issues in Containers"
+type: skill
+category: docker
+difficulty: medium
+tags: [docker, permissions, security, filesystem]
+time_estimate: "15m"
+xp_reward: 150
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix File Permission Issues in Containers
+
+  A container is failing because the application can't write to its data directory due to permission issues.
+
+  ### Scenario
+
+  The image `permapp:latest` runs as a non-root user (uid 1000) but the data directory `/app/data` is owned by root. The container crashes because it can't write logs.
+
+  ### Your task
+
+  1. Inspect the Dockerfile at `~/permapp/Dockerfile` to understand the issue
+  2. Fix the Dockerfile so the non-root user can write to `/app/data`
+  3. Rebuild the image as `permapp:fixed`
+  4. Run a container named `permbox` from the fixed image
+  5. The container should stay running
+
+  ### Useful commands
+
+  ```bash
+  cat ~/permapp/Dockerfile
+  cd ~/permapp && docker build -t permapp:fixed .
+  docker run -d --name permbox permapp:fixed
+  docker logs permbox
+  ```
+hints:
+  - "The issue is that /app/data is created as root but the app runs as uid 1000"
+  - "Add `RUN chown -R 1000:1000 /app/data` before the USER instruction"
+  - "Or create the directory after switching to the non-root user"
+validation:
+  script: validate.sh
+  success_message: "Permissions fixed! Container running as non-root."
+  failure_message: "The permbox container is not running. Check the file permissions."

@@ -1,0 +1,67 @@
+name: "Ansible Inventory Groups"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, inventory, groups, hosts]
+time_estimate: "20m"
+xp_reward: 150
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Configure Ansible Inventory Groups
+
+  Ansible inventory files define hosts and groups. An inventory in `~/ansible-project/inventory.ini` has incorrect group definitions.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the inventory file to correctly define groups and group variables
+  3. The inventory should have `webservers`, `dbservers`, and a parent group `production`
+  4. All hosts should use `ansible_connection=local` (since we're on localhost)
+  5. Run the playbook successfully
+
+  ### Inventory syntax
+
+  ```ini
+  [webservers]
+  localhost ansible_connection=local
+
+  [dbservers]
+  localhost ansible_connection=local
+
+  [production:children]
+  webservers
+  dbservers
+
+  [production:vars]
+  env=production
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-inventory -i inventory.ini --list
+  ansible-inventory -i inventory.ini --graph
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Use `[group:children]` to create parent groups containing other groups"
+  - "Use `[group:vars]` to set variables for all hosts in a group"
+  - "Each host line needs `ansible_connection=local` for localhost"
+validation:
+  script: validate.sh
+  success_message: "Inventory groups configured correctly!"
+  failure_message: "Inventory issues remain. Check group syntax and children definitions."

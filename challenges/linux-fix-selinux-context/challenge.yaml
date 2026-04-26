@@ -1,0 +1,52 @@
+name: "Fix SELinux File Contexts"
+type: skill
+category: linux
+difficulty: hard
+tags: [linux, selinux, security, contexts]
+time_estimate: "20m"
+xp_reward: 150
+packages: [selinux-utils, policycoreutils]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix SELinux File Contexts
+
+  Files have been moved to new locations and their SELinux contexts are wrong, preventing services from accessing them. Since SELinux may not be enforcing in this container, we'll simulate the exercise by working with extended attributes.
+
+  ### What you know
+
+  - Web content has been moved to `/srv/www/html/` but has wrong security labels
+  - The files need the `httpd_sys_content_t` context to be served by a web server
+  - A marker file tracks the correct context assignments
+  - You need to set the correct contexts and create a verification file
+
+  ### Your task
+
+  1. Check the current file contexts in `/srv/www/html/`
+  2. Create a file `/srv/www/html/.contexts` listing each file and its intended context
+  3. The file should contain lines like: `index.html httpd_sys_content_t`
+  4. Set the `user.selinux_type` extended attribute on each file to `httpd_sys_content_t`
+  5. Create `/home/runner/selinux-fix.log` documenting what you fixed
+
+  ### Useful commands
+
+  ```bash
+  ls -laZ /srv/www/html/
+  setfattr -n user.selinux_type -v httpd_sys_content_t file
+  getfattr -n user.selinux_type file
+  ```
+hints:
+  - "List files with `ls /srv/www/html/` to see what needs fixing"
+  - "Set attributes with `setfattr -n user.selinux_type -v httpd_sys_content_t /srv/www/html/index.html`"
+  - "Create the .contexts file and the selinux-fix.log documenting your changes"
+validation:
+  script: validate.sh
+  success_message: "SELinux contexts are fixed!"
+  failure_message: "File contexts are not properly set."

@@ -1,0 +1,61 @@
+name: "Add Variable Validation Rules"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, validation, variables, constraints]
+time_estimate: "15m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Add Variable Validation Rules
+
+  Terraform supports custom validation rules on variables to catch invalid input early. Your task is to add validation blocks to existing variables.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - Three variables need validation rules
+  - The defaults are valid — your rules should accept them
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Add a `validation` block to `environment`:
+     - Must be one of: `"dev"`, `"staging"`, `"production"`
+     - Error message: `"Environment must be dev, staging, or production."`
+  3. Add a `validation` block to `port`:
+     - Must be between 1024 and 65535
+     - Error message: `"Port must be between 1024 and 65535."`
+  4. Add a `validation` block to `app_name`:
+     - Must match regex `^[a-zA-Z][a-zA-Z0-9-]*$`
+     - Error message: `"App name must start with a letter and contain only letters, numbers, and hyphens."`
+  5. Ensure `terraform validate` passes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  terraform plan -var="port=80"  # should fail validation
+  ```
+hints:
+  - "Validation syntax: validation { condition = ...; error_message = \"...\" }"
+  - "Use contains([\"dev\", \"staging\", \"production\"], var.environment) for enum validation"
+  - "Use can(regex(\"pattern\", var.name)) for regex validation"
+validation:
+  script: validate.sh
+  success_message: "Validation rules are properly configured!"
+  failure_message: "Check that all three variables have validation blocks."

@@ -1,0 +1,65 @@
+name: "Ansible Error Handling"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, error-handling, block, rescue, always]
+time_estimate: "20m"
+xp_reward: 150
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Ansible Error Handling with Block/Rescue/Always
+
+  Ansible's `block/rescue/always` provides try/catch/finally error handling. A playbook in `~/ansible-project/playbook.yml` has broken error handling.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the block/rescue/always structure
+  3. The `block` section should attempt a task that fails
+  4. The `rescue` section should handle the error
+  5. The `always` section should run cleanup regardless
+  6. Run the playbook successfully
+
+  ### Block/Rescue/Always syntax
+
+  ```yaml
+  - block:
+      - name: Try something
+        command: /bin/false
+    rescue:
+      - name: Handle error
+        debug:
+          msg: "Task failed, handling error"
+    always:
+      - name: Cleanup
+        debug:
+          msg: "Always runs"
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "`block`, `rescue`, and `always` are at the same indentation level"
+  - "`rescue` runs only when a task in `block` fails"
+  - "`always` runs regardless of success or failure"
+validation:
+  script: validate.sh
+  success_message: "Error handling working correctly!"
+  failure_message: "Block/rescue/always structure has issues. Check indentation and structure."

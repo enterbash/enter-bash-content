@@ -1,0 +1,47 @@
+name: "Fix ImagePullBackOff"
+type: skill
+category: kubernetes
+difficulty: easy
+tags: [kubernetes, images, debugging, containers]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix ImagePullBackOff
+
+  A Pod manifest references an image that doesn't exist, causing an ImagePullBackOff error.
+
+  ### What you know
+
+  - The manifest is at `~/pod.yaml`
+  - The pod should run nginx version 1.25
+  - The image name has typos
+
+  ### Your task
+
+  1. Fix the image name in `~/pod.yaml`
+  2. The correct image is `nginx:1.25`
+  3. The manifest must pass `kubectl apply --dry-run=client -f ~/pod.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/pod.yaml
+  ```
+hints:
+  - "Check the image name for typos"
+  - "The correct image name is `nginx` not `ngnix`"
+  - "The correct tag is `1.25` — use a specific version instead of `latest` with typos"
+validation:
+  script: validate.sh
+  success_message: "Image reference is correct!"
+  failure_message: "The image reference still has errors."

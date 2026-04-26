@@ -1,0 +1,51 @@
+name: "Add a Healthcheck to a Container"
+type: skill
+category: docker
+difficulty: medium
+tags: [docker, healthcheck, monitoring, containers]
+time_estimate: "15m"
+xp_reward: 100
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Add a Healthcheck to a Container
+
+  You need to run a container with a proper healthcheck configured.
+
+  ### Your task
+
+  1. Run an nginx container named `healthyweb` with a healthcheck that:
+     - Runs `curl -f http://localhost/ || exit 1`
+     - Checks every 10 seconds
+     - Times out after 5 seconds
+     - Retries 3 times
+  2. Wait for the container to become healthy
+  3. Verify the health status with `docker inspect`
+
+  ### Useful commands
+
+  ```bash
+  docker run -d --name healthyweb \
+    --health-cmd="curl -f http://localhost/ || exit 1" \
+    --health-interval=10s \
+    --health-timeout=5s \
+    --health-retries=3 \
+    nginx:alpine
+  docker inspect healthyweb --format '{{.State.Health.Status}}'
+  ```
+hints:
+  - "Use `--health-cmd` to specify the healthcheck command"
+  - "Use `--health-interval`, `--health-timeout`, and `--health-retries` for timing"
+  - "Wait a few seconds after starting for the first health check to run"
+validation:
+  script: validate.sh
+  success_message: "Healthcheck configured! Container is healthy."
+  failure_message: "The container doesn't have a proper healthcheck or isn't healthy yet."

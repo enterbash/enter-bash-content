@@ -1,0 +1,49 @@
+name: "Mount Volumes Correctly"
+type: skill
+category: docker
+difficulty: easy
+tags: [docker, volumes, storage, containers]
+time_estimate: "10m"
+xp_reward: 75
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Mount Volumes Correctly
+
+  You need to run a container with a volume mount so that data persists on the host.
+
+  ### Scenario
+
+  - A directory `~/data` exists on the host with a file `config.txt`
+  - You need to run an alpine container named `databox` that mounts `~/data` to `/data` inside the container
+  - The container should run `sleep infinity` to stay alive
+
+  ### Your task
+
+  1. Run a container named `databox` with `~/data` mounted at `/data`
+  2. Verify the file is accessible inside the container
+  3. Create a new file `/data/output.txt` inside the container with any content
+
+  ### Useful commands
+
+  ```bash
+  docker run -d --name databox -v ~/data:/data alpine sleep infinity
+  docker exec databox ls /data
+  docker exec databox sh -c 'echo "hello" > /data/output.txt'
+  ```
+hints:
+  - "Use the `-v` flag to mount a host directory: `-v ~/data:/data`"
+  - "The format is `-v HOST_PATH:CONTAINER_PATH`"
+  - "Create output.txt inside the container: `docker exec databox sh -c 'echo hello > /data/output.txt'`"
+validation:
+  script: validate.sh
+  success_message: "Volume mounted correctly! Data persists between host and container."
+  failure_message: "Check that the databox container is running with ~/data mounted at /data and output.txt exists."

@@ -1,0 +1,49 @@
+name: "Fix a Broken Service"
+type: skill
+category: kubernetes
+difficulty: easy
+tags: [kubernetes, services, networking, debugging]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix the Broken Service
+
+  A Kubernetes Service manifest has several errors preventing it from working correctly. Your task is to fix the YAML file so it passes validation.
+
+  ### What you know
+
+  - The broken manifest is at `~/service.yaml`
+  - It should expose a Deployment called `web-app` on port 80
+  - The target port should be 8080 (where the app listens)
+  - The service type should be ClusterIP
+
+  ### Your task
+
+  1. Examine the Service manifest and identify the errors
+  2. Fix all issues in `~/service.yaml`
+  3. The fixed manifest must pass `kubectl apply --dry-run=client -f ~/service.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/service.yaml
+  cat ~/service.yaml
+  ```
+hints:
+  - "Check the apiVersion — Services use v1"
+  - "Look at the selector — does it match the deployment labels?"
+  - "The port and targetPort fields must be integers, not strings"
+validation:
+  script: validate.sh
+  success_message: "The Service manifest is valid and correctly configured!"
+  failure_message: "The Service manifest still has errors. Check apiVersion, selector, and port values."

@@ -1,0 +1,53 @@
+name: "Create a ServiceAccount"
+type: skill
+category: kubernetes
+difficulty: easy
+tags: [kubernetes, service-account, rbac, security]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create a ServiceAccount
+
+  Create a ServiceAccount and bind it to a ClusterRole.
+
+  ### Requirements
+
+  - ServiceAccount file: `~/sa.yaml`
+    - Name: `app-deployer`
+    - Namespace: `default`
+    - Labels: `role: deployer`
+
+  - RoleBinding file: `~/rolebinding.yaml`
+    - Name: `app-deployer-binding`
+    - Bind the ServiceAccount `app-deployer` to the ClusterRole `edit`
+
+  ### Your task
+
+  1. Create `~/sa.yaml` with the ServiceAccount
+  2. Create `~/rolebinding.yaml` with the RoleBinding
+  3. Both must pass `kubectl apply --dry-run=client -f`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/sa.yaml
+  kubectl apply --dry-run=client -f ~/rolebinding.yaml
+  ```
+hints:
+  - "ServiceAccount uses apiVersion: v1 and kind: ServiceAccount"
+  - "In the RoleBinding subjects, ServiceAccount kind needs a namespace field"
+  - "roleRef for a ClusterRole uses kind: ClusterRole and apiGroup: rbac.authorization.k8s.io"
+validation:
+  script: validate.sh
+  success_message: "ServiceAccount and RoleBinding are correctly configured!"
+  failure_message: "The ServiceAccount or RoleBinding has errors."

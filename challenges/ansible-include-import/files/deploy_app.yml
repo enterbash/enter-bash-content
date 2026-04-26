@@ -1,0 +1,15 @@
+---
+- name: Deploy app config
+  copy:
+    content: |
+      [app]
+      name=myapp
+      version=1.0
+    dest: /tmp/include-test/app.conf
+
+- name: Deploy log config
+  copy:
+    content: |
+      log_level=info
+      log_file=/tmp/include-test/logs/app.log
+    dest: /tmp/include-test/logs/log.conf

@@ -1,0 +1,54 @@
+name: "Manage LVM Volumes"
+type: skill
+category: linux
+difficulty: hard
+tags: [linux, lvm, storage, filesystem]
+time_estimate: "25m"
+xp_reward: 200
+packages: [lvm2]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Manage LVM Volumes
+
+  You need to extend an LVM logical volume that is running out of space. The volume group has free space available.
+
+  ### What you know
+
+  - A volume group `vg_data` exists with available free space
+  - A logical volume `lv_app` exists but is too small (64MB)
+  - The logical volume is mounted at `/mnt/appdata`
+  - You need to extend it to use all available space in the VG
+  - The filesystem on the LV needs to be resized too
+
+  ### Your task
+
+  1. Check the current LVM configuration with `lvs`, `vgs`, `pvs`
+  2. Extend the logical volume `lv_app` to use all free space
+  3. Resize the filesystem to use the new space
+  4. Verify the mount shows the increased size
+
+  ### Useful commands
+
+  ```bash
+  sudo lvs
+  sudo vgs
+  sudo lvextend -l +100%FREE /dev/vg_data/lv_app
+  sudo resize2fs /dev/vg_data/lv_app
+  df -h /mnt/appdata
+  ```
+hints:
+  - "Check free space with `sudo vgs` — look at VFree column"
+  - "Extend with `sudo lvextend -l +100%FREE /dev/vg_data/lv_app`"
+  - "Resize the filesystem with `sudo resize2fs /dev/vg_data/lv_app`"
+validation:
+  script: validate.sh
+  success_message: "LVM volume extended and filesystem resized!"
+  failure_message: "The LVM volume has not been properly extended."

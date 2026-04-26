@@ -1,0 +1,22 @@
+---
+- name: Deploy to production
+  hosts: production
+  become: yes
+  tasks:
+    - name: Create deploy directory
+      file:
+        path: /tmp/inventory-test
+        state: directory
+
+    - name: Write environment info
+      copy:
+        content: |
+          env={{ env }}
+          deploy_user={{ deploy_user }}
+          group={{ group_names | join(',') }}
+        dest: /tmp/inventory-test/env_info.txt
+
+    - name: Write host info
+      copy:
+        content: "host={{ inventory_hostname }}\n"
+        dest: /tmp/inventory-test/host_info.txt

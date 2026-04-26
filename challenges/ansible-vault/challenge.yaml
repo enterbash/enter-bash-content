@@ -1,0 +1,53 @@
+name: "Ansible Vault"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, vault, encryption, secrets]
+time_estimate: "20m"
+xp_reward: 150
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Ansible Vault for Secrets
+
+  Ansible Vault encrypts sensitive data. You need to create an encrypted vars file and use it in a playbook.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Create a vault password file at `~/ansible-project/.vault_pass` containing the password `devops123`
+  3. Create an encrypted vars file `secrets.yml` using ansible-vault with:
+     - `db_password: supersecret`
+     - `api_key: abc123xyz`
+  4. Fix the playbook to include the encrypted vars file using `vars_files`
+  5. Run the playbook with `--vault-password-file .vault_pass`
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  echo "devops123" > .vault_pass
+  ansible-vault create --vault-password-file .vault_pass secrets.yml
+  ansible-vault edit --vault-password-file .vault_pass secrets.yml
+  ansible-playbook -i inventory.ini playbook.yml --vault-password-file .vault_pass
+  ```
+hints:
+  - "Create the password file first: `echo 'devops123' > .vault_pass`"
+  - "Use `ansible-vault encrypt` to encrypt an existing file, or `ansible-vault create` for a new one"
+  - "Add `vars_files: [secrets.yml]` to the play to load encrypted variables"
+validation:
+  script: validate.sh
+  success_message: "Vault secrets are encrypted and working!"
+  failure_message: "Vault setup incomplete. Check the password file and encrypted vars."

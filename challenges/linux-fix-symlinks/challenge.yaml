@@ -1,0 +1,52 @@
+name: "Fix Broken Symlinks"
+type: skill
+category: linux
+difficulty: easy
+tags: [linux, symlinks, filesystem, debugging]
+time_estimate: "10m"
+xp_reward: 75
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Broken Symbolic Links
+
+  Several symbolic links in the application directory are broken. The application won't start because it can't find its configuration and library files through the symlinks.
+
+  ### What you know
+
+  - The application is in `/home/runner/myapp/`
+  - There are broken symlinks pointing to non-existent targets
+  - The actual files have been moved to `/home/runner/myapp/current/`
+  - You need to fix the symlinks to point to the correct locations
+
+  ### Your task
+
+  1. Find all broken symlinks in `/home/runner/myapp/`
+  2. Determine where they should point (files are in `current/` subdirectory)
+  3. Fix each broken symlink
+  4. Verify all symlinks resolve correctly
+
+  ### Useful commands
+
+  ```bash
+  find ~/myapp -type l -xtype l  # find broken symlinks
+  ls -la ~/myapp/
+  ln -sf target linkname
+  readlink linkname
+  ```
+hints:
+  - "Use `find ~/myapp -type l -xtype l` to find broken symlinks"
+  - "Use `ls -la` to see where each symlink currently points"
+  - "Fix with `ln -sf /home/runner/myapp/current/<filename> /home/runner/myapp/<linkname>`"
+validation:
+  script: validate.sh
+  success_message: "All symlinks are fixed and pointing to the correct targets!"
+  failure_message: "There are still broken symlinks in the application directory."

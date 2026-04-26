@@ -1,0 +1,56 @@
+name: "Fix Shell Redirections"
+type: skill
+category: linux
+difficulty: easy
+tags: [linux, bash, redirection, shell]
+time_estimate: "10m"
+xp_reward: 75
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Shell Redirections
+
+  A data processing script has broken output redirections. The script needs to write its output to specific files, but the redirections are wrong.
+
+  ### What you know
+
+  - The script is at `/home/runner/process.sh`
+  - It should write normal output to `/home/runner/output/results.txt`
+  - It should write errors to `/home/runner/output/errors.log`
+  - It should append (not overwrite) a summary to `/home/runner/output/summary.txt`
+  - Currently the redirections are broken or missing
+
+  ### Your task
+
+  1. Examine the script at `/home/runner/process.sh`
+  2. Fix the output redirections so that:
+     - stdout goes to `results.txt`
+     - stderr goes to `errors.log`
+     - The summary line appends to `summary.txt`
+  3. Run the script and verify the output files are correct
+
+  ### Useful commands
+
+  ```bash
+  cat ~/process.sh
+  command > file        # redirect stdout
+  command 2> file       # redirect stderr
+  command >> file       # append stdout
+  command > file 2>&1   # redirect both
+  ```
+hints:
+  - "Check the script — look for `>`, `>>`, `2>` redirections that are wrong"
+  - "stdout redirect: `> ~/output/results.txt`, stderr: `2> ~/output/errors.log`, append: `>> ~/output/summary.txt`"
+  - "Fix the script and run it with `bash ~/process.sh`"
+validation:
+  script: validate.sh
+  success_message: "All output redirections are working correctly!"
+  failure_message: "The output files don't have the expected content."

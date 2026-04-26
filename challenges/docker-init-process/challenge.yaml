@@ -1,0 +1,50 @@
+name: "Use Init Process in Containers"
+type: skill
+category: docker
+difficulty: hard
+tags: [docker, init, process, zombie, tini]
+time_estimate: "20m"
+xp_reward: 200
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Init Process in Containers
+
+  Without an init process, containers can accumulate zombie processes and have signal handling issues. Docker's `--init` flag adds a tiny init process (tini) as PID 1.
+
+  ### Scenario
+
+  A container at `~/spawner` runs a script that spawns child processes. Without an init system, these can become zombies.
+
+  ### Your task
+
+  1. Build the image from `~/spawner/Dockerfile` as `spawner:latest`
+  2. Run a container named `no-init` WITHOUT `--init` (for comparison)
+  3. Run a container named `with-init` WITH `--init`
+  4. Verify that `with-init` has tini/docker-init as PID 1
+
+  ### Useful commands
+
+  ```bash
+  cd ~/spawner && docker build -t spawner:latest .
+  docker run -d --name no-init spawner:latest
+  docker run -d --name with-init --init spawner:latest
+  docker exec with-init ps aux
+  docker exec no-init ps aux
+  ```
+hints:
+  - "Use `--init` flag when running the container"
+  - "Check PID 1 with `docker exec with-init ps aux` - it should show `/sbin/docker-init`"
+  - "The init process reaps zombie children and forwards signals"
+validation:
+  script: validate.sh
+  success_message: "Init process configured! No more zombie processes."
+  failure_message: "Make sure with-init container is running with --init flag."

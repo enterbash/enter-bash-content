@@ -1,0 +1,33 @@
+---
+- name: Manage application service
+  hosts: local
+  become: yes
+  tasks:
+    - name: Create service config directory
+      file:
+        path: /tmp/myservice-conf
+        state: directory
+
+    - name: Write service config
+      copy:
+        content: |
+          [service]
+          name=myservice
+          port=9090
+          workers=4
+        dest: /tmp/myservice-conf/service.conf
+        mode: "0644"
+
+    - name: Start the service
+      service:
+        name: myservice
+        state: started
+
+    - name: Check service status
+      command: myservice status
+      register: service_status
+
+    - name: Write status to file
+      copy:
+        content: "{{ service_status.stdout }}\n"
+        dest: /tmp/myservice-conf/status.txt

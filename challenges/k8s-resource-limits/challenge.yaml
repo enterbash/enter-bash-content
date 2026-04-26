@@ -1,0 +1,53 @@
+name: "Add Resource Limits"
+type: skill
+category: kubernetes
+difficulty: easy
+tags: [kubernetes, resources, limits, requests, pods]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Add Resource Limits to a Pod
+
+  A Pod manifest is missing resource requests and limits. Add them to ensure proper resource management.
+
+  ### What you know
+
+  - The manifest is at `~/pod.yaml`
+  - The pod runs an nginx container
+
+  ### Requirements
+
+  Add the following resource constraints to the container:
+  - CPU request: `100m`
+  - CPU limit: `500m`
+  - Memory request: `128Mi`
+  - Memory limit: `256Mi`
+
+  ### Your task
+
+  1. Edit `~/pod.yaml` to add resource requests and limits
+  2. The manifest must pass `kubectl apply --dry-run=client -f ~/pod.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/pod.yaml
+  ```
+hints:
+  - "Resources go under spec.containers[].resources"
+  - "Use `requests` for minimum guaranteed resources and `limits` for maximum"
+  - "CPU is specified in millicores (m) and memory in mebibytes (Mi)"
+validation:
+  script: validate.sh
+  success_message: "Resource limits are correctly configured!"
+  failure_message: "Resource limits are missing or incorrect."

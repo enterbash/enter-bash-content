@@ -1,0 +1,47 @@
+name: "Configure Bridge Networking"
+type: skill
+category: docker
+difficulty: medium
+tags: [docker, networking, bridge, subnet]
+time_estimate: "15m"
+xp_reward: 150
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Configure Bridge Networking
+
+  Create a custom bridge network with a specific subnet and gateway, then run containers on it.
+
+  ### Your task
+
+  1. Create a bridge network named `appnet` with:
+     - Subnet: `172.20.0.0/16`
+     - Gateway: `172.20.0.1`
+  2. Run an nginx container named `webhost` on `appnet` with IP `172.20.0.10`
+  3. Run an alpine container named `checker` on `appnet` (running `sleep infinity`)
+  4. Verify `checker` can reach `webhost` at `172.20.0.10`
+
+  ### Useful commands
+
+  ```bash
+  docker network create --driver bridge --subnet 172.20.0.0/16 --gateway 172.20.0.1 appnet
+  docker run -d --name webhost --network appnet --ip 172.20.0.10 nginx:alpine
+  docker run -d --name checker --network appnet alpine sleep infinity
+  docker exec checker ping -c 1 172.20.0.10
+  ```
+hints:
+  - "Use `--subnet` and `--gateway` when creating the network"
+  - "Use `--ip` to assign a specific IP to a container"
+  - "Both containers must be on the same network"
+validation:
+  script: validate.sh
+  success_message: "Bridge network configured with custom subnet!"
+  failure_message: "Check the network configuration and container IPs."

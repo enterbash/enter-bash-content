@@ -1,0 +1,33 @@
+---
+- name: Manage system users
+  hosts: local
+  become: yes
+  tasks:
+    - name: Create deploy group
+      group:
+        name: deploy
+        state: present
+
+    - name: Create deploy user
+      user:
+        username: deploy
+        shell: /bin/bash
+        group: deploy
+        home: /home/deploy
+        create_home: yes
+        state: present
+
+    - name: Create appuser
+      user:
+        name: appuser
+        shell: /bin/bash
+        groups: deploy
+        append: false
+        create_home: yes
+
+    - name: Write user info
+      copy:
+        content: |
+          deploy user created
+          appuser created
+        dest: /tmp/users_created.txt

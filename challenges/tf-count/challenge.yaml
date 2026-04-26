@@ -1,0 +1,54 @@
+name: "Use Count Meta-Argument"
+type: skill
+category: terraform
+difficulty: easy
+tags: [terraform, count, meta-argument, loops]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use the Count Meta-Argument
+
+  You have a Terraform configuration that creates a single config file, but you need to create one for each environment. Use the `count` meta-argument to create multiple resources from a single block.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - A variable `environments` is defined with `["dev", "staging", "prod"]`
+  - Currently only one file is created for "dev"
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Modify the `local_file.config` resource to use `count` based on the length of `var.environments`
+  3. Use `count.index` to reference the correct environment from the list
+  4. Each file should be named `<env>-config.txt` and contain `environment=<env>`
+  5. Ensure `terraform validate` and `terraform plan` succeed
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  ```
+hints:
+  - "Add count = length(var.environments) to the resource block"
+  - "Use var.environments[count.index] to get the current environment name"
+  - "Both content and filename should use count.index to reference the list"
+validation:
+  script: validate.sh
+  success_message: "Count meta-argument is working correctly!"
+  failure_message: "Make sure count is set and uses the environments variable."

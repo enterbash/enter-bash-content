@@ -1,0 +1,60 @@
+name: "Use Conditional Expressions"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, conditionals, ternary, expressions]
+time_estimate: "15m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Terraform Conditional Expressions
+
+  Terraform supports conditional expressions (ternary operator) to make configurations dynamic. Your task is to use conditionals to change behavior based on variables.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - Variables `environment` and `enable_debug` are defined
+  - You need to create resources that behave differently based on these variables
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Create a `local_file` resource named `config`:
+     - If `var.environment == "production"`: content is `"log_level=error\ndebug=false"`
+     - Otherwise: content is `"log_level=debug\ndebug=true"`
+     - Filename: `${path.module}/app-config.txt`
+  3. Create a `local_file` resource named `debug_log`:
+     - Only created when `var.enable_debug` is `true` (use `count = var.enable_debug ? 1 : 0`)
+     - Content: `"Debug logging enabled"`
+     - Filename: `${path.module}/debug.log`
+  4. Ensure `terraform validate` passes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  terraform plan -var="environment=staging" -var="enable_debug=true"
+  ```
+hints:
+  - "Conditional syntax: condition ? true_value : false_value"
+  - "For the config content: var.environment == \"production\" ? \"log_level=error...\" : \"log_level=debug...\""
+  - "For conditional creation: count = var.enable_debug ? 1 : 0"
+validation:
+  script: validate.sh
+  success_message: "Conditional expressions are working correctly!"
+  failure_message: "Check that both resources use conditional logic properly."

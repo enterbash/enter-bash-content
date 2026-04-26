@@ -1,0 +1,20 @@
+---
+- name: Deploy application config
+  hosts: local
+  become: yes
+  vars:
+    app_name: webapp
+    app_port: 8080
+    app_env: production
+    max_connections: 100
+    enable_ssl: true
+  tasks:
+    - name: Create config directory
+      file:
+        path: /tmp/webapp
+        state: directory
+
+    - name: Deploy app config
+      copy:
+        src: templates/app.conf.j2
+        dest: /tmp/webapp/app.conf

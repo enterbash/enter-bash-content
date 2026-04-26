@@ -1,0 +1,46 @@
+name: "Fix Volume Mounts"
+type: skill
+category: kubernetes
+difficulty: easy
+tags: [kubernetes, volumes, mounts, debugging]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Volume Mounts
+
+  A Pod manifest has mismatched volume names between the `volumeMounts` and `volumes` sections.
+
+  ### What you know
+
+  - The manifest is at `~/pod.yaml`
+  - The pod should mount a ConfigMap at `/etc/config` and an emptyDir at `/data`
+
+  ### Your task
+
+  1. Examine `~/pod.yaml` and fix the volume name mismatches
+  2. The `volumeMounts[].name` must match the corresponding `volumes[].name`
+  3. The manifest must pass `kubectl apply --dry-run=client -f ~/pod.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/pod.yaml
+  ```
+hints:
+  - "Each volumeMount.name must exactly match a volume.name"
+  - "Compare the names in volumeMounts with the names in volumes"
+  - "Either rename the volumeMounts or the volumes to match"
+validation:
+  script: validate.sh
+  success_message: "Volume mounts are correctly configured!"
+  failure_message: "Volume mount names still don't match."

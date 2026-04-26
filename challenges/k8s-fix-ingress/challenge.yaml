@@ -1,0 +1,47 @@
+name: "Fix an Ingress Manifest"
+type: skill
+category: kubernetes
+difficulty: medium
+tags: [kubernetes, ingress, networking, debugging]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix the Broken Ingress
+
+  An Ingress manifest has multiple errors. Fix it so it correctly routes traffic.
+
+  ### What you know
+
+  - The manifest is at `~/ingress.yaml`
+  - It should route `app.example.com` traffic to a service called `web-svc` on port 80
+  - It should use the `nginx` ingress class
+  - It should have a path `/` with pathType `Prefix`
+
+  ### Your task
+
+  1. Examine and fix all errors in `~/ingress.yaml`
+  2. The fixed manifest must pass `kubectl apply --dry-run=client -f ~/ingress.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/ingress.yaml
+  ```
+hints:
+  - "Ingress uses apiVersion: networking.k8s.io/v1"
+  - "The backend service must be under `service.name` and `service.port.number` (not the old format)"
+  - "Each path needs a `pathType` field — use `Prefix`"
+validation:
+  script: validate.sh
+  success_message: "Ingress manifest is valid and correctly configured!"
+  failure_message: "The Ingress manifest still has errors."

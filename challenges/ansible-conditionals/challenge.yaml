@@ -1,0 +1,53 @@
+name: "Ansible Conditionals"
+type: skill
+category: ansible
+difficulty: easy
+tags: [ansible, conditionals, when, logic]
+time_estimate: "15m"
+xp_reward: 100
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Ansible Conditionals
+
+  A playbook in `~/ansible-project/playbook.yml` uses `when` conditionals incorrectly. Fix the conditional expressions so the playbook runs properly.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the `when` conditions in the playbook
+  3. The playbook defines a variable `deploy_env` set to `production` and should conditionally create files based on that
+  4. Run the playbook successfully
+
+  ### Key rules for `when`
+
+  - `when` does NOT use `{{ }}` — variables are referenced directly
+  - String comparisons use `==` with quotes: `when: my_var == "value"`
+  - Boolean checks: `when: my_var` or `when: not my_var`
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Remove {{ }} from `when` conditions — they cause double evaluation"
+  - "String comparison: `when: deploy_env == \"production\"`"
+  - "Use `when: enable_logging` for boolean checks, not `when: enable_logging == true`"
+validation:
+  script: validate.sh
+  success_message: "Conditionals are working correctly!"
+  failure_message: "The when conditions still have issues. Remember: no {{ }} in when clauses."

@@ -1,0 +1,25 @@
+---
+- name: Deploy with secrets
+  hosts: local
+  become: yes
+  tasks:
+    - name: Create secrets directory
+      file:
+        path: /tmp/secrets
+        state: directory
+        mode: "0700"
+
+    - name: Write database config
+      copy:
+        content: |
+          db_host=localhost
+          db_password={{ db_password }}
+        dest: /tmp/secrets/db.conf
+        mode: "0600"
+
+    - name: Write API config
+      copy:
+        content: |
+          api_key={{ api_key }}
+        dest: /tmp/secrets/api.conf
+        mode: "0600"

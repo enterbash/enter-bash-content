@@ -1,0 +1,53 @@
+name: "Manage Users and Groups"
+type: skill
+category: linux
+difficulty: medium
+tags: [linux, users, groups, permissions]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Manage Users and Groups
+
+  You need to set up users and groups for a development team. The project requires specific user/group configurations for proper access control.
+
+  ### What you know
+
+  - You need to create a group called `devteam`
+  - Create two users: `alice` and `bob`, both members of `devteam`
+  - Create a shared project directory at `/opt/project` owned by `devteam`
+  - Both users should be able to read/write files in the shared directory
+  - The directory should use the setgid bit so new files inherit the group
+
+  ### Your task
+
+  1. Create the `devteam` group
+  2. Create users `alice` and `bob` with `devteam` as a supplementary group
+  3. Create `/opt/project` with proper ownership and permissions
+  4. Set the setgid bit on the directory
+
+  ### Useful commands
+
+  ```bash
+  sudo groupadd devteam
+  sudo useradd -m -G devteam alice
+  sudo chown :devteam /opt/project
+  sudo chmod g+s /opt/project
+  ```
+hints:
+  - "Create the group first with `sudo groupadd devteam`"
+  - "Create users with `sudo useradd -m -G devteam alice` and same for bob"
+  - "Set directory permissions with `sudo chown :devteam /opt/project && sudo chmod 2775 /opt/project`"
+validation:
+  script: validate.sh
+  success_message: "Users, groups, and shared directory are properly configured!"
+  failure_message: "User/group configuration is not complete yet."

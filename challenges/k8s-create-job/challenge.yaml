@@ -1,0 +1,50 @@
+name: "Create a Job"
+type: skill
+category: kubernetes
+difficulty: easy
+tags: [kubernetes, jobs, batch, workloads]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create a Kubernetes Job
+
+  Create a Job manifest that runs a batch computation task.
+
+  ### Requirements
+
+  - File: `~/job.yaml`
+  - Job name: `data-processor`
+  - Container name: `processor`
+  - Image: `busybox:1.36`
+  - Command: `["sh", "-c", "echo Processing data && sleep 5 && echo Done"]`
+  - Backoff limit: 3
+  - Restart policy: `Never`
+
+  ### Your task
+
+  1. Create `~/job.yaml` with a valid Job manifest
+  2. It must pass `kubectl apply --dry-run=client -f ~/job.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/job.yaml
+  ```
+hints:
+  - "Jobs use apiVersion: batch/v1 and kind: Job"
+  - "The restartPolicy must be set in spec.template.spec (not at the Job level)"
+  - "backoffLimit goes under spec (the Job spec, not the pod spec)"
+validation:
+  script: validate.sh
+  success_message: "Job manifest is valid and correct!"
+  failure_message: "The Job manifest is missing or has errors."

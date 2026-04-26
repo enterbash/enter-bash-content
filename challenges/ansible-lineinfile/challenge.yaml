@@ -1,0 +1,58 @@
+name: "Ansible Lineinfile"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, lineinfile, config, editing]
+time_estimate: "20m"
+xp_reward: 150
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use the Lineinfile Module
+
+  The `lineinfile` module ensures a particular line is in a file, or replaces an existing line using regex. A playbook in `~/ansible-project/playbook.yml` has incorrect lineinfile usage.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. The setup creates a config file at `/tmp/lineinfile-test/app.conf`
+  3. Fix the lineinfile tasks to correctly modify the config
+  4. Run the playbook successfully
+
+  ### Lineinfile syntax
+
+  ```yaml
+  - name: Set port
+    lineinfile:
+      path: /tmp/app.conf
+      regexp: '^port='
+      line: 'port=9090'
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  cat /tmp/lineinfile-test/app.conf
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Use `path:` not `dest:` or `file:` — `path` is the current parameter name"
+  - "The `regexp:` matches the line to replace, `line:` is the replacement"
+  - "Use `insertafter:` or `insertbefore:` to control where new lines are added"
+validation:
+  script: validate.sh
+  success_message: "Lineinfile module working correctly!"
+  failure_message: "Lineinfile issues remain. Check path, regexp, and line parameters."

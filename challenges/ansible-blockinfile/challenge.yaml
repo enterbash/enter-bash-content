@@ -1,0 +1,60 @@
+name: "Ansible Blockinfile"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, blockinfile, config, multiline]
+time_estimate: "20m"
+xp_reward: 150
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use the Blockinfile Module
+
+  The `blockinfile` module inserts, updates, or removes a block of multi-line text surrounded by marker lines. A playbook in `~/ansible-project/playbook.yml` has incorrect blockinfile usage.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. The setup creates a config file at `/tmp/blockinfile-test/nginx.conf`
+  3. Fix the blockinfile tasks to correctly insert configuration blocks
+  4. Run the playbook successfully
+
+  ### Blockinfile syntax
+
+  ```yaml
+  - name: Add server block
+    blockinfile:
+      path: /tmp/nginx.conf
+      marker: "# {mark} MANAGED BLOCK"
+      block: |
+        server {
+          listen 80;
+        }
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Use `path:` not `dest:` for the file path"
+  - "Use `block:` not `content:` for the multi-line text"
+  - "The `marker:` must contain `{mark}` which gets replaced with BEGIN/END"
+validation:
+  script: validate.sh
+  success_message: "Blockinfile module working correctly!"
+  failure_message: "Blockinfile issues remain. Check block and marker parameters."

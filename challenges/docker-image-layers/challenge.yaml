@@ -1,0 +1,60 @@
+name: "Optimize Docker Image Layers"
+type: skill
+category: docker
+difficulty: medium
+tags: [docker, optimization, layers, dockerfile]
+time_estimate: "15m"
+xp_reward: 150
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Optimize Docker Image Layers
+
+  A Dockerfile at `~/bloated/Dockerfile` creates an unnecessarily large image. Your task is to optimize it.
+
+  ### Scenario
+
+  The current Dockerfile:
+  - Runs `apt-get update` and `apt-get install` in separate RUN commands
+  - Doesn't clean up apt cache
+  - Copies files before installing dependencies (breaking cache)
+  - Has unnecessary layers
+
+  ### Your task
+
+  1. Read the Dockerfile at `~/bloated/Dockerfile`
+  2. Optimize it to reduce the number of layers and image size
+  3. Build the optimized image as `optimized:latest`
+  4. The image must be smaller than the original `bloated:latest` image
+
+  ### Optimization tips
+
+  - Combine RUN commands with `&&`
+  - Clean up apt cache in the same layer: `rm -rf /var/lib/apt/lists/*`
+  - Copy dependency files before source code
+  - Use `.dockerignore` if needed
+
+  ### Useful commands
+
+  ```bash
+  cat ~/bloated/Dockerfile
+  docker images bloated
+  cd ~/bloated && docker build -t optimized:latest .
+  docker images optimized
+  ```
+hints:
+  - "Combine the apt-get update and install into a single RUN command"
+  - "Add `&& rm -rf /var/lib/apt/lists/*` at the end of the apt-get RUN command"
+  - "Move COPY of requirements before COPY of source code for better layer caching"
+validation:
+  script: validate.sh
+  success_message: "Image optimized! Great job reducing those layers."
+  failure_message: "The optimized image doesn't exist or isn't smaller than the original."

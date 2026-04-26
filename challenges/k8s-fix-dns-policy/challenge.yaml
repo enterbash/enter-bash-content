@@ -1,0 +1,54 @@
+name: "Fix DNS Policy"
+type: skill
+category: kubernetes
+difficulty: medium
+tags: [kubernetes, dns, networking, debugging]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix DNS Policy in a Pod
+
+  A Pod manifest has the wrong DNS policy and is missing custom DNS configuration.
+
+  ### What you know
+
+  - The manifest is at `~/pod.yaml`
+  - The pod currently uses `dnsPolicy: Default` which uses the node's DNS
+  - The pod needs to use a custom DNS server while still being able to resolve cluster services
+
+  ### Requirements
+
+  - Change `dnsPolicy` to `None`
+  - Add a `dnsConfig` section with:
+    - Nameservers: `8.8.8.8` and `8.8.4.4`
+    - Search domains: `svc.cluster.local` and `cluster.local`
+    - Options: `ndots` with value `"5"`
+
+  ### Your task
+
+  1. Edit `~/pod.yaml` to fix the DNS configuration
+  2. The manifest must pass `kubectl apply --dry-run=client -f ~/pod.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/pod.yaml
+  ```
+hints:
+  - "dnsPolicy: None requires a dnsConfig section"
+  - "dnsConfig goes under spec (same level as containers)"
+  - "nameservers, searches, and options are the three dnsConfig fields"
+validation:
+  script: validate.sh
+  success_message: "DNS policy is correctly configured!"
+  failure_message: "DNS configuration still has errors."

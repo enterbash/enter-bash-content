@@ -1,0 +1,49 @@
+name: "Link Containers (Legacy)"
+type: skill
+category: docker
+difficulty: medium
+tags: [docker, linking, legacy, networking]
+time_estimate: "15m"
+xp_reward: 100
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Link Containers (Legacy)
+
+  Docker's `--link` flag is a legacy feature for connecting containers. While custom networks are preferred today, understanding links helps when working with older setups.
+
+  ### Scenario
+
+  You need to set up two containers where one can access the other using Docker's legacy linking.
+
+  ### Your task
+
+  1. Run a container named `redis-server` using `redis:alpine`
+  2. Run a container named `redis-client` linked to `redis-server` with alias `db`
+  3. The client should be an alpine container running `sleep infinity`
+  4. Verify the link works: the client should be able to ping `db`
+
+  ### Useful commands
+
+  ```bash
+  docker run -d --name redis-server redis:alpine
+  docker run -d --name redis-client --link redis-server:db alpine sleep infinity
+  docker exec redis-client ping -c 1 db
+  docker exec redis-client env | grep DB_
+  ```
+hints:
+  - "Start the server first, then link the client to it"
+  - "Use `--link CONTAINER:ALIAS` to create the link"
+  - "The link creates environment variables and /etc/hosts entries"
+validation:
+  script: validate.sh
+  success_message: "Containers linked! Legacy linking working."
+  failure_message: "Check that both containers are running and the link is configured."

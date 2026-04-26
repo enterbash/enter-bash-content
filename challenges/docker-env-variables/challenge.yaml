@@ -1,0 +1,47 @@
+name: "Pass Environment Variables to Containers"
+type: skill
+category: docker
+difficulty: easy
+tags: [docker, environment, variables, configuration]
+time_estimate: "10m"
+xp_reward: 75
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Pass Environment Variables to Containers
+
+  You need to run a container with specific environment variables set.
+
+  ### Your task
+
+  1. Run an alpine container named `envbox` with the following environment variables:
+     - `APP_ENV=production`
+     - `APP_PORT=3000`
+     - `APP_DEBUG=false`
+  2. The container should run `sleep infinity`
+  3. Also create an env file at `~/app.env` with `DB_HOST=localhost` and `DB_PORT=5432`
+  4. Run a second container named `envbox2` using the env file
+
+  ### Useful commands
+
+  ```bash
+  docker run -d --name envbox -e APP_ENV=production -e APP_PORT=3000 -e APP_DEBUG=false alpine sleep infinity
+  docker exec envbox env
+  docker run -d --name envbox2 --env-file ~/app.env alpine sleep infinity
+  ```
+hints:
+  - "Use `-e KEY=VALUE` to set individual environment variables"
+  - "Use `--env-file` to load variables from a file"
+  - "Create ~/app.env with one KEY=VALUE per line"
+validation:
+  script: validate.sh
+  success_message: "Environment variables set correctly in both containers!"
+  failure_message: "Check that both containers have the correct environment variables."

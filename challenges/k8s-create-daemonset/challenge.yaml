@@ -1,0 +1,50 @@
+name: "Create a DaemonSet"
+type: skill
+category: kubernetes
+difficulty: medium
+tags: [kubernetes, daemonset, workloads, monitoring]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create a DaemonSet
+
+  Create a DaemonSet manifest for a log collector that runs on every node.
+
+  ### Requirements
+
+  - File: `~/daemonset.yaml`
+  - DaemonSet name: `log-collector`
+  - Container name: `fluentd`
+  - Image: `fluentd:v1.16`
+  - Labels (on DaemonSet and pod template): `app: log-collector`
+  - Volume mount: mount the host path `/var/log` to `/var/log` in the container (read-only)
+  - Resource limits: CPU `200m`, Memory `256Mi`
+
+  ### Your task
+
+  1. Create `~/daemonset.yaml` with a valid DaemonSet manifest
+  2. It must pass `kubectl apply --dry-run=client -f ~/daemonset.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/daemonset.yaml
+  ```
+hints:
+  - "DaemonSets use apiVersion: apps/v1 and kind: DaemonSet"
+  - "Use a hostPath volume to mount /var/log from the node"
+  - "Set readOnly: true on the volumeMount"
+validation:
+  script: validate.sh
+  success_message: "DaemonSet manifest is valid and correct!"
+  failure_message: "The DaemonSet manifest is missing or has errors."

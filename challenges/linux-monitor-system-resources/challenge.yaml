@@ -1,0 +1,55 @@
+name: "Monitor System Resources"
+type: skill
+category: linux
+difficulty: medium
+tags: [linux, monitoring, performance, processes]
+time_estimate: "15m"
+xp_reward: 100
+packages: [procps, sysstat]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Monitor System Resources
+
+  The system is experiencing performance issues. Multiple rogue processes are consuming excessive resources. You need to identify them and create a system health report.
+
+  ### What you know
+
+  - Several processes are consuming excessive CPU and memory
+  - The processes have recognizable names containing "leak" or "hog"
+  - You need to kill all rogue processes
+  - Create a system report at `/home/runner/system-report.txt`
+
+  ### Your task
+
+  1. Use `ps`, `top`, or similar tools to identify resource-hogging processes
+  2. Kill all processes with "leak" or "hog" in their name
+  3. Create a system report at `/home/runner/system-report.txt` containing:
+     - Output of `free -h` (memory usage)
+     - Output of `df -h` (disk usage)
+     - Output of `uptime` (load average)
+
+  ### Useful commands
+
+  ```bash
+  ps aux --sort=-%cpu | head -20
+  top -bn1
+  free -h
+  df -h
+  pkill -f "pattern"
+  ```
+hints:
+  - "Use `ps aux | grep -E 'leak|hog'` to find the rogue processes"
+  - "Kill them with `pkill -f mem_leak && pkill -f cpu_hog`"
+  - "Create the report with `{ free -h; echo '---'; df -h; echo '---'; uptime; } > ~/system-report.txt`"
+validation:
+  script: validate.sh
+  success_message: "Rogue processes killed and system report created!"
+  failure_message: "Rogue processes are still running or the system report is missing."

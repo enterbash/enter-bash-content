@@ -1,0 +1,30 @@
+---
+- name: Deploy with delegation
+  hosts: webservers
+  become: yes
+  tasks:
+    - name: Create deploy directory
+      file:
+        path: /tmp/delegation-test
+        state: directory
+
+    - name: Deploy app config
+      copy:
+        content: |
+          [app]
+          version=1.0
+          deployed=true
+        dest: /tmp/delegation-test/app.conf
+
+    - name: Log deployment to monitoring server
+      copy:
+        content: "deployed version 1.0 at {{ ansible_date_time.iso8601 }}\n"
+        dest: /tmp/delegation-test/deploy.log
+        delegate_to: localhost
+
+    - name: Notify monitoring
+      copy:
+        content: "monitoring notified\n"
+        dest: /tmp/delegation-test/monitoring.txt
+      delegate_to: localhost
+      run_once: yes

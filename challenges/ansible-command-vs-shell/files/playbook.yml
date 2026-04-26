@@ -1,0 +1,30 @@
+---
+- name: Command vs Shell usage
+  hosts: local
+  become: yes
+  tasks:
+    - name: Create output directory
+      file:
+        path: /tmp/cmdshell
+        state: directory
+
+    - name: Get hostname (simple command)
+      shell: hostname
+      register: host_result
+
+    - name: Write hostname to file using redirect
+      command: echo "{{ host_result.stdout }}" > /tmp/cmdshell/hostname.txt
+
+    - name: Get disk usage with pipe
+      command: df -h | head -5
+      register: disk_result
+
+    - name: Write disk info
+      shell: echo "{{ disk_result.stdout }}" > /tmp/cmdshell/disk.txt
+
+    - name: Count files in tmp
+      command: ls /tmp | wc -l
+      register: count_result
+
+    - name: Write summary using env var
+      command: echo "user=$USER files={{ count_result.stdout }}" > /tmp/cmdshell/summary.txt

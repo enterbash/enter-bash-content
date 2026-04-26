@@ -1,0 +1,60 @@
+name: "Ansible Loops"
+type: skill
+category: ansible
+difficulty: easy
+tags: [ansible, loops, loop, with_items, iteration]
+time_estimate: "15m"
+xp_reward: 100
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Ansible Loops
+
+  A playbook in `~/ansible-project/playbook.yml` needs to create multiple directories and files using loops, but the loop syntax is broken.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the loop syntax in the playbook
+  3. The playbook should create directories for three apps and a config file for each
+  4. Run the playbook successfully
+
+  ### Loop syntax
+
+  Modern Ansible uses `loop` (not `with_items`):
+  ```yaml
+  - name: Create dirs
+    file:
+      path: "/tmp/{{ item }}"
+      state: directory
+    loop:
+      - app1
+      - app2
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Use `loop:` with a list, or `with_items:` — but not both"
+  - "Reference the current item with `{{ item }}`, not `{{ items }}` or `{{ loop }}`"
+  - "For dict loops, access keys with `{{ item.key }}` and values with `{{ item.value }}`"
+validation:
+  script: validate.sh
+  success_message: "Loops are working — all directories and files created!"
+  failure_message: "Loop syntax still has issues. Check `loop:` and `{{ item }}` references."

@@ -1,0 +1,51 @@
+name: "Create a Deployment"
+type: skill
+category: kubernetes
+difficulty: easy
+tags: [kubernetes, deployments, pods, containers]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create a Deployment from Scratch
+
+  Create a Kubernetes Deployment manifest that meets the following requirements.
+
+  ### Requirements
+
+  - File: `~/deployment.yaml`
+  - Deployment name: `nginx-deploy`
+  - Replicas: 3
+  - Container name: `nginx`
+  - Image: `nginx:1.25`
+  - Container port: 80
+  - Labels on both the Deployment and pod template: `app: nginx`
+
+  ### Your task
+
+  1. Create the file `~/deployment.yaml` with a valid Deployment manifest
+  2. Ensure it passes `kubectl apply --dry-run=client -f ~/deployment.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl create deployment --help
+  kubectl apply --dry-run=client -f ~/deployment.yaml
+  ```
+hints:
+  - "Use apiVersion: apps/v1 for Deployments"
+  - "The spec.selector.matchLabels must match the pod template labels"
+  - "Don't forget the metadata.labels and spec.template.metadata.labels sections"
+validation:
+  script: validate.sh
+  success_message: "Deployment manifest is valid and meets all requirements!"
+  failure_message: "The Deployment manifest is missing or doesn't meet the requirements."

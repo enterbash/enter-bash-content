@@ -1,0 +1,61 @@
+name: "Ansible Serial (Rolling Updates)"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, serial, rolling-update, deployment]
+time_estimate: "20m"
+xp_reward: 150
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Serial for Rolling Updates
+
+  The `serial` keyword controls how many hosts Ansible processes at a time. A playbook in `~/ansible-project/playbook.yml` needs serial configuration for a rolling deployment.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Add `serial` to the play to process hosts in batches
+  3. The playbook should deploy to hosts one at a time (serial: 1)
+  4. Run the playbook successfully
+
+  ### Serial syntax
+
+  ```yaml
+  - hosts: webservers
+    serial: 1
+    tasks: ...
+  ```
+
+  You can also use percentages or lists:
+  ```yaml
+  serial: "30%"
+  serial: [1, 5, "100%"]
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Add `serial: 1` at the play level (same level as `hosts:`)"
+  - "Serial controls batch size — `1` means one host at a time"
+  - "Use `max_fail_percentage` with serial to control failure tolerance"
+validation:
+  script: validate.sh
+  success_message: "Serial rolling update configured correctly!"
+  failure_message: "Serial configuration issues. Add serial at the play level."

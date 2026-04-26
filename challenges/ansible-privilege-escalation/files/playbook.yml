@@ -1,0 +1,30 @@
+---
+- name: Privilege escalation demo
+  hosts: local
+  sudo: yes
+  tasks:
+    - name: Create root-owned directory
+      file:
+        path: /tmp/priv-test
+        state: directory
+        owner: root
+        mode: "0755"
+
+    - name: Write root info
+      shell: whoami > /tmp/priv-test/root_user.txt
+
+    - name: Create deploy directory
+      file:
+        path: /tmp/priv-test/deploy
+        state: directory
+        owner: deploy
+        mode: "0755"
+
+    - name: Write deploy user info
+      shell: whoami > /tmp/priv-test/deploy_user.txt
+      become_as: deploy
+
+    - name: Write final status
+      copy:
+        content: "privilege escalation configured\n"
+        dest: /tmp/priv-test/status.txt

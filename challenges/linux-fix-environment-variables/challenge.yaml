@@ -1,0 +1,55 @@
+name: "Fix Environment Variables"
+type: skill
+category: linux
+difficulty: easy
+tags: [linux, environment, bash, PATH]
+time_estimate: "10m"
+xp_reward: 75
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Environment Variables
+
+  An application fails to start because its environment variables are misconfigured. The PATH is broken and required variables are missing.
+
+  ### What you know
+
+  - The app startup script is at `/home/runner/app/start.sh`
+  - It requires `APP_HOME`, `APP_PORT`, and `APP_ENV` environment variables
+  - The PATH has been broken — standard commands like `ls` may not work
+  - The correct values are:
+    - `APP_HOME=/home/runner/app`
+    - `APP_PORT=3000`
+    - `APP_ENV=production`
+
+  ### Your task
+
+  1. Fix the PATH so standard commands work (restore `/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin`)
+  2. Set the required environment variables in `/home/runner/.bashrc`
+  3. Also export them in the current shell
+  4. Run the app startup script to verify
+
+  ### Useful commands
+
+  ```bash
+  echo $PATH
+  export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+  export APP_HOME=/home/runner/app
+  echo 'export VAR=value' >> ~/.bashrc
+  ```
+hints:
+  - "Fix PATH first: `export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin`"
+  - "Set the variables: `export APP_HOME=/home/runner/app APP_PORT=3000 APP_ENV=production`"
+  - "Add them to ~/.bashrc so they persist, then run ~/app/start.sh"
+validation:
+  script: validate.sh
+  success_message: "Environment variables are correctly configured!"
+  failure_message: "Environment variables are still missing or incorrect."

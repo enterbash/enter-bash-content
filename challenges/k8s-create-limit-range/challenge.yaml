@@ -1,0 +1,50 @@
+name: "Create a LimitRange"
+type: skill
+category: kubernetes
+difficulty: medium
+tags: [kubernetes, limit-range, resources, namespaces]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create a LimitRange
+
+  Create a LimitRange that sets default resource constraints for containers in a namespace.
+
+  ### Requirements
+
+  - File: `~/limitrange.yaml`
+  - Name: `default-limits`
+  - Type: `Container`
+  - Default limits: CPU `500m`, Memory `512Mi`
+  - Default requests: CPU `100m`, Memory `128Mi`
+  - Max limits: CPU `2`, Memory `2Gi`
+  - Min limits: CPU `50m`, Memory `64Mi`
+
+  ### Your task
+
+  1. Create `~/limitrange.yaml` with a valid LimitRange manifest
+  2. It must pass `kubectl apply --dry-run=client -f ~/limitrange.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/limitrange.yaml
+  ```
+hints:
+  - "LimitRange uses apiVersion: v1 and kind: LimitRange"
+  - "Limits are defined under spec.limits as an array"
+  - "Each entry has type, default, defaultRequest, max, and min fields"
+validation:
+  script: validate.sh
+  success_message: "LimitRange is correctly configured!"
+  failure_message: "The LimitRange manifest is missing or has errors."

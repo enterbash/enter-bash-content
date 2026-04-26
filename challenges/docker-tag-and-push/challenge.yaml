@@ -1,0 +1,50 @@
+name: "Tag Docker Images"
+type: skill
+category: docker
+difficulty: easy
+tags: [docker, tag, images, registry]
+time_estimate: "10m"
+xp_reward: 75
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Tag Docker Images
+
+  You need to properly tag Docker images for versioning and organization.
+
+  ### Scenario
+
+  An image `tagme:latest` has been built. You need to create proper version tags for it.
+
+  ### Your task
+
+  1. Tag the `tagme:latest` image as `tagme:v1.0`
+  2. Tag it as `tagme:v1.0.0`
+  3. Tag it as `myregistry/tagme:v1.0` (simulating a registry prefix)
+  4. Verify all tags exist with `docker images tagme`
+
+  ### Useful commands
+
+  ```bash
+  docker images tagme
+  docker tag tagme:latest tagme:v1.0
+  docker tag tagme:latest tagme:v1.0.0
+  docker tag tagme:latest myregistry/tagme:v1.0
+  docker images | grep tagme
+  ```
+hints:
+  - "Use `docker tag SOURCE:TAG TARGET:TAG` to create new tags"
+  - "Tags are just pointers to the same image - they don't copy data"
+  - "Registry prefixes are just part of the tag name"
+validation:
+  script: validate.sh
+  success_message: "Images tagged correctly! Ready for versioning."
+  failure_message: "Not all required tags were found. Check your tagging commands."

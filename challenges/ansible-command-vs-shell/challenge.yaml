@@ -1,0 +1,53 @@
+name: "Command vs Shell Module"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, command, shell, execution]
+time_estimate: "20m"
+xp_reward: 150
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Command vs Shell Module
+
+  The `command` module runs commands without a shell (no pipes, redirects, or env vars). The `shell` module runs through `/bin/sh`. A playbook in `~/ansible-project/playbook.yml` uses the wrong module for each task.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix each task to use the correct module (`command` or `shell`)
+  3. Tasks using pipes, redirects, or shell features need `shell`
+  4. Simple commands should use `command` (more secure)
+  5. Run the playbook successfully
+
+  ### When to use which
+
+  - `command` — simple commands: `ls /tmp`, `whoami`, `date`
+  - `shell` — needs shell features: `echo "hi" > file`, `cat file | grep x`, `$HOME`
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Pipes (`|`) and redirects (`>`) require the `shell` module"
+  - "Environment variables like `$HOME` require the `shell` module"
+  - "Simple commands like `hostname` or `date` should use `command`"
+validation:
+  script: validate.sh
+  success_message: "Command and shell modules used correctly!"
+  failure_message: "Module choice issues remain. Check which tasks need shell features."

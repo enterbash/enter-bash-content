@@ -1,0 +1,57 @@
+name: "Ansible Package Module"
+type: skill
+category: ansible
+difficulty: easy
+tags: [ansible, apt, package, install]
+time_estimate: "15m"
+xp_reward: 100
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Install Packages with Ansible
+
+  The `apt` module manages packages on Debian/Ubuntu. A playbook in `~/ansible-project/playbook.yml` has incorrect package installation tasks.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the package installation tasks
+  3. The playbook should install `curl`, `jq`, and `tree` using the `apt` module
+  4. Run the playbook successfully
+
+  ### apt module syntax
+
+  ```yaml
+  - name: Install package
+    apt:
+      name: curl
+      state: present
+      update_cache: yes
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Use `state: present` not `state: installed` — that's the yum syntax"
+  - "You can install multiple packages with a list: `name: [curl, jq, tree]`"
+  - "Use `update_cache: yes` to run apt-get update first"
+validation:
+  script: validate.sh
+  success_message: "Packages installed correctly!"
+  failure_message: "Package installation issues remain. Check apt module parameters."

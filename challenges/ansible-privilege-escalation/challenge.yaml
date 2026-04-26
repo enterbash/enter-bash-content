@@ -1,0 +1,63 @@
+name: "Ansible Privilege Escalation"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, become, sudo, privilege-escalation]
+time_estimate: "20m"
+xp_reward: 150
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Configure Ansible Privilege Escalation
+
+  Ansible uses `become` to run tasks with elevated privileges. A playbook in `~/ansible-project/playbook.yml` has incorrect privilege escalation settings.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the `become` directives in the playbook
+  3. Some tasks need root, others should run as a specific user
+  4. Run the playbook successfully
+
+  ### Become syntax
+
+  ```yaml
+  - hosts: all
+    become: yes           # Enable privilege escalation
+    become_method: sudo   # Method (default: sudo)
+    become_user: root     # Target user (default: root)
+    tasks:
+      - name: Run as root
+        command: whoami
+
+      - name: Run as deploy user
+        command: whoami
+        become_user: deploy
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Use `become: yes` not `sudo: yes` — sudo is deprecated"
+  - "Use `become_user:` not `become_as:` or `sudo_user:`"
+  - "Set `become: yes` at play level, override with `become: no` on specific tasks"
+validation:
+  script: validate.sh
+  success_message: "Privilege escalation configured correctly!"
+  failure_message: "Become configuration issues. Check become/become_user syntax."

@@ -1,0 +1,48 @@
+name: "Fix Tolerations and Taints"
+type: skill
+category: kubernetes
+difficulty: hard
+tags: [kubernetes, tolerations, taints, scheduling]
+time_estimate: "25m"
+xp_reward: 200
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Tolerations and Taints
+
+  A Pod manifest has incorrect tolerations that won't match the node taints. Fix them.
+
+  ### What you know
+
+  - The manifest is at `~/pod.yaml`
+  - The pod needs to run on nodes with these taints:
+    - `dedicated=gpu:NoSchedule`
+    - `maintenance:NoExecute` (tolerate for 3600 seconds)
+
+  ### Your task
+
+  1. Fix the tolerations in `~/pod.yaml`
+  2. The manifest must pass `kubectl apply --dry-run=client -f ~/pod.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/pod.yaml
+  ```
+hints:
+  - "Tolerations use key, operator, value, and effect fields"
+  - "For key=value:effect, use operator: Equal"
+  - "For key:effect (no value), use operator: Exists"
+  - "tolerationSeconds controls how long to tolerate NoExecute taints"
+validation:
+  script: validate.sh
+  success_message: "Tolerations are correctly configured!"
+  failure_message: "Tolerations still have errors."

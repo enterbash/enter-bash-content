@@ -1,0 +1,55 @@
+name: "Use Override Files"
+type: skill
+category: terraform
+difficulty: hard
+tags: [terraform, override, files, configuration]
+time_estimate: "20m"
+xp_reward: 200
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Terraform Override Files
+
+  Override files (`_override.tf` or `override.tf`) let you override specific settings without modifying the original files. This is useful for local development overrides.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - The `main.tf` has a configuration with `environment = "production"`
+  - You need to create an override file to change settings for local development
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Create a file named `override.tf` (or `main_override.tf`) that:
+     - Overrides the `environment` variable default to `"development"`
+     - Overrides the `random_pet.server` resource to use `length = 3` and `separator = "_"`
+  3. Ensure `terraform validate` passes
+  4. Run `terraform plan` and verify the overrides are applied
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  ```
+hints:
+  - "Override files use the same syntax as regular .tf files"
+  - "Name the file override.tf or main_override.tf"
+  - "Only the specific attributes you define are overridden"
+validation:
+  script: validate.sh
+  success_message: "Override files are properly configured!"
+  failure_message: "Create an override file that changes the variable default and resource attributes."

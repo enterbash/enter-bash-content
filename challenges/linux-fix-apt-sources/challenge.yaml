@@ -1,0 +1,51 @@
+name: "Fix Broken APT Sources"
+type: skill
+category: linux
+difficulty: medium
+tags: [linux, apt, packages, debian]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Broken APT Sources
+
+  The package manager is broken because the APT sources list has been corrupted. You can't install or update any packages.
+
+  ### What you know
+
+  - `apt update` fails with errors
+  - The sources list at `/etc/apt/sources.list` has been corrupted
+  - There are also broken files in `/etc/apt/sources.list.d/`
+  - You need to restore working Ubuntu 24.04 (Noble) sources
+
+  ### Your task
+
+  1. Try `sudo apt update` and observe the errors
+  2. Fix `/etc/apt/sources.list` with valid Ubuntu Noble repositories
+  3. Remove or fix any broken files in `/etc/apt/sources.list.d/`
+  4. Run `sudo apt update` successfully
+
+  ### Useful commands
+
+  ```bash
+  sudo apt update
+  cat /etc/apt/sources.list
+  ls /etc/apt/sources.list.d/
+  ```
+hints:
+  - "Check `/etc/apt/sources.list` — it likely has invalid URLs or syntax errors"
+  - "A minimal working sources.list needs: `deb http://archive.ubuntu.com/ubuntu noble main restricted universe`"
+  - "Remove broken files from `/etc/apt/sources.list.d/` and fix the main sources.list"
+validation:
+  script: validate.sh
+  success_message: "APT sources are fixed and package manager is working!"
+  failure_message: "APT sources are still broken. Run apt update to check."

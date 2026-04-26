@@ -1,0 +1,44 @@
+name: "Build a Docker Image"
+type: skill
+category: docker
+difficulty: easy
+tags: [docker, build, dockerfile, images]
+time_estimate: "10m"
+xp_reward: 75
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Build a Docker Image
+
+  A project directory has been set up at `~/myapp` with a simple Python application and a Dockerfile.
+
+  ### Your task
+
+  1. Navigate to `~/myapp`
+  2. Build a Docker image from the Dockerfile
+  3. Tag the image as `myapp:latest`
+  4. Verify the image was created with `docker images`
+
+  ### Useful commands
+
+  ```bash
+  cd ~/myapp
+  docker build -t myapp:latest .
+  docker images
+  ```
+hints:
+  - "Navigate to ~/myapp where the Dockerfile is located"
+  - "Use `docker build -t myapp:latest .` to build and tag the image"
+  - "The dot at the end of the build command specifies the build context (current directory)"
+validation:
+  script: validate.sh
+  success_message: "Image built successfully! You've created your first Docker image."
+  failure_message: "The myapp:latest image was not found. Make sure you built and tagged it correctly."

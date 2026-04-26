@@ -1,0 +1,62 @@
+name: "Create a Simple Module"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, modules, reusability, hcl]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+  - source: files/module_main.tf
+    dest: ~/terraform-project/modules/config/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create a Simple Terraform Module
+
+  Modules are reusable packages of Terraform configuration. Your task is to complete a module and call it from the root configuration.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - A module skeleton exists at `~/terraform-project/modules/config/`
+  - The root `main.tf` needs to call this module
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Complete the module at `modules/config/main.tf`:
+     - Define `variable "app_name"` (string)
+     - Define `variable "environment"` (string)
+     - Create a `local_file` resource named `config` with content `"app=<app_name>\nenv=<environment>"`
+     - Define `output "config_path"` that returns the file path
+  3. In the root `main.tf`, call the module:
+     - Use `module "app_config"` with `source = "./modules/config"`
+     - Pass `app_name = "my-service"` and `environment = "production"`
+  4. Add an output `config_file` that references `module.app_config.config_path`
+  5. Ensure `terraform validate` passes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  ```
+hints:
+  - "Module source for local modules: source = \"./modules/config\""
+  - "Module outputs are accessed with module.<name>.<output_name>"
+  - "Don't forget to define variables in the module AND pass them from root"
+validation:
+  script: validate.sh
+  success_message: "Module is properly defined and called!"
+  failure_message: "Check that the module has variables, resources, outputs, and is called from root."

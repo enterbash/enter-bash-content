@@ -1,0 +1,50 @@
+name: "Fix Timezone"
+type: skill
+category: linux
+difficulty: easy
+tags: [linux, timezone, configuration, date]
+time_estimate: "10m"
+xp_reward: 75
+packages: [tzdata]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix the System Timezone
+
+  The server's timezone is set incorrectly. Application logs are showing wrong timestamps. You need to set the timezone to `America/New_York` (US Eastern Time).
+
+  ### What you know
+
+  - The current timezone is wrong (set to UTC+14 or similar)
+  - The correct timezone should be `America/New_York`
+  - Applications depend on the system timezone for logging
+
+  ### Your task
+
+  1. Check the current timezone with `timedatectl` or `date`
+  2. Set the timezone to `America/New_York`
+  3. Verify the change took effect
+
+  ### Useful commands
+
+  ```bash
+  timedatectl
+  timedatectl list-timezones | grep New_York
+  sudo timedatectl set-timezone America/New_York
+  date
+  ```
+hints:
+  - "Check current timezone with `timedatectl` or `cat /etc/timezone`"
+  - "Use `sudo timedatectl set-timezone America/New_York` to set it"
+  - "Alternatively, use `sudo ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime`"
+validation:
+  script: validate.sh
+  success_message: "Timezone is correctly set to America/New_York!"
+  failure_message: "The timezone is not set to America/New_York yet."

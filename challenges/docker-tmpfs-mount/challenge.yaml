@@ -1,0 +1,45 @@
+name: "Use tmpfs Mounts"
+type: skill
+category: docker
+difficulty: medium
+tags: [docker, tmpfs, memory, storage]
+time_estimate: "10m"
+xp_reward: 100
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use tmpfs Mounts
+
+  tmpfs mounts store data in memory only - it's never written to disk. This is useful for sensitive data or high-performance temporary storage.
+
+  ### Your task
+
+  1. Run a container named `tmpbox` with a tmpfs mount at `/app/cache` with size limit of 64MB
+  2. Run a second container named `securebox` with a tmpfs mount at `/run/secrets` with size limit of 1MB
+  3. Verify the tmpfs mounts are working by writing data to them
+  4. Confirm the data doesn't persist after container restart
+
+  ### Useful commands
+
+  ```bash
+  docker run -d --name tmpbox --tmpfs /app/cache:size=64m alpine sleep infinity
+  docker run -d --name securebox --tmpfs /run/secrets:size=1m alpine sleep infinity
+  docker exec tmpbox sh -c 'echo "cached data" > /app/cache/test.txt'
+  docker exec tmpbox df -h /app/cache
+  ```
+hints:
+  - "Use `--tmpfs /path:size=SIZE` to create a tmpfs mount with a size limit"
+  - "tmpfs data lives in memory and is lost when the container stops"
+  - "Check with `df -h` inside the container to verify the mount"
+validation:
+  script: validate.sh
+  success_message: "tmpfs mounts configured correctly!"
+  failure_message: "Check that both containers have tmpfs mounts at the correct paths."

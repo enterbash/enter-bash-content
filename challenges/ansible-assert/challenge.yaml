@@ -1,0 +1,59 @@
+name: "Ansible Assert Module"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, assert, validation, testing]
+time_estimate: "20m"
+xp_reward: 150
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use the Assert Module
+
+  The `assert` module validates conditions and fails the play if they're not met. A playbook in `~/ansible-project/playbook.yml` has broken assert usage.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the assert module syntax in the playbook
+  3. The playbook should validate system conditions and write results
+  4. Run the playbook successfully
+
+  ### Assert syntax
+
+  ```yaml
+  - name: Validate port
+    assert:
+      that:
+        - app_port > 1024
+        - app_port < 65535
+      fail_msg: "Invalid port number"
+      success_msg: "Port is valid"
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Use `that:` with a list of conditions, not `condition:` or `when:`"
+  - "Use `fail_msg:` not `msg:` for the failure message"
+  - "Conditions in `that:` don't use `{{ }}` — they're Jinja2 expressions already"
+validation:
+  script: validate.sh
+  success_message: "Assert module working correctly!"
+  failure_message: "Assert issues remain. Check the that/fail_msg syntax."

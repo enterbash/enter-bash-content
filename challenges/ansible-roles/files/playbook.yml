@@ -1,0 +1,6 @@
+---
+- name: Deploy webapp using role
+  hosts: local
+  become: yes
+  tasks:
+    - include_role: webapp

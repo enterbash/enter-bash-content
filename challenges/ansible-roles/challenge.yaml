@@ -1,0 +1,63 @@
+name: "Ansible Roles"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, roles, structure, organization]
+time_estimate: "25m"
+xp_reward: 200
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create an Ansible Role
+
+  Ansible roles provide a structured way to organize playbooks. You need to create a role called `webapp` and use it from a playbook.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Create the role directory structure for a role named `webapp`
+  3. The role should:
+     - Define a default variable `app_port` set to `3000` in `defaults/main.yml`
+     - Create directory `/tmp/webapp` in `tasks/main.yml`
+     - Create a config file at `/tmp/webapp/config.txt` with the port number
+  4. Fix the playbook to use the role with `roles:`
+  5. Run the playbook successfully
+
+  ### Role directory structure
+
+  ```
+  roles/
+    webapp/
+      tasks/
+        main.yml
+      defaults/
+        main.yml
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  mkdir -p roles/webapp/{tasks,defaults}
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Create the directory structure: `mkdir -p roles/webapp/{tasks,defaults}`"
+  - "Role tasks go in `roles/webapp/tasks/main.yml` — just a list of tasks, no play header"
+  - "Reference the role in the playbook under `roles:` at the play level"
+validation:
+  script: validate.sh
+  success_message: "Role is structured and working correctly!"
+  failure_message: "Role issues remain. Check the directory structure and task definitions."

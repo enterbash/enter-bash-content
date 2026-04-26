@@ -1,0 +1,58 @@
+name: "Use try and can Functions"
+type: skill
+category: terraform
+difficulty: hard
+tags: [terraform, try, can, functions, error-handling]
+time_estimate: "20m"
+xp_reward: 200
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use try and can Functions
+
+  The `try` function evaluates expressions and returns the first one that doesn't error. The `can` function returns true if an expression evaluates without error. These are useful for handling optional or variable-shaped data.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - A variable `config` contains a complex object that may have optional fields
+  - You need to safely access potentially missing fields
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. In the `locals` block, use `try()` to safely access:
+     - `app_name`: try `var.config.app.name`, fallback to `"default-app"`
+     - `app_port`: try `var.config.app.port`, fallback to `8080`
+     - `db_host`: try `var.config.database.host`, fallback to `"localhost"`
+  3. Use `can()` in the local `has_database`:
+     - `can(var.config.database.host)` — returns true if database config exists
+  4. Create a `local_file` resource using these locals
+  5. Ensure `terraform validate` passes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  ```
+hints:
+  - "try syntax: try(expression, fallback_value)"
+  - "can syntax: can(expression) — returns bool"
+  - "try can chain multiple expressions: try(expr1, expr2, default)"
+validation:
+  script: validate.sh
+  success_message: "try and can functions are properly used!"
+  failure_message: "Make sure locals use try() with fallbacks and can() for boolean checks."

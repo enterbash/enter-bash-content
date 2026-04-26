@@ -1,0 +1,60 @@
+name: "Ansible Callback Plugins"
+type: skill
+category: ansible
+difficulty: hard
+tags: [ansible, callback, plugins, output]
+time_estimate: "25m"
+xp_reward: 200
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+  - source: files/ansible.cfg
+    dest: ~/ansible-project/ansible.cfg
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Configure Ansible Callback Plugins
+
+  Callback plugins control Ansible's output format. An `ansible.cfg` in `~/ansible-project/` has incorrect callback configuration.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the `ansible.cfg` to configure callback plugins correctly
+  3. Enable the `timer` and `profile_tasks` callback plugins
+  4. Set the stdout callback to `yaml`
+  5. Run the playbook successfully
+
+  ### ansible.cfg callback settings
+
+  ```ini
+  [defaults]
+  stdout_callback = yaml
+  callback_whitelist = timer, profile_tasks
+  ```
+
+  Note: In newer Ansible versions, `callback_whitelist` is renamed to `callbacks_enabled`.
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Use `stdout_callback` not `stdout_plugin` in ansible.cfg"
+  - "Use `callbacks_enabled` (or `callback_whitelist`) for additional callbacks"
+  - "The config goes under `[defaults]` section"
+validation:
+  script: validate.sh
+  success_message: "Callback plugins configured correctly!"
+  failure_message: "Callback configuration issues. Check ansible.cfg settings."

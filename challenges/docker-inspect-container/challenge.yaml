@@ -1,0 +1,51 @@
+name: "Use Docker Inspect to Find Information"
+type: skill
+category: docker
+difficulty: easy
+tags: [docker, inspect, debugging, metadata]
+time_estimate: "10m"
+xp_reward: 75
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Docker Inspect to Find Information
+
+  Use `docker inspect` to extract specific information about containers and images.
+
+  ### Scenario
+
+  A container named `mystery` is running. You need to find specific details about it.
+
+  ### Your task
+
+  Create a file `~/report.txt` with the following information (one per line):
+  1. The container's IP address
+  2. The container's MAC address
+  3. The image used to create the container
+  4. The container's hostname
+
+  ### Useful commands
+
+  ```bash
+  docker inspect mystery
+  docker inspect mystery --format '{{.NetworkSettings.IPAddress}}'
+  docker inspect mystery --format '{{range .NetworkSettings.Networks}}{{.MacAddress}}{{end}}'
+  docker inspect mystery --format '{{.Config.Image}}'
+  docker inspect mystery --format '{{.Config.Hostname}}'
+  ```
+hints:
+  - "Use `docker inspect mystery` to see all metadata"
+  - "Use `--format` with Go templates to extract specific fields"
+  - "IP is at `.NetworkSettings.IPAddress`, image at `.Config.Image`"
+validation:
+  script: validate.sh
+  success_message: "Report created! You've mastered docker inspect."
+  failure_message: "Check ~/report.txt - it should have 4 lines with the correct info."

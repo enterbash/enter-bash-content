@@ -1,0 +1,52 @@
+name: "Configure Rolling Update Strategy"
+type: skill
+category: kubernetes
+difficulty: medium
+tags: [kubernetes, deployments, rolling-update, strategy]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Configure Rolling Update Strategy
+
+  A Deployment manifest needs a proper rolling update strategy configured.
+
+  ### What you know
+
+  - The manifest is at `~/deployment.yaml`
+  - It currently uses the `Recreate` strategy (causes downtime)
+
+  ### Requirements
+
+  Change the strategy to `RollingUpdate` with:
+  - `maxSurge: 1` (at most 1 extra pod during update)
+  - `maxUnavailable: 0` (zero downtime)
+  - Also add a `minReadySeconds: 10` to the Deployment spec
+
+  ### Your task
+
+  1. Edit `~/deployment.yaml` to configure the rolling update strategy
+  2. The manifest must pass `kubectl apply --dry-run=client -f ~/deployment.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/deployment.yaml
+  ```
+hints:
+  - "Change spec.strategy.type from Recreate to RollingUpdate"
+  - "Add spec.strategy.rollingUpdate with maxSurge and maxUnavailable"
+  - "minReadySeconds goes under spec (same level as replicas)"
+validation:
+  script: validate.sh
+  success_message: "Rolling update strategy is correctly configured!"
+  failure_message: "The rolling update strategy is not configured correctly."

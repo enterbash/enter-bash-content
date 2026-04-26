@@ -1,0 +1,50 @@
+name: "Fix Ansible YAML Syntax"
+type: skill
+category: ansible
+difficulty: easy
+tags: [ansible, yaml, syntax, debugging]
+time_estimate: "15m"
+xp_reward: 100
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix YAML Syntax Errors in Ansible Playbook
+
+  A playbook in `~/ansible-project/playbook.yml` has multiple YAML syntax errors that prevent it from being parsed.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Run `ansible-playbook -i inventory.ini playbook.yml --syntax-check` to see the errors
+  3. Fix all YAML syntax issues in `playbook.yml`
+  4. Run the playbook successfully
+
+  The playbook should create a directory and a file on localhost.
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml --syntax-check
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Check for inconsistent indentation — YAML uses spaces, not tabs"
+  - "Look for missing colons after key names"
+  - "Ensure list items use consistent dash-space formatting"
+validation:
+  script: validate.sh
+  success_message: "All YAML syntax errors fixed — playbook runs clean!"
+  failure_message: "The playbook still has syntax errors. Check indentation and YAML formatting."

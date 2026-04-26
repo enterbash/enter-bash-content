@@ -1,0 +1,56 @@
+name: "Create Output Values"
+type: skill
+category: terraform
+difficulty: easy
+tags: [terraform, outputs, hcl, basics]
+time_estimate: "10m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create Terraform Output Values
+
+  You have a Terraform configuration that creates resources but doesn't expose any output values. Add outputs so that other configurations or users can reference the results.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - Resources are already defined in `main.tf`
+  - No outputs are currently defined
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Add the following output values:
+     - `pet_name` — the ID of the `random_pet.server` resource
+     - `config_path` — the filename of the `local_file.config` resource
+     - `random_number` — the result of the `random_integer.priority` resource, with a description
+  3. Ensure `terraform validate` passes and all outputs are defined
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  terraform output
+  ```
+hints:
+  - "Output syntax: output \"name\" { value = resource_type.resource_name.attribute }"
+  - "Add a description field to the random_number output"
+  - "random_pet exposes .id, local_file exposes .filename, random_integer exposes .result"
+validation:
+  script: validate.sh
+  success_message: "All outputs are properly defined!"
+  failure_message: "Make sure all three outputs are defined with correct values."

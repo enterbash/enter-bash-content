@@ -1,0 +1,19 @@
+---
+- name: Use lookup plugins
+  hosts: local
+  become: yes
+  vars:
+    greeting: "{{ lookup('read', '/tmp/lookup-test/greeting.txt') }}"
+    home_dir: "{{ lookup('environment', 'HOME') }}"
+  tasks:
+    - name: Get file lines
+      set_fact:
+        file_lines: "{{ lookup('lines', '/tmp/lookup-test/lines.txt') }}"
+
+    - name: Write lookup results
+      copy:
+        content: |
+          greeting={{ greeting }}
+          home={{ home_dir }}
+          lines={{ file_lines }}
+        dest: /tmp/lookup-test/results.txt

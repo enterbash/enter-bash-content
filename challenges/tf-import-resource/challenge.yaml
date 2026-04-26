@@ -1,0 +1,55 @@
+name: "Import Existing Resources"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, import, state, migration]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Import Existing Resources into Terraform
+
+  A file was created manually outside of Terraform. You need to bring it under Terraform management by importing it.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - A file `~/terraform-project/app-config.txt` exists with content `app_version=2.1.0`
+  - This file is NOT yet managed by Terraform
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Write a `local_file` resource block named `app_config` in `main.tf` that matches the existing file
+  3. Run `terraform init`
+  4. Import the existing file: `terraform import local_file.app_config ~/terraform-project/app-config.txt`
+  5. Adjust the resource block so `terraform plan` shows no changes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform import <resource_address> <id>
+  terraform state show <resource>
+  terraform plan
+  ```
+hints:
+  - "The import ID for local_file is the file path"
+  - "After import, run `terraform state show local_file.app_config` to see the actual attributes"
+  - "Make sure content and filename match exactly what's in state"
+validation:
+  script: validate.sh
+  success_message: "Resource successfully imported into Terraform!"
+  failure_message: "The resource needs to be imported and plan should show no changes."

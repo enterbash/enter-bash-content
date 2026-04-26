@@ -1,0 +1,53 @@
+name: "Work with Terraform State"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, state, management, cli]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Work with Terraform State
+
+  Terraform state tracks the mapping between your configuration and real resources. You need to perform several state management operations.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - Resources have already been applied and state exists
+  - You need to inspect and manipulate the state
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. List all resources in the state using `terraform state list`
+  3. Rename the `random_pet.server` resource to `random_pet.app_server` in the state using `terraform state mv`
+  4. Update `main.tf` to match the new resource name
+  5. Ensure `terraform plan` shows no changes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform state list
+  terraform state show <resource>
+  terraform state mv <source> <destination>
+  terraform plan
+  ```
+hints:
+  - "Use `terraform state mv random_pet.server random_pet.app_server` to rename in state"
+  - "After renaming in state, update the resource block name in main.tf"
+  - "Also update any references to random_pet.server to random_pet.app_server"
+validation:
+  script: validate.sh
+  success_message: "State management operations completed successfully!"
+  failure_message: "Make sure the resource is renamed in both state and config."

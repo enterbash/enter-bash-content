@@ -1,0 +1,49 @@
+name: "Recover Deleted File"
+type: skill
+category: linux
+difficulty: medium
+tags: [linux, proc, filesystem, recovery]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Recover a Deleted File from /proc
+
+  A critical configuration file has been accidentally deleted, but the process that was reading it is still running. You can recover the file contents from `/proc`.
+
+  ### What you know
+
+  - A process called `config_reader` is still running and has the deleted file open
+  - The original file was at `/home/runner/app/config.json`
+  - The file can be recovered from `/proc/<PID>/fd/` since the process still holds it open
+
+  ### Your task
+
+  1. Find the PID of the `config_reader` process
+  2. Look in `/proc/<PID>/fd/` for the deleted file descriptor
+  3. Copy the file contents back to `/home/runner/app/config.json`
+
+  ### Useful commands
+
+  ```bash
+  ps aux | grep config_reader
+  ls -la /proc/<PID>/fd/
+  cat /proc/<PID>/fd/<FD>
+  ```
+hints:
+  - "Find the PID with `pgrep -f config_reader`"
+  - "List file descriptors with `ls -la /proc/<PID>/fd/` — look for one marked as (deleted)"
+  - "Copy the file with `cp /proc/<PID>/fd/<FD> /home/runner/app/config.json`"
+validation:
+  script: validate.sh
+  success_message: "File recovered successfully!"
+  failure_message: "The config.json file has not been recovered correctly."

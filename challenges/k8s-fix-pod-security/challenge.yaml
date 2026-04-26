@@ -1,0 +1,55 @@
+name: "Fix Pod Security Context"
+type: skill
+category: kubernetes
+difficulty: medium
+tags: [kubernetes, security, pod-security, containers]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Pod Security Context
+
+  A Pod manifest has insecure settings. Fix it to follow security best practices.
+
+  ### What you know
+
+  - The manifest is at `~/pod.yaml`
+  - The pod is currently running as root with privileged mode enabled
+
+  ### Requirements
+
+  Fix the security context to:
+  - Run as non-root user (runAsUser: 1000)
+  - Run as group 1000 (runAsGroup: 1000)
+  - Set `privileged: false`
+  - Set `runAsNonRoot: true`
+  - Set `readOnlyRootFilesystem: true`
+  - Set `allowPrivilegeEscalation: false`
+
+  ### Your task
+
+  1. Edit `~/pod.yaml` to fix the security context
+  2. The manifest must pass `kubectl apply --dry-run=client -f ~/pod.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/pod.yaml
+  ```
+hints:
+  - "securityContext can be set at both pod level and container level"
+  - "runAsNonRoot and runAsUser go in the container's securityContext"
+  - "Set privileged to false and allowPrivilegeEscalation to false"
+validation:
+  script: validate.sh
+  success_message: "Pod security context is correctly configured!"
+  failure_message: "The pod security context still has issues."

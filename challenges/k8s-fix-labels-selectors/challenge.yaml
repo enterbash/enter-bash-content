@@ -1,0 +1,49 @@
+name: "Fix Label Selectors"
+type: skill
+category: kubernetes
+difficulty: easy
+tags: [kubernetes, labels, selectors, debugging]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Label Selectors
+
+  A Deployment and Service have mismatched label selectors. Fix them so they work together.
+
+  ### What you know
+
+  - The Deployment is at `~/deployment.yaml`
+  - The Service is at `~/service.yaml`
+  - The app should use the label `app: api-server`
+  - The Deployment's `spec.selector.matchLabels` must match `spec.template.metadata.labels`
+  - The Service's `spec.selector` must match the Pod template labels
+
+  ### Your task
+
+  1. Fix all label mismatches across both files
+  2. Both must pass `kubectl apply --dry-run=client -f`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/deployment.yaml
+  kubectl apply --dry-run=client -f ~/service.yaml
+  ```
+hints:
+  - "The Deployment selector.matchLabels must exactly match template.metadata.labels"
+  - "The Service selector must match the Pod template labels"
+  - "All three selectors should use `app: api-server`"
+validation:
+  script: validate.sh
+  success_message: "Label selectors are correctly aligned!"
+  failure_message: "Label selectors still have mismatches."

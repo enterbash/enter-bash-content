@@ -1,0 +1,57 @@
+name: "Handle Sensitive Variables"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, sensitive, variables, security]
+time_estimate: "15m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Handle Sensitive Variables
+
+  Terraform can mark variables and outputs as sensitive to prevent their values from being displayed in plan output or logs. Your task is to properly handle sensitive data.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - Two variables contain secrets that should be marked sensitive
+  - You need to create resources and outputs that handle sensitivity correctly
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Mark `db_password` and `api_key` variables as `sensitive = true`
+  3. Create a `local_file` resource named `config` that writes non-sensitive data:
+     - Content: `"app=${var.app_name}\nid=${random_id.suffix.hex}"`
+     - Filename: `${path.module}/config.txt`
+  4. Create output `app_id` with value `"${var.app_name}-${random_id.suffix.hex}"`
+  5. Create output `password_set` marked as `sensitive = true`
+  6. Ensure `terraform validate` passes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  ```
+hints:
+  - "Add sensitive = true inside the variable block"
+  - "Sensitive outputs need sensitive = true in the output block"
+  - "Terraform will show (sensitive value) in plan output for sensitive values"
+validation:
+  script: validate.sh
+  success_message: "Sensitive variables are properly handled!"
+  failure_message: "Make sure both variables and the output are marked as sensitive."

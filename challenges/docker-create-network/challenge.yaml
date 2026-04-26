@@ -1,0 +1,45 @@
+name: "Create Custom Docker Networks"
+type: skill
+category: docker
+difficulty: easy
+tags: [docker, networking, bridge, containers]
+time_estimate: "10m"
+xp_reward: 75
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create Custom Docker Networks
+
+  You need to create a custom Docker network and run two containers that can communicate using container names.
+
+  ### Your task
+
+  1. Create a custom bridge network named `mynet`
+  2. Run an nginx container named `web` on the `mynet` network
+  3. Run an alpine container named `tester` on the `mynet` network (running `sleep infinity`)
+  4. Verify that `tester` can ping `web` by name
+
+  ### Useful commands
+
+  ```bash
+  docker network create mynet
+  docker run -d --name web --network mynet nginx:alpine
+  docker run -d --name tester --network mynet alpine sleep infinity
+  docker exec tester ping -c 1 web
+  ```
+hints:
+  - "Use `docker network create mynet` to create the network"
+  - "Use `--network mynet` when running containers to attach them"
+  - "Containers on the same custom network can resolve each other by name"
+validation:
+  script: validate.sh
+  success_message: "Custom network created and containers can communicate!"
+  failure_message: "Check that both containers are on the mynet network."

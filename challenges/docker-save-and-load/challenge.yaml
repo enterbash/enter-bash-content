@@ -1,0 +1,51 @@
+name: "Save and Load Docker Images"
+type: skill
+category: docker
+difficulty: medium
+tags: [docker, save, load, images, export]
+time_estimate: "15m"
+xp_reward: 100
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Save and Load Docker Images
+
+  Learn to export Docker images to tar files and import them back. This is useful for transferring images without a registry.
+
+  ### Scenario
+
+  An image `savetest:latest` exists. You need to save it to a file and then load it back with a different tag.
+
+  ### Your task
+
+  1. Save the `savetest:latest` image to `~/savetest.tar`
+  2. Remove the original image with `docker rmi savetest:latest`
+  3. Load the image back from `~/savetest.tar`
+  4. Tag the loaded image as `restored:v1`
+  5. Verify the restored image works by running it
+
+  ### Useful commands
+
+  ```bash
+  docker save savetest:latest -o ~/savetest.tar
+  docker rmi savetest:latest
+  docker load -i ~/savetest.tar
+  docker tag savetest:latest restored:v1
+  docker run --rm restored:v1
+  ```
+hints:
+  - "Use `docker save IMAGE -o FILE` to export an image"
+  - "Use `docker load -i FILE` to import an image from a tar file"
+  - "After loading, the original tags are preserved - then add your new tag"
+validation:
+  script: validate.sh
+  success_message: "Image saved and restored successfully!"
+  failure_message: "Check that ~/savetest.tar exists and restored:v1 image is available."

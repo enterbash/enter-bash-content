@@ -1,0 +1,58 @@
+name: "Use null_resource with Triggers"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, null-resource, triggers, provisioners]
+time_estimate: "15m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use null_resource with Triggers
+
+  The `null_resource` is useful for running provisioners that aren't tied to a specific resource. Triggers let you control when the provisioner re-runs.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - You need to create null_resources with triggers
+  - Triggers cause the resource to be recreated when values change
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Create a `null_resource` named `config_generator` with:
+     - A `triggers` block that includes `config_version = var.config_version`
+     - A `local-exec` provisioner that writes the version to a file
+  3. Create a `null_resource` named `always_run` with:
+     - A `triggers` block with `always_run = timestamp()`
+     - A `local-exec` provisioner that echoes the current time
+  4. Ensure `terraform validate` passes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  terraform apply -auto-approve
+  ```
+hints:
+  - "Triggers syntax: triggers = { key = value }"
+  - "timestamp() returns the current time, causing re-run every apply"
+  - "Provisioner runs when triggers change (resource is recreated)"
+validation:
+  script: validate.sh
+  success_message: "null_resource triggers are properly configured!"
+  failure_message: "Check that both null_resources have triggers and provisioners."

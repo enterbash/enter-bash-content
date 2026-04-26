@@ -1,0 +1,52 @@
+name: "Create a ResourceQuota"
+type: skill
+category: kubernetes
+difficulty: medium
+tags: [kubernetes, resource-quota, namespaces, resources]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create a ResourceQuota
+
+  Create a ResourceQuota to limit resource consumption in a namespace.
+
+  ### Requirements
+
+  - File: `~/quota.yaml`
+  - Name: `team-quota`
+  - Hard limits:
+    - `pods: "10"`
+    - `requests.cpu: "4"`
+    - `requests.memory: "8Gi"`
+    - `limits.cpu: "8"`
+    - `limits.memory: "16Gi"`
+    - `services: "5"`
+
+  ### Your task
+
+  1. Create `~/quota.yaml` with a valid ResourceQuota manifest
+  2. It must pass `kubectl apply --dry-run=client -f ~/quota.yaml`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/quota.yaml
+  ```
+hints:
+  - "ResourceQuota uses apiVersion: v1 and kind: ResourceQuota"
+  - "All limits go under spec.hard"
+  - "Values must be strings (quoted)"
+validation:
+  script: validate.sh
+  success_message: "ResourceQuota is correctly configured!"
+  failure_message: "The ResourceQuota manifest is missing or has errors."

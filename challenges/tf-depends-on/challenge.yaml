@@ -1,0 +1,54 @@
+name: "Fix Dependency Ordering"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, depends-on, dependencies, ordering]
+time_estimate: "15m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Terraform Dependency Ordering
+
+  Terraform usually infers dependencies from resource references, but sometimes you need explicit `depends_on` to ensure correct ordering.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - Three resources need to run in a specific order
+  - `create_dir` must run before `app_config`, which must run before `validate_config`
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Add `depends_on = [null_resource.create_dir]` to the `local_file.app_config` resource
+  3. Add `depends_on = [local_file.app_config]` to the `null_resource.validate_config` resource
+  4. Ensure `terraform validate` passes and `terraform apply` succeeds
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  terraform apply -auto-approve
+  ```
+hints:
+  - "depends_on takes a list of resource references: depends_on = [resource_type.name]"
+  - "The directory must exist before writing a file into it"
+  - "The config file must exist before trying to read it"
+validation:
+  script: validate.sh
+  success_message: "Dependencies are properly ordered!"
+  failure_message: "Make sure both depends_on blocks reference the correct resources."

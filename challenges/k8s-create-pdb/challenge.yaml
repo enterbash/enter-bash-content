@@ -1,0 +1,56 @@
+name: "Create a PodDisruptionBudget"
+type: skill
+category: kubernetes
+difficulty: medium
+tags: [kubernetes, pdb, availability, disruption]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create a PodDisruptionBudget
+
+  Create a PodDisruptionBudget (PDB) to ensure high availability during voluntary disruptions.
+
+  ### Requirements
+
+  - File: `~/pdb.yaml`
+  - PDB name: `web-pdb`
+  - Selector: `app: web`
+  - Minimum available: 2
+
+  Also create a matching Deployment:
+  - File: `~/deployment.yaml`
+  - Name: `web`
+  - Replicas: 4
+  - Labels: `app: web`
+  - Image: `nginx:1.25`
+
+  ### Your task
+
+  1. Create `~/pdb.yaml` with the PodDisruptionBudget
+  2. Create `~/deployment.yaml` with the Deployment
+  3. Both must pass `kubectl apply --dry-run=client -f`
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply --dry-run=client -f ~/pdb.yaml
+  kubectl apply --dry-run=client -f ~/deployment.yaml
+  ```
+hints:
+  - "PDB uses apiVersion: policy/v1 and kind: PodDisruptionBudget"
+  - "Use minAvailable or maxUnavailable (not both)"
+  - "The PDB selector must match the Deployment's pod template labels"
+validation:
+  script: validate.sh
+  success_message: "PodDisruptionBudget is correctly configured!"
+  failure_message: "The PDB or Deployment has errors."

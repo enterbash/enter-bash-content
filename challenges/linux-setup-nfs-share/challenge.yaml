@@ -1,0 +1,55 @@
+name: "Set Up NFS Share"
+type: skill
+category: linux
+difficulty: hard
+tags: [linux, nfs, networking, filesystem]
+time_estimate: "20m"
+xp_reward: 150
+packages: [nfs-kernel-server, nfs-common]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Set Up an NFS Share
+
+  You need to configure an NFS server to share a directory and then mount it locally to verify it works.
+
+  ### What you know
+
+  - The directory to share is `/srv/nfs/shared`
+  - It should be exported to all local clients (`localhost`)
+  - The NFS export should allow read-write access
+  - The share should be mounted at `/mnt/nfs-test`
+
+  ### Your task
+
+  1. Create the shared directory `/srv/nfs/shared` with some test files
+  2. Configure `/etc/exports` to export the directory
+  3. Export the shares with `exportfs`
+  4. Start the NFS server
+  5. Mount the share locally at `/mnt/nfs-test`
+  6. Verify you can read files from the mount
+
+  ### Useful commands
+
+  ```bash
+  sudo mkdir -p /srv/nfs/shared
+  sudo nano /etc/exports
+  sudo exportfs -ra
+  sudo service nfs-kernel-server start
+  sudo mount -t nfs localhost:/srv/nfs/shared /mnt/nfs-test
+  ```
+hints:
+  - "Add to /etc/exports: `/srv/nfs/shared localhost(rw,sync,no_subtree_check,no_root_squash)`"
+  - "Run `sudo exportfs -ra` after editing exports, then start the NFS server"
+  - "Mount with `sudo mount -t nfs localhost:/srv/nfs/shared /mnt/nfs-test`"
+validation:
+  script: validate.sh
+  success_message: "NFS share is configured and mounted!"
+  failure_message: "NFS share is not properly configured or mounted."

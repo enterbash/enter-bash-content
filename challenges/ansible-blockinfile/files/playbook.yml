@@ -1,0 +1,29 @@
+---
+- name: Add config blocks
+  hosts: local
+  become: yes
+  tasks:
+    - name: Add upstream block to nginx config
+      blockinfile:
+        dest: /tmp/blockinfile-test/nginx.conf
+        content: |
+          upstream backend {
+              server 127.0.0.1:8080;
+              server 127.0.0.1:8081;
+          }
+        marker: "# MANAGED BLOCK upstream"
+        insertbefore: "^http"
+
+    - name: Add server block inside http
+      blockinfile:
+        path: /tmp/blockinfile-test/nginx.conf
+        block: |
+          server {
+              listen 80;
+              server_name localhost;
+              location / {
+                  proxy_pass http://backend;
+              }
+          }
+        marker: "# {mark} MANAGED BLOCK server"
+        insertafter: "default_type"

@@ -1,0 +1,59 @@
+name: "Ansible Templates"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, templates, jinja2, template-module]
+time_estimate: "20m"
+xp_reward: 150
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+  - source: files/app.conf.j2
+    dest: ~/ansible-project/templates/app.conf.j2
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Jinja2 Templates
+
+  Ansible uses Jinja2 templates to generate dynamic configuration files. A playbook and template in `~/ansible-project/` have issues.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the playbook to use the `template` module (not `copy`) for the `.j2` file
+  3. Fix the Jinja2 template syntax in `templates/app.conf.j2`
+  4. The template should use variables defined in the playbook
+  5. Run the playbook successfully
+
+  ### Template module syntax
+
+  ```yaml
+  - name: Deploy config
+    template:
+      src: templates/myfile.conf.j2
+      dest: /tmp/myfile.conf
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Use `template` module instead of `copy` for .j2 files"
+  - "Jinja2 variables use `{{ var }}`, conditionals use `{% if var %}`"
+  - "Make sure the `src` path is relative to the playbook location"
+validation:
+  script: validate.sh
+  success_message: "Templates are rendering correctly!"
+  failure_message: "Template issues remain. Check Jinja2 syntax and module usage."

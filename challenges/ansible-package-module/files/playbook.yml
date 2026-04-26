@@ -1,0 +1,37 @@
+---
+- name: Install required packages
+  hosts: local
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install curl
+      apt:
+        name: curl
+        state: installed
+
+    - name: Install jq
+      package:
+        name: jq
+        state: latest
+        update_cache: yes
+
+    - name: Install tree
+      apt:
+        pkg: tree
+        state: present
+
+    - name: Verify installations
+      command: "{{ item }} --version"
+      loop:
+        - curl
+        - jq
+        - tree
+      register: versions
+
+    - name: Write version info
+      copy:
+        content: "packages installed successfully\n"
+        dest: /tmp/packages_installed.txt

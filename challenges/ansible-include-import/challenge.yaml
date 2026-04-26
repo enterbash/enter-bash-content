@@ -1,0 +1,64 @@
+name: "Ansible Include and Import Tasks"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, include_tasks, import_tasks, organization]
+time_estimate: "20m"
+xp_reward: 150
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+  - source: files/setup_dirs.yml
+    dest: ~/ansible-project/tasks/setup_dirs.yml
+  - source: files/deploy_app.yml
+    dest: ~/ansible-project/tasks/deploy_app.yml
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use include_tasks and import_tasks
+
+  Ansible lets you split playbooks into reusable task files. A playbook in `~/ansible-project/playbook.yml` has broken include/import syntax.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the playbook to correctly include/import task files from `tasks/`
+  3. The task files are already created — just fix how they're referenced
+  4. Run the playbook successfully
+
+  ### Differences
+
+  - `import_tasks` — static, processed at parse time
+  - `include_tasks` — dynamic, processed at runtime (supports loops/conditionals)
+
+  ### Syntax
+
+  ```yaml
+  tasks:
+    - import_tasks: tasks/setup.yml
+    - include_tasks: tasks/deploy.yml
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Use `import_tasks:` or `include_tasks:` — not `include:` (deprecated)"
+  - "The path is relative to the playbook location"
+  - "import_tasks cannot be used with `when` on the import itself in older versions"
+validation:
+  script: validate.sh
+  success_message: "Task includes and imports working correctly!"
+  failure_message: "Include/import issues remain. Check the task file paths."

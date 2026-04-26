@@ -1,0 +1,57 @@
+name: "Ansible Copy Module"
+type: skill
+category: ansible
+difficulty: easy
+tags: [ansible, copy, module, files]
+time_estimate: "15m"
+xp_reward: 100
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+  - source: files/source_config.txt
+    dest: ~/ansible-project/source_config.txt
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use the Copy Module
+
+  The `copy` module copies files or writes content to remote hosts. A playbook in `~/ansible-project/playbook.yml` has incorrect copy module usage.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the copy module parameters in the playbook
+  3. The playbook should copy a file and create files with inline content
+  4. Run the playbook successfully
+
+  ### Copy module options
+
+  - `src:` — source file path (local)
+  - `dest:` — destination path (required)
+  - `content:` — inline content (mutually exclusive with `src`)
+  - `mode:` — file permissions
+  - `backup: yes` — create backup before overwriting
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "You cannot use `src` and `content` together — pick one"
+  - "`dest` is required for every copy task"
+  - "Use `content:` for inline text, `src:` for copying existing files"
+validation:
+  script: validate.sh
+  success_message: "Copy module used correctly!"
+  failure_message: "Copy module issues remain. Check src/content/dest parameters."

@@ -1,0 +1,51 @@
+name: "Use Docker Logs to Find Issues"
+type: skill
+category: docker
+difficulty: easy
+tags: [docker, logs, debugging, troubleshooting]
+time_estimate: "10m"
+xp_reward: 75
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Docker Logs to Find Issues
+
+  Several containers are running but one has errors. Use `docker logs` to find and fix the issue.
+
+  ### Scenario
+
+  Three containers are running: `app1`, `app2`, and `app3`. One of them is logging errors. You need to find which one and create a report.
+
+  ### Your task
+
+  1. Check the logs of all three containers
+  2. Find which container is logging `ERROR` messages
+  3. Create a file `~/error-report.txt` containing:
+     - Line 1: the name of the failing container
+     - Line 2: the error message from the logs
+
+  ### Useful commands
+
+  ```bash
+  docker logs app1
+  docker logs app2
+  docker logs app3
+  docker logs --tail 10 <container>
+  docker logs --since 1m <container>
+  ```
+hints:
+  - "Run `docker logs` on each container to find which one has ERROR messages"
+  - "Use `docker logs app2` - that's the one with errors"
+  - "Create ~/error-report.txt with the container name on line 1 and the error on line 2"
+validation:
+  script: validate.sh
+  success_message: "Error found and reported! Good log analysis."
+  failure_message: "Check ~/error-report.txt - it should contain the failing container name and error."

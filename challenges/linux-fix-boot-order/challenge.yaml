@@ -1,0 +1,52 @@
+name: "Fix Boot Configuration"
+type: skill
+category: linux
+difficulty: hard
+tags: [linux, grub, boot, configuration]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Boot Configuration
+
+  The GRUB boot configuration has been modified incorrectly. You need to fix the GRUB defaults and regenerate the configuration.
+
+  ### What you know
+
+  - The GRUB defaults file is at `/etc/default/grub`
+  - The timeout has been set to 0 (no menu shown)
+  - The default kernel parameters are missing important options
+  - The configuration needs `quiet splash` in the kernel command line
+
+  ### Your task
+
+  1. Examine the current GRUB configuration at `/etc/default/grub`
+  2. Fix the following issues:
+     - Set `GRUB_TIMEOUT=5` (show menu for 5 seconds)
+     - Set `GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"`
+     - Ensure `GRUB_CMDLINE_LINUX=""` is present (empty, no extra params)
+  3. The fixed config should be syntactically valid
+
+  ### Useful commands
+
+  ```bash
+  cat /etc/default/grub
+  sudo nano /etc/default/grub
+  ```
+hints:
+  - "Check `/etc/default/grub` for the current broken values"
+  - "Set `GRUB_TIMEOUT=5` and `GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash\"`"
+  - "Make sure each line is a valid KEY=VALUE or KEY=\"VALUE\" format"
+validation:
+  script: validate.sh
+  success_message: "GRUB configuration is fixed!"
+  failure_message: "GRUB configuration still has issues."

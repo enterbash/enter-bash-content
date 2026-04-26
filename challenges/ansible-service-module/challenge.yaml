@@ -1,0 +1,48 @@
+name: "Ansible Service Module"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, service, systemd, daemon]
+time_estimate: "20m"
+xp_reward: 150
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Manage Services with Ansible
+
+  The `service` module manages system services. A playbook in `~/ansible-project/playbook.yml` has incorrect service management. Since we're running in a container without systemd, we'll simulate service management using scripts.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. The setup script creates a fake service script at `/usr/local/bin/myservice`
+  3. Fix the playbook to correctly manage the service lifecycle
+  4. The playbook should create a service config, then use `command` to start the service
+  5. Run the playbook successfully
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "In containers without systemd, use `command` module to run service scripts"
+  - "Check the service script at `/usr/local/bin/myservice` to understand its interface"
+  - "The service writes a PID file — check for it to verify it started"
+validation:
+  script: validate.sh
+  success_message: "Service management working correctly!"
+  failure_message: "Service management issues remain. Check the playbook tasks."

@@ -1,0 +1,34 @@
+---
+- name: Create application directories
+  hosts: local
+  become: yes
+  vars:
+    apps:
+      - name: frontend
+        port: 3000
+      - name: backend
+        port: 8080
+      - name: worker
+        port: 9090
+  tasks:
+    - name: Create app directories
+      file:
+        path: "/tmp/apps/{{ items.name }}"
+        state: directory
+        mode: "0755"
+      with_items: apps
+
+    - name: Create config files
+      copy:
+        content: "app={{ item.name }}\nport={{ item.port }}\n"
+        dest: "/tmp/apps/{{ item.name }}/config.txt"
+      loop: {{ apps }}
+
+    - name: Create log directories
+      file:
+        path: "/tmp/apps/{{ item }}/logs"
+        state: directory
+      loop:
+        - frontend
+        - backend
+        - workers

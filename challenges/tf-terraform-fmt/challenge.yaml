@@ -1,0 +1,53 @@
+name: "Fix Terraform Formatting"
+type: skill
+category: terraform
+difficulty: easy
+tags: [terraform, fmt, formatting, style]
+time_estimate: "10m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Terraform Formatting
+
+  Terraform has a built-in formatter (`terraform fmt`) that enforces consistent style. The configuration file has formatting issues that need to be fixed.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - The `main.tf` file has inconsistent formatting
+  - `terraform fmt -check` currently fails
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Run `terraform fmt -check` to see what needs fixing
+  3. Run `terraform fmt` to auto-fix the formatting, or fix it manually
+  4. Ensure `terraform fmt -check` passes (exit code 0)
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform fmt -check
+  terraform fmt -diff
+  terraform fmt
+  ```
+hints:
+  - "terraform fmt will auto-fix formatting — just run it"
+  - "terraform fmt -check returns exit code 0 if already formatted"
+  - "Common issues: inconsistent indentation, missing spaces around ="
+validation:
+  script: validate.sh
+  success_message: "Formatting is clean!"
+  failure_message: "Run terraform fmt to fix the formatting."

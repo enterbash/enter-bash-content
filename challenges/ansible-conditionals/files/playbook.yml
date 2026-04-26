@@ -1,0 +1,26 @@
+---
+- name: Conditional deployment
+  hosts: local
+  become: yes
+  vars:
+    deploy_env: production
+    enable_logging: true
+    app_port: 8080
+  tasks:
+    - name: Create production config
+      copy:
+        content: "env=production\n"
+        dest: /tmp/prod_config.txt
+      when: "{{ deploy_env }} == production"
+
+    - name: Create logging config
+      copy:
+        content: "logging=enabled\n"
+        dest: /tmp/logging.conf
+      when: "{{ enable_logging }} == true"
+
+    - name: Create high-port notice
+      copy:
+        content: "port={{ app_port }}\n"
+        dest: /tmp/port_info.txt
+      when: {{ app_port }} > 1024

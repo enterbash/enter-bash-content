@@ -1,0 +1,61 @@
+name: "Ansible Delegation"
+type: skill
+category: ansible
+difficulty: medium
+tags: [ansible, delegate_to, delegation, localhost]
+time_estimate: "20m"
+xp_reward: 150
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use delegate_to in Ansible
+
+  The `delegate_to` directive runs a task on a different host than the current play target. A playbook in `~/ansible-project/playbook.yml` has incorrect delegation.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. Fix the `delegate_to` usage in the playbook
+  3. The playbook targets the `webservers` group but some tasks should run on localhost
+  4. Run the playbook successfully
+
+  ### delegate_to syntax
+
+  ```yaml
+  - name: Run on localhost
+    command: date
+    delegate_to: localhost
+
+  - name: Write local file
+    copy:
+      content: "deployed"
+      dest: /tmp/deploy.log
+    delegate_to: localhost
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Use `delegate_to: localhost` to run a task on the control node"
+  - "`delegate_to` goes at the task level, not inside module parameters"
+  - "Use `run_once: true` with delegation to avoid running once per host"
+validation:
+  script: validate.sh
+  success_message: "Delegation working correctly!"
+  failure_message: "Delegation issues remain. Check delegate_to placement."

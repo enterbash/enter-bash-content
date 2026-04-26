@@ -1,0 +1,31 @@
+---
+- name: Copy files to destinations
+  hosts: local
+  become: yes
+  tasks:
+    - name: Create target directory
+      file:
+        path: /tmp/copymod
+        state: directory
+
+    - name: Copy config from source
+      copy:
+        src: source_config.txt
+        content: "overridden content"
+        dest: /tmp/copymod/db.conf
+        mode: "0644"
+
+    - name: Create app config with content
+      copy:
+        content: |
+          [app]
+          name=myapp
+          debug=false
+        mode: "0644"
+
+    - name: Create readme file
+      copy:
+        src: source_config.txt
+        dest: /tmp/copymod/readme.txt
+        mode: "0644"
+        owner: root

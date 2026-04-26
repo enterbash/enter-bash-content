@@ -1,0 +1,28 @@
+---
+- name: Modify config with lineinfile
+  hosts: local
+  become: yes
+  tasks:
+    - name: Change port to 9090
+      lineinfile:
+        dest: /tmp/lineinfile-test/app.conf
+        regex: 'port='
+        line: 'port=9090'
+
+    - name: Enable debug mode
+      lineinfile:
+        file: /tmp/lineinfile-test/app.conf
+        regexp: '^debug='
+        replace: 'debug=true'
+
+    - name: Set log level to info
+      lineinfile:
+        path: /tmp/lineinfile-test/app.conf
+        regexp: '^log_level='
+        line: 'log_level=info'
+
+    - name: Add environment line after log_level
+      lineinfile:
+        path: /tmp/lineinfile-test/app.conf
+        line: 'environment=production'
+        insertafter: 'log_level'

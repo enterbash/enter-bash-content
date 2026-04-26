@@ -1,0 +1,56 @@
+name: "Use Local Values"
+type: skill
+category: terraform
+difficulty: easy
+tags: [terraform, locals, hcl, basics]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Terraform Local Values
+
+  The current configuration has repeated values and expressions. Refactor it to use `locals` blocks to reduce duplication and improve readability.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - The configuration has duplicated strings and expressions
+  - You need to extract common values into locals
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Create a `locals` block with:
+     - `project_name` set to `"web-app"`
+     - `environment` set to `"production"`
+     - `common_tags` — a map with keys `project` and `env` using the above locals
+  3. Update all resources to use `local.project_name`, `local.environment`, and `local.common_tags`
+  4. Ensure `terraform validate` passes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  ```
+hints:
+  - "Define locals with: locals { name = \"value\" }"
+  - "Reference locals with local.name (not locals.name)"
+  - "common_tags should be: { project = local.project_name, env = local.environment }"
+validation:
+  script: validate.sh
+  success_message: "Local values are properly defined and used!"
+  failure_message: "Make sure you have a locals block with project_name, environment, and common_tags."

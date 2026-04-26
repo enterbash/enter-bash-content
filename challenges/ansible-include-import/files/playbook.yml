@@ -1,0 +1,8 @@
+---
+- name: Deploy application
+  hosts: local
+  become: yes
+  tasks:
+    - include: setup_dirs.yml
+
+    - include: deploy_app.yml

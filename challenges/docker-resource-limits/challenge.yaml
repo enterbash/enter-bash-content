@@ -1,0 +1,46 @@
+name: "Set Resource Limits on Containers"
+type: skill
+category: docker
+difficulty: medium
+tags: [docker, resources, memory, cpu, limits]
+time_estimate: "10m"
+xp_reward: 100
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Set Resource Limits on Containers
+
+  You need to run a container with specific memory and CPU limits to prevent it from consuming too many resources.
+
+  ### Your task
+
+  1. Run an alpine container named `limited` with the following constraints:
+     - Memory limit: 128MB
+     - CPU limit: 0.5 CPUs
+     - The container should run `sleep infinity`
+  2. Verify the limits are applied using `docker inspect`
+
+  ### Useful commands
+
+  ```bash
+  docker run -d --name limited --memory=128m --cpus=0.5 alpine sleep infinity
+  docker inspect limited --format '{{.HostConfig.Memory}}'
+  docker inspect limited --format '{{.HostConfig.NanoCpus}}'
+  docker stats limited --no-stream
+  ```
+hints:
+  - "Use `--memory=128m` to set the memory limit"
+  - "Use `--cpus=0.5` to limit CPU usage to half a core"
+  - "Combine both: `docker run -d --name limited --memory=128m --cpus=0.5 alpine sleep infinity`"
+validation:
+  script: validate.sh
+  success_message: "Resource limits set correctly! The container is constrained."
+  failure_message: "Check that the container is running with the correct memory and CPU limits."

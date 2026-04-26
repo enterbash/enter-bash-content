@@ -1,0 +1,54 @@
+name: "Create Swap Space"
+type: skill
+category: linux
+difficulty: medium
+tags: [linux, swap, memory, performance]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create and Enable Swap Space
+
+  The system is running low on memory and has no swap space configured. Your task is to create a swap file and enable it.
+
+  ### What you know
+
+  - The system currently has no swap space
+  - You need to create a 512MB swap file at `/swapfile`
+  - The swap should be enabled and persist across reboots
+
+  ### Your task
+
+  1. Verify there is no current swap with `swapon --show`
+  2. Create a 512MB swap file at `/swapfile`
+  3. Set correct permissions on the swap file (600)
+  4. Format it as swap with `mkswap`
+  5. Enable it with `swapon`
+  6. Add an entry to `/etc/fstab` so it persists
+
+  ### Useful commands
+
+  ```bash
+  swapon --show
+  sudo fallocate -l 512M /swapfile
+  sudo chmod 600 /swapfile
+  sudo mkswap /swapfile
+  sudo swapon /swapfile
+  ```
+hints:
+  - "Create the file with `sudo fallocate -l 512M /swapfile` or `sudo dd if=/dev/zero of=/swapfile bs=1M count=512`"
+  - "The swap file must have permissions 600: `sudo chmod 600 /swapfile`"
+  - "Add `/swapfile none swap sw 0 0` to `/etc/fstab` for persistence"
+validation:
+  script: validate.sh
+  success_message: "Swap space is configured and active!"
+  failure_message: "Swap is not properly configured. Check the swap file and fstab."

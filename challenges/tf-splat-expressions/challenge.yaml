@@ -1,0 +1,55 @@
+name: "Use Splat Expressions"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, splat, expressions, lists]
+time_estimate: "15m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Splat Expressions
+
+  Splat expressions (`[*]`) provide a concise way to extract attributes from lists of objects. Your task is to use splat expressions to work with multiple resources.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - Multiple `random_pet` resources are created using `count`
+  - You need to use splat expressions to collect their attributes
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Add the following outputs using splat expressions:
+     - `all_pet_names`: list of all pet IDs using `random_pet.pets[*].id`
+     - `all_file_paths`: list of all file paths using `local_file.pet_files[*].filename`
+  3. Create a `local_file` named `summary` that joins all pet names with newlines
+  4. Ensure `terraform validate` passes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  ```
+hints:
+  - "Splat syntax: resource_type.name[*].attribute"
+  - "Use join(\"\\n\", random_pet.pets[*].id) to combine into a string"
+  - "Splat expressions return a list of the specified attribute"
+validation:
+  script: validate.sh
+  success_message: "Splat expressions are properly used!"
+  failure_message: "Make sure outputs use [*] splat syntax and the summary file is created."

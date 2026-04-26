@@ -1,0 +1,58 @@
+name: "Use Terraform Workspaces"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, workspaces, environments, state]
+time_estimate: "15m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Terraform Workspaces
+
+  Workspaces allow you to manage multiple environments with the same configuration. Your task is to create workspaces and use `terraform.workspace` to customize resources.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - The current configuration is hardcoded to "default"
+  - You need to make it workspace-aware
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Update `main.tf` to use `terraform.workspace` instead of hardcoded values:
+     - Content: `"environment=${terraform.workspace}"`
+     - Filename: `"${path.module}/${terraform.workspace}-config.txt"`
+  3. Create a new workspace called `staging`: `terraform workspace new staging`
+  4. Apply in the staging workspace
+  5. Switch back to default and ensure both workspaces exist
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform workspace list
+  terraform workspace new <name>
+  terraform workspace select <name>
+  terraform apply -auto-approve
+  ```
+hints:
+  - "Replace hardcoded 'default' with terraform.workspace"
+  - "Use terraform workspace new staging to create the workspace"
+  - "terraform.workspace returns the current workspace name as a string"
+validation:
+  script: validate.sh
+  success_message: "Workspaces are properly configured!"
+  failure_message: "Make sure the staging workspace exists and config uses terraform.workspace."

@@ -1,0 +1,54 @@
+name: "Use Data Sources"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, data-sources, hcl]
+time_estimate: "15m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Terraform Data Sources
+
+  Data sources allow Terraform to read information from existing resources or external data. Your task is to use data sources to read local files and use their content.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - There are existing files on disk that you need to read using data sources
+  - The setup script creates files that your data sources should reference
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Add a `data "local_file"` data source named `source_config` that reads `${path.module}/source/config.txt`
+  3. Add a `data "local_file"` data source named `source_version` that reads `${path.module}/source/version.txt`
+  4. Create a `local_file` resource named `combined` that writes both contents to `${path.module}/combined.txt`
+  5. Ensure `terraform validate` and `terraform plan` succeed
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  ```
+hints:
+  - "Data source syntax: data \"local_file\" \"name\" { filename = \"path\" }"
+  - "Reference data source values with data.local_file.name.content"
+  - "Create the source files first with the setup, then reference them"
+validation:
+  script: validate.sh
+  success_message: "Data sources are properly configured!"
+  failure_message: "Check that both data sources and the combined resource are defined correctly."

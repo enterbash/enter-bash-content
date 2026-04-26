@@ -1,0 +1,54 @@
+name: "Ansible Facts"
+type: skill
+category: ansible
+difficulty: easy
+tags: [ansible, facts, gather_facts, system-info]
+time_estimate: "15m"
+xp_reward: 100
+packages: [ansible]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/playbook.yml
+    dest: ~/ansible-project/playbook.yml
+  - source: files/inventory.ini
+    dest: ~/ansible-project/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Ansible Facts
+
+  Ansible automatically gathers system facts about managed hosts. A playbook in `~/ansible-project/playbook.yml` needs to be fixed to correctly use these facts.
+
+  ### Your task
+
+  1. Navigate to `~/ansible-project/`
+  2. The playbook has `gather_facts` disabled — enable it
+  3. Fix the fact variable references to use correct `ansible_*` fact names
+  4. The playbook should create a system info file at `/tmp/system_info.txt` containing the OS, hostname, and architecture
+
+  ### Discovering facts
+
+  ```bash
+  ansible -i inventory.ini local -m setup | less
+  ansible -i inventory.ini local -m setup -a "filter=ansible_distribution"
+  ```
+
+  ### Useful commands
+
+  ```bash
+  cd ~/ansible-project
+  ansible-playbook -i inventory.ini playbook.yml
+  ```
+hints:
+  - "Set `gather_facts: yes` (or remove the line — it defaults to yes)"
+  - "The OS distribution fact is `ansible_distribution`, not `ansible_os`"
+  - "The hostname fact is `ansible_hostname`, the architecture is `ansible_architecture`"
+validation:
+  script: validate.sh
+  success_message: "Ansible facts are being used correctly!"
+  failure_message: "Fact references are still incorrect. Run `ansible -m setup` to discover fact names."

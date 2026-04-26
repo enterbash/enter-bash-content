@@ -1,0 +1,49 @@
+name: "Copy Files In and Out of Containers"
+type: skill
+category: docker
+difficulty: easy
+tags: [docker, copy, files, containers]
+time_estimate: "10m"
+xp_reward: 75
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Copy Files In and Out of Containers
+
+  You need to copy files between the host and a running container.
+
+  ### Scenario
+
+  A container named `filebox` is running. Inside it, there's a file at `/var/log/app.log` that you need to extract. You also need to copy a config file into the container.
+
+  ### Your task
+
+  1. Copy `/var/log/app.log` from the `filebox` container to `~/extracted.log` on the host
+  2. Create a file `~/inject.conf` on the host with the content `mode=active`
+  3. Copy `~/inject.conf` into the container at `/etc/inject.conf`
+  4. Verify both operations worked
+
+  ### Useful commands
+
+  ```bash
+  docker cp filebox:/var/log/app.log ~/extracted.log
+  echo "mode=active" > ~/inject.conf
+  docker cp ~/inject.conf filebox:/etc/inject.conf
+  docker exec filebox cat /etc/inject.conf
+  ```
+hints:
+  - "Use `docker cp CONTAINER:PATH HOST_PATH` to copy from container to host"
+  - "Use `docker cp HOST_PATH CONTAINER:PATH` to copy from host to container"
+  - "The syntax is similar to `scp` - source first, then destination"
+validation:
+  script: validate.sh
+  success_message: "Files copied successfully in both directions!"
+  failure_message: "Check that extracted.log exists on host and inject.conf exists in the container."

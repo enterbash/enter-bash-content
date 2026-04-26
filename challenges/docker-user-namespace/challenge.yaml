@@ -1,0 +1,49 @@
+name: "Run Containers as Non-Root"
+type: skill
+category: docker
+difficulty: medium
+tags: [docker, security, user, non-root]
+time_estimate: "15m"
+xp_reward: 150
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Run Containers as Non-Root
+
+  Running containers as root is a security risk. Configure containers to run as non-root users.
+
+  ### Your task
+
+  1. Build an image from `~/nonroot/Dockerfile` that:
+     - Creates a user `appuser` with uid 1001
+     - Sets the working directory to `/app`
+     - Switches to `appuser` before running the app
+  2. Build the image as `nonroot:latest`
+  3. Run a container named `safebox` from the image
+  4. Verify the container is NOT running as root
+
+  ### Useful commands
+
+  ```bash
+  cat ~/nonroot/Dockerfile
+  cd ~/nonroot && docker build -t nonroot:latest .
+  docker run -d --name safebox nonroot:latest
+  docker exec safebox whoami
+  docker exec safebox id
+  ```
+hints:
+  - "Use `RUN adduser -D -u 1001 appuser` to create the user in alpine"
+  - "Use `USER appuser` before CMD to switch to the non-root user"
+  - "Make sure the app directory is owned by appuser"
+validation:
+  script: validate.sh
+  success_message: "Container running as non-root! Secure setup."
+  failure_message: "The container is still running as root or isn't running at all."

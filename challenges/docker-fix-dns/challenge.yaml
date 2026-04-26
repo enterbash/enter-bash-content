@@ -1,0 +1,50 @@
+name: "Fix DNS Resolution in Containers"
+type: skill
+category: docker
+difficulty: medium
+tags: [docker, dns, networking, troubleshooting]
+time_estimate: "15m"
+xp_reward: 150
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix DNS Resolution in Containers
+
+  A container can't resolve DNS names. Fix the DNS configuration.
+
+  ### Scenario
+
+  A container named `dnsbox` is running but can't resolve any hostnames. It's been started with a broken DNS configuration pointing to a non-existent DNS server.
+
+  ### Your task
+
+  1. Check the current DNS configuration of `dnsbox`
+  2. Stop and remove the broken container
+  3. Run a new container named `dnsbox-fixed` with working DNS (use `8.8.8.8` as DNS server)
+  4. Verify DNS resolution works inside the container
+
+  ### Useful commands
+
+  ```bash
+  docker exec dnsbox cat /etc/resolv.conf
+  docker exec dnsbox nslookup google.com
+  docker rm -f dnsbox
+  docker run -d --name dnsbox-fixed --dns 8.8.8.8 alpine sleep infinity
+  docker exec dnsbox-fixed nslookup google.com
+  ```
+hints:
+  - "Check `/etc/resolv.conf` inside the container to see the broken DNS"
+  - "Use `--dns 8.8.8.8` to specify a working DNS server"
+  - "Run: `docker run -d --name dnsbox-fixed --dns 8.8.8.8 alpine sleep infinity`"
+validation:
+  script: validate.sh
+  success_message: "DNS fixed! Container can resolve hostnames."
+  failure_message: "The dnsbox-fixed container can't resolve DNS. Check the --dns flag."

@@ -1,0 +1,16 @@
+---
+- name: Gather system information
+  hosts: local
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: Create system info file
+      copy:
+        content: |
+          OS: {{ ansible_os }}
+          Hostname: {{ ansible_host_name }}
+          Architecture: {{ ansible_arch }}
+          Kernel: {{ ansible_kernel_version }}
+          Python: {{ ansible_python.version.major }}
+        dest: /tmp/system_info.txt
+        mode: "0644"

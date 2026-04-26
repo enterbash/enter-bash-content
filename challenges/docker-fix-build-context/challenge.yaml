@@ -1,0 +1,52 @@
+name: "Fix Build Context Issues"
+type: skill
+category: docker
+difficulty: medium
+tags: [docker, build, context, dockerignore]
+time_estimate: "15m"
+xp_reward: 150
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Build Context Issues
+
+  A Docker build is sending too much data as build context because it includes unnecessary files. Fix it with a `.dockerignore` file.
+
+  ### Scenario
+
+  The project at `~/bigproject` has a 50MB `data/` directory, `node_modules/`, and log files that are being sent as build context but aren't needed in the image.
+
+  ### Your task
+
+  1. Check the current build context size by running a build
+  2. Create a `.dockerignore` file at `~/bigproject/.dockerignore` that excludes:
+     - `data/` directory
+     - `node_modules/` directory
+     - `*.log` files
+     - `.git/` directory
+  3. Rebuild the image as `slim-project:latest`
+  4. Verify the image doesn't contain the excluded files
+
+  ### Useful commands
+
+  ```bash
+  ls -la ~/bigproject
+  cd ~/bigproject && docker build -t slim-project:latest .
+  docker run --rm slim-project:latest ls /app
+  ```
+hints:
+  - "Create a `.dockerignore` file in the project root"
+  - "Add one pattern per line: `data/`, `node_modules/`, `*.log`, `.git/`"
+  - "The .dockerignore syntax is similar to .gitignore"
+validation:
+  script: validate.sh
+  success_message: "Build context optimized! Unnecessary files excluded."
+  failure_message: "Check that .dockerignore exists and the image doesn't contain excluded files."

@@ -1,0 +1,57 @@
+name: "Create a Secret"
+type: skill
+category: kubernetes
+difficulty: easy
+tags: [kubernetes, secrets, security, configuration]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Create a Kubernetes Secret
+
+  Create a Secret manifest that stores database credentials, and a Pod that uses them.
+
+  ### Requirements
+
+  - Secret file: `~/secret.yaml`
+    - Name: `db-credentials`
+    - Type: `Opaque`
+    - Data keys: `username` and `password` (base64-encoded)
+    - Username value: `admin` (base64: `YWRtaW4=`)
+    - Password value: `s3cur3p@ss` (base64: `czNjdXIzcEBzcw==`)
+
+  - Pod file: `~/pod.yaml`
+    - Name: `db-client`
+    - Image: `postgres:15`
+    - Mount the secret as environment variables `DB_USER` (from `username`) and `DB_PASS` (from `password`)
+
+  ### Your task
+
+  1. Create `~/secret.yaml` with the Secret manifest
+  2. Create `~/pod.yaml` with the Pod that references the Secret
+  3. Both must pass `kubectl apply --dry-run=client -f`
+
+  ### Useful commands
+
+  ```bash
+  echo -n "admin" | base64
+  kubectl apply --dry-run=client -f ~/secret.yaml
+  kubectl apply --dry-run=client -f ~/pod.yaml
+  ```
+hints:
+  - "Secrets use apiVersion: v1 and kind: Secret"
+  - "Use the `data` field with base64-encoded values, or `stringData` with plain text"
+  - "In the Pod, use env[].valueFrom.secretKeyRef to reference individual Secret keys"
+validation:
+  script: validate.sh
+  success_message: "Secret and Pod are correctly configured!"
+  failure_message: "The Secret or Pod manifest has issues."

@@ -1,0 +1,54 @@
+name: "Set Up rsync Backup"
+type: skill
+category: linux
+difficulty: medium
+tags: [linux, rsync, backup, automation]
+time_estimate: "15m"
+xp_reward: 100
+packages: [rsync]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Set Up rsync Backup
+
+  You need to create a backup script using rsync that backs up important data with proper options.
+
+  ### What you know
+
+  - Source data is in `/home/runner/project/`
+  - Backup destination is `/home/runner/backup/`
+  - The backup should preserve permissions, timestamps, and symlinks
+  - It should exclude `.git/` directories and `node_modules/`
+  - A backup script should be created at `/home/runner/run-backup.sh`
+
+  ### Your task
+
+  1. Create a backup script at `/home/runner/run-backup.sh` that uses rsync
+  2. The script should:
+     - Use rsync with archive mode (`-a`)
+     - Exclude `.git/` and `node_modules/`
+     - Delete files in destination that no longer exist in source (`--delete`)
+     - Show verbose output
+  3. Run the backup script
+  4. Verify the backup is complete
+
+  ### Useful commands
+
+  ```bash
+  rsync -av --exclude='.git/' --exclude='node_modules/' --delete source/ dest/
+  ```
+hints:
+  - "Create a script with `rsync -av --delete --exclude='.git/' --exclude='node_modules/' /home/runner/project/ /home/runner/backup/`"
+  - "Make sure the script is executable with `chmod +x ~/run-backup.sh`"
+  - "Run the script and check that `/home/runner/backup/` has the expected files"
+validation:
+  script: validate.sh
+  success_message: "rsync backup is configured and working!"
+  failure_message: "The backup script or backup contents are not correct."

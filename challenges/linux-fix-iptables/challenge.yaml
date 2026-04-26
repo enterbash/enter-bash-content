@@ -1,0 +1,55 @@
+name: "Fix iptables Rules"
+type: skill
+category: linux
+difficulty: hard
+tags: [linux, iptables, firewall, networking]
+time_estimate: "20m"
+xp_reward: 150
+packages: [iptables]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix iptables Firewall Rules
+
+  The firewall rules have been misconfigured and are blocking legitimate traffic. A web server is running but users can't access it because iptables is dropping the traffic.
+
+  ### What you know
+
+  - A web server (nginx) is running on port 80
+  - The iptables rules are blocking incoming HTTP traffic on port 80
+  - SSH (port 22) should also be allowed
+  - The default INPUT policy is set to DROP
+  - You need to allow HTTP (80), HTTPS (443), and SSH (22) traffic
+  - Loopback traffic should be allowed
+
+  ### Your task
+
+  1. Check the current iptables rules
+  2. Fix the rules to allow HTTP (80), HTTPS (443), and SSH (22)
+  3. Allow loopback interface traffic
+  4. Allow established/related connections
+  5. Verify you can access the web server
+
+  ### Useful commands
+
+  ```bash
+  sudo iptables -L -n -v
+  sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+  sudo iptables -I INPUT 1 -i lo -j ACCEPT
+  curl http://localhost
+  ```
+hints:
+  - "Check current rules with `sudo iptables -L -n -v`"
+  - "Allow loopback first: `sudo iptables -I INPUT 1 -i lo -j ACCEPT`"
+  - "Add rules for ports: `sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT` (repeat for 443 and 22)"
+validation:
+  script: validate.sh
+  success_message: "Firewall rules are correctly configured!"
+  failure_message: "Firewall rules are still blocking traffic."

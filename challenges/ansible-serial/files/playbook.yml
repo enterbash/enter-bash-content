@@ -1,0 +1,22 @@
+---
+- name: Rolling deployment
+  hosts: webservers
+  become: yes
+  tasks:
+    - name: Create deploy directory
+      file:
+        path: /tmp/serial-deploy
+        state: directory
+
+    - name: Deploy application
+      copy:
+        content: |
+          version=2.0
+          host={{ inventory_hostname }}
+          timestamp={{ ansible_date_time.iso8601 }}
+        dest: /tmp/serial-deploy/app.conf
+
+    - name: Write deploy marker
+      copy:
+        content: "deployed\n"
+        dest: /tmp/serial-deploy/deployed.txt

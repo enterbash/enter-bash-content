@@ -1,0 +1,55 @@
+name: "Fix Variable Type Constraints"
+type: skill
+category: terraform
+difficulty: medium
+tags: [terraform, variables, types, constraints]
+time_estimate: "15m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Variable Type Constraints
+
+  The variable definitions have incorrect type constraints that don't match their default values. Fix the types so the configuration validates.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - Four variables have mismatched type constraints
+  - The default values are correct — the types need to be fixed
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Fix each variable's `type` to match its default value:
+     - `app_name`: should be `string`
+     - `port`: should be `number`
+     - `allowed_hosts`: should be `list(string)`
+     - `feature_flags`: should be `object({ name = string, enabled = bool })`
+  3. Ensure `terraform validate` passes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  ```
+hints:
+  - "Match the type to the default value format"
+  - "Lists use list(type), maps use map(type)"
+  - "Objects use object({ key = type, key2 = type })"
+validation:
+  script: validate.sh
+  success_message: "All type constraints are correct!"
+  failure_message: "Check that each variable's type matches its default value."

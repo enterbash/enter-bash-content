@@ -1,0 +1,53 @@
+name: "Fix String Interpolation"
+type: skill
+category: terraform
+difficulty: easy
+tags: [terraform, strings, interpolation, hcl]
+time_estimate: "10m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Fix Terraform String Interpolation
+
+  A configuration has broken string interpolation. Variables and resource attributes are not being referenced correctly inside strings.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - The `main.tf` file has incorrect string interpolation syntax
+  - Variables and resource references inside strings need `${}` wrapper
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Fix all string interpolation errors in `main.tf`
+  3. Ensure all variable references use `${var.name}` syntax inside strings
+  4. Ensure all resource references use `${resource.name.attribute}` syntax
+  5. Make sure `terraform validate` passes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  ```
+hints:
+  - "Inside strings, variables must be wrapped: ${var.project} not $var.project"
+  - "Resource attributes need the full path: ${random_id.suffix.hex}"
+  - "Path references also need wrapping: ${path.module}"
+validation:
+  script: validate.sh
+  success_message: "All string interpolation is fixed!"
+  failure_message: "There are still interpolation errors. Check all ${} references."

@@ -1,0 +1,58 @@
+name: "Use the Random Provider"
+type: skill
+category: terraform
+difficulty: easy
+tags: [terraform, random, provider, resources]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use the Random Provider
+
+  The random provider generates random values useful for unique naming, passwords, and shuffling. Your task is to create several random resources and use them.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - The random provider is already configured
+  - You need to create multiple random resource types
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Create the following resources:
+     - `random_pet "app_name"` with length 3 and separator `"-"`
+     - `random_integer "port"` with min 3000 and max 9000
+     - `random_password "db_password"` with length 16 and `special = true`
+     - `random_uuid "request_id"`
+  3. Create a `local_file "config"` that uses all four random values in its content
+  4. Ensure `terraform validate` passes
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform init
+  terraform validate
+  terraform plan
+  terraform apply -auto-approve
+  ```
+hints:
+  - "random_pet exposes .id, random_integer exposes .result"
+  - "random_password exposes .result, random_uuid exposes .result"
+  - "All random resources are in the hashicorp/random provider"
+validation:
+  script: validate.sh
+  success_message: "Random provider resources are properly configured!"
+  failure_message: "Make sure all four random resources and the config file are defined."

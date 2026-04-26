@@ -1,0 +1,60 @@
+name: "Use Moved Blocks for Refactoring"
+type: skill
+category: terraform
+difficulty: hard
+tags: [terraform, moved, refactoring, state]
+time_estimate: "20m"
+xp_reward: 200
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/main.tf
+    dest: ~/terraform-project/main.tf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Use Moved Blocks for Refactoring
+
+  When renaming resources, Terraform would normally destroy the old one and create a new one. The `moved` block tells Terraform that a resource was renamed, preserving state.
+
+  ### What you know
+
+  - The project is in `~/terraform-project/`
+  - Resources were already applied with old names
+  - You need to rename them without destroying/recreating
+
+  ### Your task
+
+  1. Navigate to `~/terraform-project/`
+  2. Rename `random_pet.server_name` to `random_pet.app_name` in the config
+  3. Rename `local_file.server_config` to `local_file.app_config` in the config
+  4. Update all references to use the new names
+  5. Add `moved` blocks to tell Terraform about the renames:
+     ```hcl
+     moved {
+       from = random_pet.server_name
+       to   = random_pet.app_name
+     }
+     ```
+  6. Ensure `terraform plan` shows moves, not destroy/create
+
+  ### Useful commands
+
+  ```bash
+  cd ~/terraform-project
+  terraform plan
+  terraform apply -auto-approve
+  ```
+hints:
+  - "moved blocks go at the top level, not inside resource blocks"
+  - "You need one moved block per renamed resource"
+  - "Update all references: random_pet.server_name.id -> random_pet.app_name.id"
+validation:
+  script: validate.sh
+  success_message: "Resources successfully refactored with moved blocks!"
+  failure_message: "Make sure moved blocks are defined and resources are renamed."

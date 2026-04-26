@@ -1,0 +1,50 @@
+name: "Kill Runaway Process"
+type: skill
+category: linux
+difficulty: easy
+tags: [linux, processes, debugging, signals]
+time_estimate: "10m"
+xp_reward: 75
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Kill a Runaway Process
+
+  A rogue process is consuming excessive CPU on the system. Your task is to identify and terminate it.
+
+  ### What you know
+
+  - A process called `cpu_hog` is running and consuming CPU
+  - It needs to be killed so the system can recover
+  - The process was started by the `runner` user
+
+  ### Your task
+
+  1. Find the runaway process using process inspection tools
+  2. Kill the process
+  3. Verify it is no longer running
+
+  ### Useful commands
+
+  ```bash
+  ps aux
+  top -bn1
+  kill <PID>
+  pkill <name>
+  ```
+hints:
+  - "Use `ps aux | grep cpu_hog` to find the process"
+  - "Use `kill <PID>` or `pkill cpu_hog` to terminate it"
+  - "If `kill` doesn't work, try `kill -9 <PID>` to force kill"
+validation:
+  script: validate.sh
+  success_message: "The runaway process has been terminated!"
+  failure_message: "The cpu_hog process is still running. Find and kill it!"

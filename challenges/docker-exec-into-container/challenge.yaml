@@ -1,0 +1,49 @@
+name: "Execute Commands in Running Containers"
+type: skill
+category: docker
+difficulty: easy
+tags: [docker, exec, containers, debugging]
+time_estimate: "10m"
+xp_reward: 75
+packages: [docker.io]
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Execute Commands in Running Containers
+
+  Use `docker exec` to run commands inside running containers and perform administrative tasks.
+
+  ### Scenario
+
+  A container named `workbox` is running. You need to perform several tasks inside it.
+
+  ### Your task
+
+  1. Create a file `/tmp/hello.txt` inside the container with the content `Hello from exec`
+  2. Install `curl` inside the container (it's an alpine container, use `apk add`)
+  3. Create a directory `/app/logs` inside the container
+  4. Start an interactive shell to verify your work (optional)
+
+  ### Useful commands
+
+  ```bash
+  docker exec workbox sh -c 'echo "Hello from exec" > /tmp/hello.txt'
+  docker exec workbox apk add --no-cache curl
+  docker exec workbox mkdir -p /app/logs
+  docker exec -it workbox sh
+  ```
+hints:
+  - "Use `docker exec CONTAINER COMMAND` to run a command"
+  - "For commands with pipes or redirects, wrap in `sh -c '...'`"
+  - "Use `-it` flags for interactive terminal access"
+validation:
+  script: validate.sh
+  success_message: "Commands executed successfully inside the container!"
+  failure_message: "Check that all files and directories were created inside the container."
