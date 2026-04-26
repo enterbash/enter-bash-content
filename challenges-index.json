@@ -5313,7 +5313,8 @@
     "xp_reward": 150,
     "packages": [
       "selinux-utils",
-      "policycoreutils"
+      "policycoreutils",
+      "attr"
     ],
     "pre_install": [],
     "namespace": "",
