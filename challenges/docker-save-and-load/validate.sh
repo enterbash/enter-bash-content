@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if [ ! -f ~/savetest.tar ]; then
   echo "FAIL: ~/savetest.tar not found"

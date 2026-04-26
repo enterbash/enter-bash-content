@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker images --format '{{.Repository}}:{{.Tag}}' | grep -q '^signalapp:fixed$'; then
   echo "FAIL: signalapp:fixed image not found"

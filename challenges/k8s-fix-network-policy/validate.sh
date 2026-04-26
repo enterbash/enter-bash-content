@@ -1,13 +1,11 @@
 #!/bin/bash
-set -e
 
 if [ ! -f ~/netpol.yaml ]; then
   echo "FAIL: ~/netpol.yaml not found"
   exit 1
 fi
 
-kubectl apply --dry-run=client -f ~/netpol.yaml 2>/dev/null
-if [ $? -ne 0 ]; then
+if ! kubectl apply --dry-run=client -f ~/netpol.yaml 2>/dev/null; then
   echo "FAIL: netpol.yaml does not pass validation"
   exit 1
 fi

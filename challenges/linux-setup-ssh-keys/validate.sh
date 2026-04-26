@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check private key exists
 if [ ! -f /home/runner/.ssh/id_ed25519 ]; then

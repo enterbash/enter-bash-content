@@ -1,13 +1,11 @@
 #!/bin/bash
-set -e
 
 if [ ! -f ~/cronjob.yaml ]; then
   echo "FAIL: ~/cronjob.yaml not found"
   exit 1
 fi
 
-kubectl apply --dry-run=client -f ~/cronjob.yaml 2>/dev/null
-if [ $? -ne 0 ]; then
+if ! kubectl apply --dry-run=client -f ~/cronjob.yaml 2>/dev/null; then
   echo "FAIL: cronjob.yaml does not pass validation"
   exit 1
 fi

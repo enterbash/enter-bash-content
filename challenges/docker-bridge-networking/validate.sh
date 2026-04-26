@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check network exists with correct subnet
 SUBNET=$(docker network inspect appnet --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}' 2>/dev/null || true)

@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 cd ~/terraform-project
 mkdir -p state
 

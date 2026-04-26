@@ -1,13 +1,11 @@
 #!/bin/bash
-set -e
 
 if [ ! -f ~/daemonset.yaml ]; then
   echo "FAIL: ~/daemonset.yaml not found"
   exit 1
 fi
 
-kubectl apply --dry-run=client -f ~/daemonset.yaml 2>/dev/null
-if [ $? -ne 0 ]; then
+if ! kubectl apply --dry-run=client -f ~/daemonset.yaml 2>/dev/null; then
   echo "FAIL: daemonset.yaml does not pass validation"
   exit 1
 fi

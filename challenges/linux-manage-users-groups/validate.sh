@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check devteam group exists
 if ! getent group devteam > /dev/null 2>&1; then

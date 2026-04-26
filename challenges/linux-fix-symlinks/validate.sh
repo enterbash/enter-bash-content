@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check no broken symlinks remain
 BROKEN=$(find /home/runner/myapp -maxdepth 1 -type l -xtype l 2>/dev/null)

@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 IMAGES=$(docker images --format '{{.Repository}}:{{.Tag}}')
 

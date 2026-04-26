@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check the file exists
 if [ ! -f ~/service.yaml ]; then
@@ -8,8 +7,7 @@ if [ ! -f ~/service.yaml ]; then
 fi
 
 # Must pass dry-run validation
-kubectl apply --dry-run=client -f ~/service.yaml 2>/dev/null
-if [ $? -ne 0 ]; then
+if ! kubectl apply --dry-run=client -f ~/service.yaml 2>/dev/null; then
   echo "FAIL: service.yaml does not pass validation"
   exit 1
 fi

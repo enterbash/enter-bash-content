@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker ps --format '{{.Names}}' | grep -q '^dnsbox-fixed$'; then
   echo "FAIL: dnsbox-fixed container is not running"

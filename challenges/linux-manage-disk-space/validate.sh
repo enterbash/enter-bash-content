@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check that old log files are removed
 OLD_LOGS=$(find /var/log/myapp -name "*.log.old" 2>/dev/null | wc -l)

@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check that suspicious SUID binaries have been fixed
 if [ -f /tmp/backdoor ] && [ -u /tmp/backdoor ]; then

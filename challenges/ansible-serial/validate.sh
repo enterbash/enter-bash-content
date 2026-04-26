@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 cd ~/ansible-project
 
 # Check that serial is defined in the playbook

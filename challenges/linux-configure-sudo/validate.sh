@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check sudoers file exists
 if [ ! -f /etc/sudoers.d/developer ]; then

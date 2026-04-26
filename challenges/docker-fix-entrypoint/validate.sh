@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker ps --format '{{.Names}}' | grep -q '^myserver$'; then
   echo "FAIL: myserver container is not running"

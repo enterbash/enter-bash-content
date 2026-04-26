@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker ps --format '{{.Names}}' | grep -q '^tmpbox$'; then
   echo "FAIL: tmpbox container is not running"

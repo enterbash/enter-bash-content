@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check network exists
 if ! docker network ls --format '{{.Name}}' | grep -q '^mynet$'; then

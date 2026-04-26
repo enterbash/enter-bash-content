@@ -6,7 +6,7 @@ export LANG=zz_ZZ.UTF-8
 export LC_ALL=zz_ZZ.UTF-8
 
 # Write broken locale to system config
-cat > /etc/default/locale <<'EOF'
+sudo tee /etc/default/locale <<'EOF' > /dev/null
 LANG=zz_ZZ.UTF-8
 LC_ALL=zz_ZZ.UTF-8
 EOF

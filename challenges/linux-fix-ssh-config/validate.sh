@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check .ssh directory permissions (should be 700)
 PERMS=$(stat -c '%a' /home/runner/.ssh)

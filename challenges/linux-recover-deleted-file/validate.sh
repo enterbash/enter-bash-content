@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check that config.json exists
 if [ ! -f /home/runner/app/config.json ]; then

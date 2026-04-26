@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker ps --format '{{.Names}}' | grep -q '^with-init$'; then
   echo "FAIL: with-init container is not running"

@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check exports file has an entry
 if ! grep -q '/srv/nfs/shared' /etc/exports; then

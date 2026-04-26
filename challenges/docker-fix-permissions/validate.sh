@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker ps --format '{{.Names}}' | grep -q '^permbox$'; then
   echo "FAIL: permbox container is not running"

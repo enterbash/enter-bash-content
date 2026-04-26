@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check .bashrc has the env vars
 if ! grep -q 'APP_HOME=/home/runner/app' /home/runner/.bashrc; then

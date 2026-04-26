@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check dummy0 exists and is UP
 if ! ip link show dummy0 | grep -q 'UP'; then

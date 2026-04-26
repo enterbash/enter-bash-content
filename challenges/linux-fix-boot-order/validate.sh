@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check GRUB_TIMEOUT is 5
 if ! grep -q 'GRUB_TIMEOUT=5' /etc/default/grub; then

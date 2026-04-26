@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check always-up
 POL1=$(docker inspect always-up --format '{{.HostConfig.RestartPolicy.Name}}' 2>/dev/null || true)

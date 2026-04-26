@@ -1,19 +1,16 @@
 #!/bin/bash
-set -e
 
 if [ ! -f ~/role.yaml ] || [ ! -f ~/rolebinding.yaml ]; then
   echo "FAIL: role.yaml or rolebinding.yaml not found"
   exit 1
 fi
 
-kubectl apply --dry-run=client -f ~/role.yaml 2>/dev/null
-if [ $? -ne 0 ]; then
+if ! kubectl apply --dry-run=client -f ~/role.yaml 2>/dev/null; then
   echo "FAIL: role.yaml does not pass validation"
   exit 1
 fi
 
-kubectl apply --dry-run=client -f ~/rolebinding.yaml 2>/dev/null
-if [ $? -ne 0 ]; then
+if ! kubectl apply --dry-run=client -f ~/rolebinding.yaml 2>/dev/null; then
   echo "FAIL: rolebinding.yaml does not pass validation"
   exit 1
 fi

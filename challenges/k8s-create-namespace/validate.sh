@@ -1,13 +1,11 @@
 #!/bin/bash
-set -e
 
 if [ ! -f ~/namespace.yaml ]; then
   echo "FAIL: ~/namespace.yaml not found"
   exit 1
 fi
 
-kubectl apply --dry-run=client -f ~/namespace.yaml 2>/dev/null
-if [ $? -ne 0 ]; then
+if ! kubectl apply --dry-run=client -f ~/namespace.yaml 2>/dev/null; then
   echo "FAIL: namespace.yaml does not pass validation"
   exit 1
 fi

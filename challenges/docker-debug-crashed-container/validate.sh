@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker ps --format '{{.Names}}' | grep -q '^webapp-fixed$'; then
   echo "FAIL: webapp-fixed container is not running"

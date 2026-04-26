@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker ps --format '{{.Names}}' | grep -q '^healthyweb$'; then
   echo "FAIL: healthyweb container is not running"

@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check report exists
 if [ ! -f /home/runner/log-analysis.txt ]; then

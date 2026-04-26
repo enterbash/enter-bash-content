@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 cd ~/terraform-project
 terraform init -input=false > /dev/null 2>&1
 PLAN=$(terraform plan -detailed-exitcode -input=false 2>&1) || EXIT_CODE=$?

@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check logrotate config exists
 if [ ! -f /etc/logrotate.d/myapp ]; then

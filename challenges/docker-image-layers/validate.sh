@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker images --format '{{.Repository}}:{{.Tag}}' | grep -q '^optimized:latest$'; then
   echo "FAIL: optimized:latest image not found"

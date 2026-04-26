@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 cd ~/ansible-project
 
 ansible-playbook -i inventory.ini playbook.yml --syntax-check > /dev/null 2>&1

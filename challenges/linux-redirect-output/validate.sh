@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check results.txt exists and has stdout content
 if [ ! -f /home/runner/output/results.txt ]; then

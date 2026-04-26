@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check swarm is active
 SWARM=$(docker info --format '{{.Swarm.LocalNodeState}}' 2>/dev/null)

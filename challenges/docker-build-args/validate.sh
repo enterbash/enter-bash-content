@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker images --format '{{.Repository}}:{{.Tag}}' | grep -q '^argapp:latest$'; then
   echo "FAIL: argapp:latest image not found"

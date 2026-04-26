@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check swap file exists
 if [ ! -f /swapfile ]; then

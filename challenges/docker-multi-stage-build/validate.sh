@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker images --format '{{.Repository}}:{{.Tag}}' | grep -q '^goapp:latest$'; then
   echo "FAIL: goapp:latest image not found"

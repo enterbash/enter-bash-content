@@ -3,7 +3,7 @@ set -e
 
 # Create a broken GRUB config
 mkdir -p /etc/default
-cat > /etc/default/grub <<'EOF'
+sudo tee /etc/default/grub <<'EOF' > /dev/null
 # Broken GRUB configuration
 GRUB_DEFAULT=0
 GRUB_TIMEOUT=0

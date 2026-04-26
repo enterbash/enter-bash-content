@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker ps --format '{{.Names}}' | grep -q '^readonly-web$'; then
   echo "FAIL: readonly-web container is not running"

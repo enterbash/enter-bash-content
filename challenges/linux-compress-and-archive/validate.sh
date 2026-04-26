@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check archive exists
 if [ ! -f /home/runner/webapp-backup.tar.gz ]; then

@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check envbox
 if ! docker ps --format '{{.Names}}' | grep -q '^envbox$'; then

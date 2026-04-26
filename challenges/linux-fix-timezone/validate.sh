@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check timezone is America/New_York
 CURRENT_TZ=$(readlink -f /etc/localtime 2>/dev/null || true)

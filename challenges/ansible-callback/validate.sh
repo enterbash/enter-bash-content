@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 cd ~/ansible-project
 
 # Check ansible.cfg has correct settings

@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check loopback is allowed
 if ! sudo iptables -L INPUT -n | grep -q 'lo.*ACCEPT\|ACCEPT.*lo'; then

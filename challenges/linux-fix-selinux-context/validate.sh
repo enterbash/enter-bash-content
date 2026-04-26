@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check .contexts file exists
 if [ ! -f /srv/www/html/.contexts ]; then

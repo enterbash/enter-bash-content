@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check LV is mounted
 if ! mountpoint -q /mnt/appdata 2>/dev/null; then

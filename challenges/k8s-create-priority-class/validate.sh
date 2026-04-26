@@ -1,19 +1,16 @@
 #!/bin/bash
-set -e
 
 if [ ! -f ~/priorityclass.yaml ] || [ ! -f ~/pod.yaml ]; then
   echo "FAIL: priorityclass.yaml or pod.yaml not found"
   exit 1
 fi
 
-kubectl apply --dry-run=client -f ~/priorityclass.yaml 2>/dev/null
-if [ $? -ne 0 ]; then
+if ! kubectl apply --dry-run=client -f ~/priorityclass.yaml 2>/dev/null; then
   echo "FAIL: priorityclass.yaml does not pass validation"
   exit 1
 fi
 
-kubectl apply --dry-run=client -f ~/pod.yaml 2>/dev/null
-if [ $? -ne 0 ]; then
+if ! kubectl apply --dry-run=client -f ~/pod.yaml 2>/dev/null; then
   echo "FAIL: pod.yaml does not pass validation"
   exit 1
 fi

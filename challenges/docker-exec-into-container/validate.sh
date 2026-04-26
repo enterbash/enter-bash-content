@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker ps --format '{{.Names}}' | grep -q '^workbox$'; then
   echo "FAIL: workbox container is not running"

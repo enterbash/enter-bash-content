@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if [ ! -f ~/configmap.yaml ] || [ ! -f ~/pod.yaml ]; then
   echo "FAIL: configmap.yaml or pod.yaml not found"
@@ -7,15 +6,13 @@ if [ ! -f ~/configmap.yaml ] || [ ! -f ~/pod.yaml ]; then
 fi
 
 # Validate ConfigMap
-kubectl apply --dry-run=client -f ~/configmap.yaml 2>/dev/null
-if [ $? -ne 0 ]; then
+if ! kubectl apply --dry-run=client -f ~/configmap.yaml 2>/dev/null; then
   echo "FAIL: configmap.yaml does not pass validation"
   exit 1
 fi
 
 # Validate Pod
-kubectl apply --dry-run=client -f ~/pod.yaml 2>/dev/null
-if [ $? -ne 0 ]; then
+if ! kubectl apply --dry-run=client -f ~/pod.yaml 2>/dev/null; then
   echo "FAIL: pod.yaml does not pass validation"
   exit 1
 fi

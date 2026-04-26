@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check that apt update succeeds
 if ! sudo apt update > /dev/null 2>&1; then

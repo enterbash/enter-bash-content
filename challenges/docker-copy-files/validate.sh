@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check extracted.log exists on host
 if [ ! -f ~/extracted.log ]; then

@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check no stopped containers
 STOPPED=$(docker ps -a --filter "status=exited" --format '{{.Names}}' | grep -c 'old' || true)

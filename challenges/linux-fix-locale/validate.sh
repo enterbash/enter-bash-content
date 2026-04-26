@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check en_US.UTF-8 is available
 if ! locale -a 2>/dev/null | grep -qi 'en_US.utf-\?8'; then

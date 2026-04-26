@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check that /mnt/data is mounted
 if ! mountpoint -q /mnt/data 2>/dev/null; then

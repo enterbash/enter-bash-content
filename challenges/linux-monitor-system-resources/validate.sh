@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check rogue processes are killed
 if pgrep -f 'mem_leak' > /dev/null 2>&1; then

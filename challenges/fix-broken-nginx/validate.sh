@@ -1,6 +1,5 @@
 #!/bin/bash
 # Validation: check that nginx is running and serving content
-set -e
 
 # Check nginx is running
 if ! pgrep -x nginx > /dev/null 2>&1; then

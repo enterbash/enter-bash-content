@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check service file exists
 if [ ! -f /etc/systemd/system/myapp.service ]; then

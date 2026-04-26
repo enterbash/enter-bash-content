@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if [ ! -f ~/report.txt ]; then
   echo "FAIL: ~/report.txt not found"

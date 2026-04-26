@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker ps --format '{{.Names}}' | grep -q '^storebox-fixed$'; then
   echo "FAIL: storebox-fixed container is not running"

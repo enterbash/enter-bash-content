@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check container is running
 if ! docker ps --format '{{.Names}}' | grep -q '^webserver$'; then

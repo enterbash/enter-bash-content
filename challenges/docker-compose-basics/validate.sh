@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 cd ~/project 2>/dev/null || true
 

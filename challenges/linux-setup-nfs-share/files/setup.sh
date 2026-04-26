@@ -10,7 +10,7 @@ echo "shared data" > /srv/nfs/shared/data.txt
 mkdir -p /mnt/nfs-test
 
 # Clear any existing exports
-echo "" > /etc/exports
+echo "" | sudo tee /etc/exports > /dev/null
 
 # Stop NFS server if running
 service nfs-kernel-server stop 2>/dev/null || true

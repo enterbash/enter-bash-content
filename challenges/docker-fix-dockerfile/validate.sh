@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker images --format '{{.Repository}}:{{.Tag}}' | grep -q '^webapp:latest$'; then
   echo "FAIL: webapp:latest image not found"

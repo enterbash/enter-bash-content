@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check that cpu_hog process is no longer running
 if pgrep -f cpu_hog > /dev/null 2>&1; then

@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check that resolv.conf has valid nameservers
 if ! grep -qE '^nameserver\s+(8\.8\.8\.8|8\.8\.4\.4|1\.1\.1\.1|1\.0\.0\.1|9\.9\.9\.9)' /etc/resolv.conf; then

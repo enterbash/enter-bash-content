@@ -1,13 +1,11 @@
 #!/bin/bash
-set -e
 
 if [ ! -f ~/job.yaml ]; then
   echo "FAIL: ~/job.yaml not found"
   exit 1
 fi
 
-kubectl apply --dry-run=client -f ~/job.yaml 2>/dev/null
-if [ $? -ne 0 ]; then
+if ! kubectl apply --dry-run=client -f ~/job.yaml 2>/dev/null; then
   echo "FAIL: job.yaml does not pass validation"
   exit 1
 fi

@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check that the myapp:latest image exists
 if ! docker images --format '{{.Repository}}:{{.Tag}}' | grep -q '^myapp:latest$'; then

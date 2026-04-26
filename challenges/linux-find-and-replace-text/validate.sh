@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check no old-server references remain
 if grep -rq 'old-server.example.com' /home/runner/configs/; then

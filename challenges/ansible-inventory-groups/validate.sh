@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 cd ~/ansible-project
 
 # Check inventory structure

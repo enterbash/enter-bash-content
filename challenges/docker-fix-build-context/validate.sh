@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker images --format '{{.Repository}}:{{.Tag}}' | grep -q '^slim-project:latest$'; then
   echo "FAIL: slim-project:latest image not found"

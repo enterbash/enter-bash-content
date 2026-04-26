@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 STATUS=$(kubectl get pod web-app -o jsonpath='{.status.phase}' 2>/dev/null || echo "NotFound")
 if [ "$STATUS" = "Running" ]; then
   echo "PASS: web-app pod is Running"

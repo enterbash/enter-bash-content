@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check that no files over 100MB exist under /home/runner
 LARGE_FILES=$(find /home/runner -size +100M -type f 2>/dev/null)

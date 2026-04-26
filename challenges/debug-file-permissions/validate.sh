@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check deploy.sh is executable
 if [ ! -x /home/learner/app/deploy.sh ]; then

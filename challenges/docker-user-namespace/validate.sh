@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if ! docker ps --format '{{.Names}}' | grep -q '^safebox$'; then
   echo "FAIL: safebox container is not running"

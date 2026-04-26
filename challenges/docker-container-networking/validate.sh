@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check both containers are running
 if ! docker ps --format '{{.Names}}' | grep -q '^web$'; then

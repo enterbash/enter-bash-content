@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Check that backup script is executable
 if [ ! -x /home/runner/backup.sh ]; then
