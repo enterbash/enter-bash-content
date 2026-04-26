@@ -23,15 +23,11 @@ if [ "$INIT" != "true" ] && [ "$INIT" != "<nil>" ]; then
   fi
 fi
 
-# Alternative check: inspect the init field
-INIT_PTR=$(docker inspect with-init --format '{{if .HostConfig.Init}}{{deref .HostConfig.Init}}{{end}}' 2>/dev/null || true)
-if [ "$INIT_PTR" != "true" ]; then
-  # Fallback: check PID 1 process name
-  PID1=$(docker exec with-init ps -o comm= -p 1 2>/dev/null || true)
-  if ! echo "$PID1" | grep -qi 'init\|tini\|docker'; then
-    echo "FAIL: --init flag not detected"
-    exit 1
-  fi
+# Verify PID 1 is an init process
+PID1=$(docker exec with-init ps -o comm= -p 1 2>/dev/null || true)
+if ! echo "$PID1" | grep -qi 'init\|tini'; then
+  echo "FAIL: --init flag not set — PID 1 is '$PID1', expected init/tini"
+  exit 1
 fi
 
 echo "PASS: init process configured correctly"
