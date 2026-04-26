@@ -5,12 +5,12 @@ if [ ! -f ~/sa.yaml ] || [ ! -f ~/rolebinding.yaml ]; then
   exit 1
 fi
 
-if ! kubectl apply --dry-run=client -f ~/sa.yaml 2>/dev/null; then
+if ! kubectl apply --dry-run=server -f ~/sa.yaml 2>/dev/null; then
   echo "FAIL: sa.yaml does not pass validation"
   exit 1
 fi
 
-if ! kubectl apply --dry-run=client -f ~/rolebinding.yaml 2>/dev/null; then
+if ! kubectl apply --dry-run=server -f ~/rolebinding.yaml 2>/dev/null; then
   echo "FAIL: rolebinding.yaml does not pass validation"
   exit 1
 fi

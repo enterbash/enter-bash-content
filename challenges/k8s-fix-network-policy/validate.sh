@@ -5,7 +5,7 @@ if [ ! -f ~/netpol.yaml ]; then
   exit 1
 fi
 
-if ! kubectl apply --dry-run=client -f ~/netpol.yaml 2>/dev/null; then
+if ! kubectl apply --dry-run=server -f ~/netpol.yaml 2>/dev/null; then
   echo "FAIL: netpol.yaml does not pass validation"
   exit 1
 fi

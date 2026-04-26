@@ -5,7 +5,7 @@ if [ ! -f ~/pvc.yaml ]; then
   exit 1
 fi
 
-if ! kubectl apply --dry-run=client -f ~/pvc.yaml 2>/dev/null; then
+if ! kubectl apply --dry-run=server -f ~/pvc.yaml 2>/dev/null; then
   echo "FAIL: pvc.yaml does not pass validation"
   exit 1
 fi

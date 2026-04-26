@@ -5,12 +5,12 @@ if [ ! -f ~/priorityclass.yaml ] || [ ! -f ~/pod.yaml ]; then
   exit 1
 fi
 
-if ! kubectl apply --dry-run=client -f ~/priorityclass.yaml 2>/dev/null; then
+if ! kubectl apply --dry-run=server -f ~/priorityclass.yaml 2>/dev/null; then
   echo "FAIL: priorityclass.yaml does not pass validation"
   exit 1
 fi
 
-if ! kubectl apply --dry-run=client -f ~/pod.yaml 2>/dev/null; then
+if ! kubectl apply --dry-run=server -f ~/pod.yaml 2>/dev/null; then
   echo "FAIL: pod.yaml does not pass validation"
   exit 1
 fi

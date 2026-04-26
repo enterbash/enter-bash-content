@@ -6,7 +6,10 @@ if ! terraform init -input=false > /dev/null 2>&1; then
 fi
 
 # Check resource exists in state
-terraform state list | grep -q 'local_file.app_config'
+if ! terraform state list 2>/dev/null | grep -q 'local_file.app_config'; then
+  echo "FAIL: local_file.app_config not found in state — run: terraform import local_file.app_config ~/terraform-project/app-config.txt"
+  exit 1
+fi
 
 # Check resource block exists in config
 if ! grep -q 'resource "local_file" "app_config"' main.tf; then

@@ -5,7 +5,7 @@ if [ ! -f ~/quota.yaml ]; then
   exit 1
 fi
 
-if ! kubectl apply --dry-run=client -f ~/quota.yaml 2>/dev/null; then
+if ! kubectl apply --dry-run=server -f ~/quota.yaml 2>/dev/null; then
   echo "FAIL: quota.yaml does not pass validation"
   exit 1
 fi

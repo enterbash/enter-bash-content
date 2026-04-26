@@ -7,7 +7,7 @@ if [ ! -f ~/service.yaml ]; then
 fi
 
 # Must pass dry-run validation
-if ! kubectl apply --dry-run=client -f ~/service.yaml 2>/dev/null; then
+if ! kubectl apply --dry-run=server -f ~/service.yaml 2>/dev/null; then
   echo "FAIL: service.yaml does not pass validation"
   exit 1
 fi

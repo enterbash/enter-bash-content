@@ -6,13 +6,13 @@ if [ ! -f ~/configmap.yaml ] || [ ! -f ~/pod.yaml ]; then
 fi
 
 # Validate ConfigMap
-if ! kubectl apply --dry-run=client -f ~/configmap.yaml 2>/dev/null; then
+if ! kubectl apply --dry-run=server -f ~/configmap.yaml 2>/dev/null; then
   echo "FAIL: configmap.yaml does not pass validation"
   exit 1
 fi
 
 # Validate Pod
-if ! kubectl apply --dry-run=client -f ~/pod.yaml 2>/dev/null; then
+if ! kubectl apply --dry-run=server -f ~/pod.yaml 2>/dev/null; then
   echo "FAIL: pod.yaml does not pass validation"
   exit 1
 fi

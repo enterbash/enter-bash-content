@@ -5,7 +5,7 @@ if [ ! -f ~/namespace.yaml ]; then
   exit 1
 fi
 
-if ! kubectl apply --dry-run=client -f ~/namespace.yaml 2>/dev/null; then
+if ! kubectl apply --dry-run=server -f ~/namespace.yaml 2>/dev/null; then
   echo "FAIL: namespace.yaml does not pass validation"
   exit 1
 fi

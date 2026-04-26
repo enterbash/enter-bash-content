@@ -5,7 +5,7 @@ if [ ! -f ~/cronjob.yaml ]; then
   exit 1
 fi
 
-if ! kubectl apply --dry-run=client -f ~/cronjob.yaml 2>/dev/null; then
+if ! kubectl apply --dry-run=server -f ~/cronjob.yaml 2>/dev/null; then
   echo "FAIL: cronjob.yaml does not pass validation"
   exit 1
 fi

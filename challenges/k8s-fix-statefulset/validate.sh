@@ -5,7 +5,7 @@ if [ ! -f ~/statefulset.yaml ]; then
   exit 1
 fi
 
-if ! kubectl apply --dry-run=client -f ~/statefulset.yaml 2>/dev/null; then
+if ! kubectl apply --dry-run=server -f ~/statefulset.yaml 2>/dev/null; then
   echo "FAIL: statefulset.yaml does not pass validation"
   exit 1
 fi

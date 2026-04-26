@@ -5,12 +5,12 @@ if [ ! -f ~/pod.yaml ] || [ ! -f ~/service.yaml ]; then
   exit 1
 fi
 
-if ! kubectl apply --dry-run=client -f ~/pod.yaml 2>/dev/null; then
+if ! kubectl apply --dry-run=server -f ~/pod.yaml 2>/dev/null; then
   echo "FAIL: pod.yaml does not pass validation"
   exit 1
 fi
 
-if ! kubectl apply --dry-run=client -f ~/service.yaml 2>/dev/null; then
+if ! kubectl apply --dry-run=server -f ~/service.yaml 2>/dev/null; then
   echo "FAIL: service.yaml does not pass validation"
   exit 1
 fi

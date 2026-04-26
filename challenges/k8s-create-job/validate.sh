@@ -5,7 +5,7 @@ if [ ! -f ~/job.yaml ]; then
   exit 1
 fi
 
-if ! kubectl apply --dry-run=client -f ~/job.yaml 2>/dev/null; then
+if ! kubectl apply --dry-run=server -f ~/job.yaml 2>/dev/null; then
   echo "FAIL: job.yaml does not pass validation"
   exit 1
 fi
