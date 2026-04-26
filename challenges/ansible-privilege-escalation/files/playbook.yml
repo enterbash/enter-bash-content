@@ -1,7 +1,7 @@
 ---
 - name: Privilege escalation demo
   hosts: local
-  sudo: yes
+  become: yes
   tasks:
     - name: Create root-owned directory
       file:
@@ -22,7 +22,8 @@
 
     - name: Write deploy user info
       shell: whoami > /tmp/priv-test/deploy_user.txt
-      become_as: deploy
+      become_user: deploy
+      become: yes
 
     - name: Write final status
       copy:
