@@ -1,31 +1,30 @@
 # Solution: Use Conditional Expressions
 
+## What the validator checks
+
+- Expected to find: ?
+- Expected to find: var\.environment
+- Expected to find: var\.enable_debug
+- Expected to find: count
+- local_file.config resource should reference 'production' in its content
+- local_file.debug_log resource should use count
+- terraform plan shows pending changes — your config may be incomplete
+- terraform plan with staging vars encountered an error
+
 ## Solution
 
 ```hcl
-variable "environment" {
-  type    = string
-  default = "production"
-}
-
-variable "enable_debug" {
-  type    = bool
-  default = false
-}
+variable "environment" { default = "production" }
+variable "enable_debug" { default = false }
 
 resource "local_file" "config" {
-  content  = "environment=${var.environment}\ndebug=${var.enable_debug}\n"
+  content  = "environment=${var.environment}\n"
   filename = "${path.module}/config.txt"
 }
 
-# Conditional resource — only create debug log in non-production
 resource "local_file" "debug_log" {
   count    = var.environment != "production" ? 1 : 0
   content  = "debug mode enabled\n"
   filename = "${path.module}/debug.log"
 }
 ```
-
-## Why this works
-
-The ternary operator `condition ? true_val : false_val` works in HCL. Using `count = condition ? 1 : 0` conditionally creates a resource. `var.environment != "production"` evaluates to true/false.

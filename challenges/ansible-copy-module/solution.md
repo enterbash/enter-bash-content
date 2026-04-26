@@ -1,19 +1,28 @@
 # Solution: Ansible Copy Module
 
-## Approach
+## What the validator checks
 
-The `copy` module has two modes: `src:` (copy a file) and `content:` (write inline text). They are mutually exclusive. Fix each task to use the right one.
+- Playbook had failures
+- db.conf not created
+- app.conf not created
+- readme.txt not created
+- db.conf should have source content
+- app.conf content wrong
+
+## Solution
+
+The `copy` module uses either `src:` (copy a file) or `content:` (write inline text) — never both.
 
 ```yaml
 - name: Copy config from source
   copy:
-    src: source_config.txt      # copies the file — db.conf gets "host=localhost"
+    src: source_config.txt      # copies the file → db.conf gets "host=localhost"
     dest: /tmp/copymod/db.conf
     mode: "0644"
 
 - name: Create app config with content
   copy:
-    content: |                  # inline content
+    content: |
       [app]
       name=myapp
       debug=false
@@ -28,6 +37,8 @@ The `copy` module has two modes: `src:` (copy a file) and `content:` (write inli
     owner: root
 ```
 
-## Why this works
+The validator checks that `db.conf` contains `host=localhost` (from `source_config.txt`) and `app.conf` contains `name=myapp` (from inline content).
 
-`src:` and `content:` are mutually exclusive — using both causes Ansible to fail. The validation checks that `db.conf` contains `host=localhost` (from `source_config.txt`) and `app.conf` contains `name=myapp` (from inline content).
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

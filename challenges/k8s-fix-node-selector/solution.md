@@ -1,20 +1,19 @@
 # Solution: Fix Node Selector and Affinity
 
+## What the validator checks
+
+- ~/pod.yaml not found
+- pod.yaml does not pass validation
+- nodeSelector is missing
+- affinity is missing
+- nodeAffinity is missing
+
 ## Solution
 
 ```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: node-selector-pod
 spec:
   nodeSelector:
-    disktype: ssd        # must match node label exactly
-  containers:
-  - name: app
-    image: nginx:alpine
+    disktype: ssd    # must match node label exactly
 ```
 
-## Why this works
-
-`nodeSelector` is a simple key-value match against node labels. The node must have the exact label for the Pod to be scheduled there. Use `kubectl get nodes --show-labels` to see available labels.
+Check available node labels: `kubectl get nodes --show-labels`

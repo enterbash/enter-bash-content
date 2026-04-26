@@ -1,22 +1,33 @@
 # Solution: Configure Bridge Networking
 
-## Approach
+## What the validator checks
 
-Create a custom bridge network with a specific subnet and run containers on it.
+- appnet subnet is not 172.20.0.0/16 (got $SUBNET)
+- webhost container is not running
+- webhost IP is not 172.20.0.10 (got $WEBIP)
+- checker container is not running
+- checker cannot reach webhost
+
+## Solution
 
 ```bash
-# Create network with specific subnet
-docker network create   --driver bridge   --subnet 172.20.0.0/16   --gateway 172.20.0.1   appnet
+docker network create \
+  --driver bridge \
+  --subnet 172.20.0.0/16 \
+  --gateway 172.20.0.1 \
+  appnet
 
-# Run containers on the network with specific IPs
-docker run -d   --name webhost   --network appnet   --ip 172.20.0.10   nginx:alpine
+docker run -d \
+  --name webhost \
+  --network appnet \
+  --ip 172.20.0.10 \
+  nginx:alpine
 
-docker run -d   --name checker   --network appnet   alpine sleep infinity
+docker run -d \
+  --name checker \
+  --network appnet \
+  alpine sleep infinity
 
-# Verify connectivity
+# Verify DNS resolution by container name
 docker exec checker ping -c 2 webhost
 ```
-
-## Why this works
-
-Custom bridge networks provide DNS resolution by container name. `--ip` assigns a static IP within the subnet.

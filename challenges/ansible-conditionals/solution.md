@@ -1,17 +1,20 @@
 # Solution: Ansible Conditionals
 
-## Approach
+## What the validator checks
 
-Use `when:` to conditionally execute tasks based on variable values.
+- Playbook had failures
+- prod_config.txt not created
+- logging.conf not created
+- port_info.txt not created
+
+## Solution
+
+Use `when:` with Jinja2 expressions. No `{{ }}` needed inside `when:`.
 
 ```yaml
-- name: Configure based on environment
-  hosts: local
-  become: yes
   vars:
     app_port: 8080
     app_env: production
-
   tasks:
     - name: Create production config
       copy:
@@ -24,14 +27,8 @@ Use `when:` to conditionally execute tasks based on variable values.
         content: "port={{ app_port }}\n"
         dest: /tmp/port_info.txt
       when: app_port > 1024
-
-    - name: Create logging config
-      copy:
-        content: "log_level=INFO\n"
-        dest: /tmp/logging.conf
-      when: app_env != "development"
 ```
 
-## Why this works
-
-`when:` accepts Jinja2 expressions. Note: no `{{ }}` needed in `when:` — Ansible evaluates it as an expression automatically.
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

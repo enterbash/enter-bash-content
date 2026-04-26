@@ -1,20 +1,20 @@
 # Solution: Ansible Blockinfile
 
-## Approach
+## What the validator checks
 
-Use `blockinfile` to insert or update a block of text in a file.
+- Playbook had failures
+- upstream block not added
+- backend server not in config
+- server block not added
+- proxy_pass not in config
+- marker lines missing
+
+## Solution
+
+Use `blockinfile` to insert a block of text identified by marker comments.
 
 ```yaml
-- name: Manage config blocks
-  hosts: local
-  become: yes
-
   tasks:
-    - name: Create config file
-      file:
-        path: /tmp/nginx.conf
-        state: touch
-
     - name: Add server block
       blockinfile:
         path: /tmp/nginx.conf
@@ -23,19 +23,12 @@ Use `blockinfile` to insert or update a block of text in a file.
           server {
               listen 80;
               server_name example.com;
-              root /var/www/html;
           }
-
-    - name: Add upstream block
-      blockinfile:
-        path: /tmp/nginx.conf
-        marker: "# {mark} UPSTREAM BLOCK"
-        block: |
-          upstream backend {
-              server 127.0.0.1:8080;
-          }
+        create: yes
 ```
 
-## Why this works
+`{mark}` is replaced with `BEGIN` and `END` in the marker comments.
 
-`blockinfile` wraps the block with marker comments so it can be identified and updated on subsequent runs. `{mark}` is replaced with `BEGIN` and `END`.
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

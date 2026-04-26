@@ -1,13 +1,13 @@
 # Solution: Kill Runaway Process
 
-## Approach
+## What the validator checks
 
-Find the CPU-hogging process and kill it.
+- **Check that cpu_hog process is no longer running**: cpu_hog process is still running
+
+## Solution
 
 ```bash
-# Find the process
-ps aux | grep cpu_hog
-# or
+# Find the CPU-hogging process
 pgrep -f cpu_hog
 
 # Kill it
@@ -17,6 +17,4 @@ pkill -f cpu_hog
 pgrep -f cpu_hog  # should return nothing
 ```
 
-## Why this works
-
-`pkill -f` matches against the full command line, not just the process name. This reliably kills the background bash script.
+`pkill -f` matches against the full command line.

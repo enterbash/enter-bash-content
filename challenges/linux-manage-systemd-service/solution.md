@@ -1,8 +1,16 @@
 # Solution: Manage a systemd Service
 
-## Approach
+## What the validator checks
 
-Create a valid systemd service unit file for the application.
+- **Check service file exists**: /etc/systemd/system/myapp.service does not exist
+- **Validate service file has required sections**: Service file missing [Unit] section
+- Service file missing [Service] section
+- Service file missing [Install] section
+- **Check ExecStart points to the python server**: ExecStart should run /opt/myapp/server.py
+- **Check WantedBy=multi-user.target (enables on boot)**: WantedBy should be multi-user.target
+- /opt/myapp/server.py does not respond correctly on port 8080
+
+## Solution
 
 ```bash
 sudo tee /etc/systemd/system/myapp.service << 'EOF'
@@ -16,19 +24,12 @@ User=runner
 WorkingDirectory=/opt/myapp
 ExecStart=/usr/bin/python3 /opt/myapp/server.py
 Restart=on-failure
-RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-# Verify the app actually runs
+# Verify the app runs
 python3 /opt/myapp/server.py &
-sleep 2
-curl -sf http://localhost:8080
-kill %1
+sleep 2 && curl -sf http://localhost:8080 && kill %1
 ```
-
-## Why this works
-
-`[Unit]` describes the service and its dependencies. `[Service]` defines how to run it. `[Install]` controls when it starts at boot. `WantedBy=multi-user.target` enables it for normal multi-user mode.

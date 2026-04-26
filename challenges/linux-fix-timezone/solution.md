@@ -1,21 +1,15 @@
 # Solution: Fix Timezone
 
-## Approach
+## What the validator checks
 
-Set the system timezone to America/New_York.
+- Timezone is not America/New_York (got: $TZ_FILE)
+
+## Solution
 
 ```bash
-# Set timezone
 sudo timedatectl set-timezone America/New_York
-# or
+# or:
 sudo ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
 echo "America/New_York" | sudo tee /etc/timezone
-
-# Verify
 timedatectl
-date
 ```
-
-## Why this works
-
-`/etc/localtime` is a symlink to the timezone data file. `/etc/timezone` stores the timezone name as text. Both need to be consistent.

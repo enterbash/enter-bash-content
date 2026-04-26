@@ -1,8 +1,13 @@
 # Solution: Fix CrashLooping Pod
 
+## What the validator checks
+
+
 ## Solution
 
-Fix the invalid command in the Pod manifest and re-apply it.
+The pod crashes because `nginx-wrong` doesn't exist in the image.
+
+Fix `~/pod.yaml` — either remove the `command:` entirely (use image default) or use the correct binary:
 
 ```yaml
 apiVersion: v1
@@ -13,24 +18,17 @@ spec:
   containers:
   - name: web
     image: nginx:alpine
-    # Option 1: remove the command entirely (use image default)
+    # Option 1: remove command entirely (recommended)
     ports:
     - containerPort: 80
 ```
 
-Or keep a command but use the correct binary:
+Or keep a command with the correct binary:
 ```yaml
     command: ["nginx", "-g", "daemon off;"]
 ```
 
 ```bash
-# Apply the fix
 kubectl apply -f ~/pod.yaml
-
-# Watch it come up
-kubectl get pod web-app -w
+kubectl get pod web-app -w   # watch it reach Running
 ```
-
-## Why this works
-
-`nginx-wrong` doesn't exist in the image, causing `exec format error` and immediate crash. Removing `command:` lets nginx use its default entrypoint. The Pod transitions from `CrashLoopBackOff` to `Running`.

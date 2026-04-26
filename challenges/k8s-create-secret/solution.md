@@ -1,8 +1,22 @@
 # Solution: Create a Secret
 
+## What the validator checks
+
+- secret.yaml or pod.yaml not found
+- secret.yaml does not pass validation
+- pod.yaml does not pass validation
+- kind should be Secret
+- Secret name should be db-credentials
+- Secret should have username key
+- Secret should have password key
+- Pod should reference db-credentials secret
+- Pod should have DB_USER env var
+- Pod should have DB_PASS env var
+
 ## Solution
 
 ```yaml
+# ~/secret.yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -13,36 +27,8 @@ data:
   DB_PASS: c3VwZXJzZWNyZXQ=  # base64("supersecret")
 ```
 
-```yaml
-# Pod using the secret
-apiVersion: v1
-kind: Pod
-metadata:
-  name: secret-pod
-spec:
-  containers:
-  - name: app
-    image: alpine
-    env:
-    - name: DB_USER
-      valueFrom:
-        secretKeyRef:
-          name: app-secret
-          key: DB_USER
-    - name: DB_PASS
-      valueFrom:
-        secretKeyRef:
-          name: app-secret
-          key: DB_PASS
-    command: ["sleep", "infinity"]
-```
-
 ```bash
 # Encode values
 echo -n "admin" | base64
 echo -n "supersecret" | base64
 ```
-
-## Why this works
-
-Secret values must be base64-encoded in the YAML. `secretKeyRef` injects them as environment variables.

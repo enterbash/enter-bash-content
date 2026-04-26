@@ -1,19 +1,23 @@
 # Solution: Fix Docker Storage Issues
 
-## Approach
+## What the validator checks
 
-Fix the container to use the correct user ID and add tmpfs for writable paths.
+- storebox-fixed container is not running
+- cannot write to /data
+- /tmp tmpfs mount not found
+
+## Solution
 
 ```bash
 docker rm -f storebox
 
-docker run -d   --name storebox   -v ~/storage:/data   -u $(id -u):$(id -g)   --tmpfs /tmp   alpine sleep infinity
+docker run -d \
+  --name storebox \
+  -v ~/storage:/data \
+  -u $(id -u):$(id -g) \
+  --tmpfs /tmp \
+  alpine sleep infinity
 
-# Verify
 docker exec storebox id
 docker exec storebox touch /tmp/test.txt && echo "tmpfs writable"
 ```
-
-## Why this works
-
-`-u $(id -u):$(id -g)` runs the container as your current user, matching the volume mount ownership. `--tmpfs` mounts a temporary in-memory filesystem for paths that need to be writable.

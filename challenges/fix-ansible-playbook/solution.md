@@ -1,19 +1,27 @@
 # Solution: Fix Ansible Playbook
 
-## Approach
+## What the validator checks
 
-Review the playbook and fix the issues so it runs successfully.
+- Playbook had failures
+
+## Solution
+
+Fix the broken playbook so it runs without errors.
 
 ```bash
 # Check syntax first
 ansible-playbook -i inventory.ini playbook.yml --syntax-check
 
-# Run with verbose output to see what's happening
+# Run with verbose output to see what's failing
 ansible-playbook -i inventory.ini playbook.yml -v
 ```
 
-## Key concepts
+Common issues to look for:
+- `src:` and `content:` used together in `copy` module (mutually exclusive)
+- Missing `dest:` in copy tasks
+- Wrong indentation
+- Invalid module parameter names
 
-- Always run `--syntax-check` before executing
-- Use `-v`, `-vv`, or `-vvv` for increasing verbosity
-- Check `failed=0` in the PLAY RECAP to confirm success
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

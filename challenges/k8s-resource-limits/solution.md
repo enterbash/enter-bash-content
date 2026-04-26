@@ -1,12 +1,17 @@
 # Solution: Add Resource Limits
 
+## What the validator checks
+
+- ~/pod.yaml not found
+- pod.yaml does not pass validation
+- CPU request should be 100m
+- Memory request should be 128Mi
+- CPU limit should be 500m
+- Memory limit should be 256Mi
+
 ## Solution
 
 ```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: resource-pod
 spec:
   containers:
   - name: app
@@ -20,6 +25,4 @@ spec:
         memory: "256Mi"
 ```
 
-## Why this works
-
-`requests` is what the scheduler uses to find a node with enough capacity. `limits` is the hard cap — exceeding memory causes OOMKill; exceeding CPU causes throttling. `100m` = 0.1 CPU cores.
+`100m` = 0.1 CPU cores. `requests` is used for scheduling; `limits` is the hard cap.

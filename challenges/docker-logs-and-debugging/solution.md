@@ -1,8 +1,12 @@
 # Solution: Use Docker Logs to Find Issues
 
-## Approach
+## What the validator checks
 
-Use `docker logs` to find the failing container and extract the error.
+- ~/error-report.txt not found
+- first line should contain the failing container name (app2)
+- second line should contain the error message
+
+## Solution
 
 ```bash
 # Check logs for each container
@@ -11,18 +15,13 @@ docker logs app2
 docker logs app3
 
 # Find the one with errors
-docker logs app2 2>&1 | grep ERROR
+for c in app1 app2 app3; do
+  echo "=== $c ==="
+  docker logs $c 2>&1 | grep -i error | head -3
+done
 
-# Write the report
+# Write the report (container name on line 1, error on line 2)
 CONTAINER="app2"
 ERROR=$(docker logs $CONTAINER 2>&1 | grep ERROR | head -1)
-
-cat > ~/error-report.txt << EOF
-$CONTAINER
-$ERROR
-EOF
+printf "%s\n%s\n" "$CONTAINER" "$ERROR" > ~/error-report.txt
 ```
-
-## Why this works
-
-`docker logs` shows stdout and stderr from a container. `2>&1` merges stderr into stdout for piping. The report needs the container name on line 1 and the error on line 2.

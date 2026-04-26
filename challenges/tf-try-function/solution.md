@@ -1,22 +1,26 @@
 # Solution: Use try and can Functions
 
+## What the validator checks
+
+- Expected to find: try(
+- Expected to find: can(
+- Expected to find: default-app
+- Expected to find: 8080
+- Expected to find: localhost
+- terraform plan shows pending changes — your config may be incomplete
+
 ## Solution
 
 ```hcl
 variable "config" {
   type    = any
-  default = {
-    name    = "myapp"
-    port    = 8080
-    timeout = null
-  }
+  default = { name = "myapp"; port = 8080; timeout = null }
 }
 
 locals {
-  # try() returns the first successful expression
   app_name = try(var.config.name, "default-app")
   app_port = try(var.config.port, 80)
-  timeout  = try(var.config.timeout, 30)  # null falls through to default
+  timeout  = try(var.config.timeout, 30)
 }
 
 resource "local_file" "config" {
@@ -25,6 +29,4 @@ resource "local_file" "config" {
 }
 ```
 
-## Why this works
-
-`try(expr1, expr2, ...)` evaluates expressions in order and returns the first one that doesn't produce an error. Useful for optional attributes that might be null or missing.
+`try()` returns the first expression that doesn't error.

@@ -1,28 +1,26 @@
 # Solution: Fix String Interpolation
 
+## What the validator checks
+
+- Expected to find: ${var\.project}
+- Expected to find: ${var\.region}
+- Expected to find: ${random_id\.suffix\.hex}
+- Expected to find: ${path\.module}
+- Found bare \$var. references without \${}
+- terraform plan shows pending changes — your config may be incomplete
+
 ## Solution
 
 ```hcl
 variable "app_name" { default = "myapp" }
 variable "environment" { default = "production" }
-variable "version" { default = "1.0.0" }
 
 locals {
   full_name = "${var.app_name}-${var.environment}"
-  tag       = "v${var.version}"
 }
 
 resource "local_file" "config" {
-  content  = <<-EOT
-    app_name    = ${var.app_name}
-    environment = ${var.environment}
-    full_name   = ${local.full_name}
-    tag         = ${local.tag}
-  EOT
+  content  = "app=${var.app_name}\nenv=${var.environment}\nfull=${local.full_name}\n"
   filename = "${path.module}/config.txt"
 }
 ```
-
-## Why this works
-
-`"${expression}"` interpolates values into strings. `<<-EOT ... EOT` is a heredoc (strips leading whitespace). String functions like `upper()`, `lower()`, `format()` work inside interpolations.

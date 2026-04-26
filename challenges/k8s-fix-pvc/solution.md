@@ -1,5 +1,13 @@
 # Solution: Fix a PersistentVolumeClaim
 
+## What the validator checks
+
+- ~/pvc.yaml not found
+- pvc.yaml does not pass validation
+- accessMode should be ReadWriteOnce
+- storage request should be 5Gi
+- PVC resources.requests should not contain cpu
+
 ## Solution
 
 ```yaml
@@ -12,9 +20,5 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 5Gi      # not "cpu" — PVCs request storage, not CPU
+      storage: 5Gi    # PVCs request "storage", not "cpu" or "memory"
 ```
-
-## Why this works
-
-PVCs request `storage`, not `cpu` or `memory`. Those belong in Pod resource requests. `ReadWriteOnce` means one node can mount it read-write at a time.

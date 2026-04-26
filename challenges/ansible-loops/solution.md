@@ -1,13 +1,19 @@
 # Solution: Ansible Loops
 
-## Approach
+## What the validator checks
 
-Use `loop:` to iterate over a list and create multiple resources.
+- Playbook had failures
+- /tmp/apps/$app not created
+- /tmp/apps/$app/config.txt not created
+- /tmp/apps/$app/logs not created
+- frontend port wrong
+- backend port wrong
+
+## Solution
+
+Use `loop:` to iterate over a list. Access the current item with `item`.
 
 ```yaml
-- name: Create app configs
-  hosts: local
-  become: yes
   vars:
     apps:
       - name: web
@@ -16,7 +22,6 @@ Use `loop:` to iterate over a list and create multiple resources.
         port: 5000
       - name: worker
         port: 9000
-
   tasks:
     - name: Create app directories
       file:
@@ -31,6 +36,6 @@ Use `loop:` to iterate over a list and create multiple resources.
       loop: "{{ apps }}"
 ```
 
-## Why this works
-
-`loop:` replaces the deprecated `with_items:`. Each iteration exposes the current item as `item`. For dictionaries, access fields with `item.key`.
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

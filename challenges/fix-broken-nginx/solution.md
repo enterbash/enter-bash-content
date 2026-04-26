@@ -1,21 +1,24 @@
 # Solution: Fix Broken Nginx Config
 
-## Approach
+## What the validator checks
 
-Review the challenge instructions and the validation checks to understand exactly what's required.
+- **Check nginx is running**: Nginx is not running
+- **Check nginx config is valid**: Nginx configuration is invalid — run 'sudo nginx -t' to see errors
+- Nginx is not serving the expected content
+
+## Solution
 
 ```bash
-# Read the instructions carefully
-cat ~/README.md 2>/dev/null || true
+# Check what's wrong with the nginx config
+sudo nginx -t
 
-# Check what validation expects
-# The key checks are:
+# Common fixes:
+# - Wrong server_name or listen port
+# - Missing semicolons
+# - Wrong root path
 
-# - Welcome to Enter Bash
+# After fixing /etc/nginx/nginx.conf or /etc/nginx/sites-enabled/*:
+sudo nginx -t   # must pass
+sudo service nginx start
+curl http://localhost
 ```
-
-## Key concepts
-
-- Read the error messages carefully — they tell you exactly what's missing
-- Use `man <command>` to look up command options
-- Test your solution before validating

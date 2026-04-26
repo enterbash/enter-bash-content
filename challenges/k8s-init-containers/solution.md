@@ -1,5 +1,14 @@
 # Solution: Add Init Containers
 
+## What the validator checks
+
+- ~/pod.yaml not found
+- pod.yaml does not pass validation
+- initContainers section is missing
+- init container name should be content-init
+- init container image should be busybox
+- init container should mount volume at /work-dir
+
 ## Solution
 
 ```yaml
@@ -27,6 +36,4 @@ spec:
     emptyDir: {}
 ```
 
-## Why this works
-
-Init containers run to completion before app containers start. They share volumes with app containers. Use them for setup tasks: waiting for dependencies, seeding data, or running migrations.
+Init containers run to completion before app containers start.

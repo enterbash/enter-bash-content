@@ -1,22 +1,21 @@
 # Solution: Fix Terraform Drift
 
-## Approach
+## What the validator checks
 
-Detect the drift and reconcile state with the actual file.
+- Terraform plan shows changes
+
+## Solution
 
 ```bash
 cd ~/terraform-project
 
-# See what changed
-terraform plan  # shows drift between state and actual file
+# See what drifted
+terraform plan
 
-# Option 1: restore the file to match state
-terraform apply -auto-approve  # overwrites the manually changed file
+# Option 1: restore to match Terraform state (overwrites manual change)
+terraform apply -auto-approve
 
-# Option 2: update config to match the drift
-# Edit main.tf to match the new content, then apply
+# Option 2: update config to match the drift, then apply
 ```
 
-## Why this works
-
-Terraform detects drift by comparing the state file against the actual infrastructure. `terraform apply` reconciles them by updating infrastructure to match the desired config. For file resources, it overwrites the file.
+Terraform detects drift by comparing state against actual files. `apply` reconciles them.

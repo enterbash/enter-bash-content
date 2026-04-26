@@ -1,16 +1,25 @@
 # Solution: Create a Simple Module
 
+## What the validator checks
+
+- Expected to find: module 
+- Expected to find: source.*modules/config
+- Expected to find: app_name
+- Expected to find: environment
+- Expected to find: variable 
+- Expected to find: variable 
+- Expected to find: resource 
+- Expected to find: output 
+- Expected to find: output 
+- Expected to find: module\.app_config
+- terraform plan shows pending changes — your config may be incomplete
+
 ## Solution
 
 ```hcl
 # modules/config/main.tf
-variable "app_name" {
-  type = string
-}
-
-variable "environment" {
-  type = string
-}
+variable "app_name" { type = string }
+variable "environment" { type = string }
 
 resource "local_file" "config" {
   content  = "app=${var.app_name}\nenv=${var.environment}\n"
@@ -23,18 +32,10 @@ output "config_path" {
 ```
 
 ```hcl
-# main.tf (root)
+# main.tf
 module "app_config" {
   source      = "./modules/config"
   app_name    = "myapp"
   environment = "production"
 }
-
-output "config_file" {
-  value = module.app_config.config_path
-}
 ```
-
-## Why this works
-
-Modules encapsulate reusable infrastructure. Input variables are passed as arguments. Outputs expose values to the calling module. `source = "./modules/config"` references a local module.

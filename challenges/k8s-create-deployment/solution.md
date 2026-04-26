@@ -1,8 +1,20 @@
 # Solution: Create a Deployment
 
+## What the validator checks
+
+- ~/deployment.yaml not found
+- deployment.yaml does not pass validation
+- kind should be Deployment
+- Deployment name should be nginx-deploy
+- replicas should be 3
+- image should be nginx:1.25
+- containerPort should be 80
+- labels should include app: nginx
+
 ## Solution
 
 ```yaml
+# ~/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -30,6 +42,4 @@ spec:
 kubectl apply --dry-run=server -f ~/deployment.yaml
 ```
 
-## Why this works
-
-A Deployment needs `spec.selector.matchLabels` to match `spec.template.metadata.labels` — this is how it knows which Pods belong to it. The `replicas: 3` creates 3 identical Pods.
+`spec.selector.matchLabels` must match `spec.template.metadata.labels` exactly.

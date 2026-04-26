@@ -1,8 +1,14 @@
 # Solution: Monitor System Resources
 
-## Approach
+## What the validator checks
 
-Kill the rogue processes and write a system resource report.
+- **Check rogue processes are killed**: mem_leak process is still running
+- cpu_hog2 process is still running
+- **Check system report exists**: /home/runner/system-report.txt not found
+- **Check report has content**: System report is empty
+- **Check report contains memory info**: Report missing memory information
+
+## Solution
 
 ```bash
 # Kill rogue processes
@@ -11,14 +17,8 @@ pkill -f cpu_hog2
 
 # Write system report
 cat > /home/runner/system-report.txt << EOF
-CPU Usage: $(top -bn1 | grep "Cpu(s)" | awk '{print $2}')%
+CPU: $(top -bn1 | grep "Cpu(s)" | awk '{print $2}')%
 Memory: $(free -h | awk '/^Mem:/{print $3 "/" $2}')
-Load Average: $(uptime | awk -F'load average:' '{print $2}')
+Rogue processes terminated
 EOF
-
-echo "Rogue processes terminated" >> /home/runner/system-report.txt
 ```
-
-## Why this works
-
-`pkill -f` kills by command pattern. The report file needs to exist with content — the exact format is flexible.

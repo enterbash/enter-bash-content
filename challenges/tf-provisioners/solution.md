@@ -1,26 +1,22 @@
 # Solution: Use Provisioners
 
+## What the validator checks
+
+- Expected to find: null_resource
+- Expected to find: provisioner 
+- Expected to find: when.*=.*destroy
+- Expected to find: provisioned
+
 ## Solution
 
 ```hcl
 resource "null_resource" "app_setup" {
   provisioner "local-exec" {
-    command = "echo 'Provisioning...' && mkdir -p ${path.module}/app"
+    command = "mkdir -p ${path.module}/app && echo 'app=myapp' > ${path.module}/app/config.txt"
   }
-
-  provisioner "local-exec" {
-    command = "echo 'app=myapp' > ${path.module}/app/config.txt"
-  }
-
   provisioner "local-exec" {
     when    = destroy
     command = "rm -rf ${path.module}/app"
   }
 }
 ```
-
-> **Note:** Provisioners are a last resort. Prefer native Terraform resources when possible.
-
-## Why this works
-
-`local-exec` runs commands on the machine running Terraform. Multiple provisioners run in order. `when = destroy` runs during `terraform destroy`. Provisioners don't track state — they run once on create.

@@ -1,12 +1,18 @@
 # Solution: Add Liveness and Readiness Probes
 
+## What the validator checks
+
+- ~/pod.yaml not found
+- pod.yaml does not pass validation
+- livenessProbe is missing
+- readinessProbe is missing
+- probes should use httpGet
+- initialDelaySeconds is missing
+- periodSeconds is missing
+
 ## Solution
 
 ```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: liveness-pod
 spec:
   containers:
   - name: app
@@ -25,7 +31,3 @@ spec:
       initialDelaySeconds: 5
       periodSeconds: 3
 ```
-
-## Why this works
-
-`livenessProbe` restarts the container if it fails. `readinessProbe` removes the Pod from Service endpoints if it fails. `initialDelaySeconds` prevents false failures during startup.

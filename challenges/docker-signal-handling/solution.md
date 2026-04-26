@@ -1,8 +1,13 @@
 # Solution: Handle Signals in Containers
 
-## Approach
+## What the validator checks
 
-Fix the Dockerfile to use exec form entrypoint so signals reach the process.
+- signalapp:fixed image not found
+- still using shell form entrypoint
+
+## Solution
+
+Fix the Dockerfile to use exec form so signals reach the process:
 
 ```dockerfile
 FROM python:3-alpine
@@ -16,9 +21,5 @@ ENTRYPOINT ["python3", "app.py"]
 ```bash
 docker build -t signalapp:fixed ~/signalapp/
 docker inspect signalapp:fixed --format '{{.Config.Entrypoint}}'
-# Should show: [python3 app.py] — not [/bin/sh -c python3 app.py]
+# Should show: [python3 app.py]  — not [/bin/sh -c python3 app.py]
 ```
-
-## Why this works
-
-Shell form wraps the command in `/bin/sh -c`, making the shell PID 1. Signals like SIGTERM go to the shell, not your app. Exec form makes your app PID 1 directly.

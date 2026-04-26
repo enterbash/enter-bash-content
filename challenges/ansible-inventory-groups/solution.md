@@ -1,30 +1,35 @@
 # Solution: Ansible Inventory Groups
 
-## Approach
+## What the validator checks
 
-Fix the inventory syntax and use group variables correctly.
+- Inventory has parse errors
+- webservers group missing
+- dbservers group missing
+- production group missing
+- Playbook had failures
+- env_info.txt not created
+- env variable not set
+- deploy_user variable not set
+
+## Solution
+
+Fix the inventory syntax errors:
 
 ```ini
 [webservers]
-localhost ansible_connection=local
+localhost ansible_connection=local   # = required, not a space
 
 [dbservers]
 localhost ansible_connection=local
 
-[production:children]
+[production:children]               # :children not :child
 webservers
 dbservers
 
-[production:vars]
+[production:vars]                   # :vars not :var
 env=production
-deploy_user=deploy
 ```
 
-Key fixes:
-- `ansible_connection local` → `ansible_connection=local` (needs `=`)
-- `[production:child]` → `[production:children]`
-- `[production:var]` → `[production:vars]`
-
-## Why this works
-
-Inventory group syntax requires `=` for variable assignments. `:children` defines a group of groups. `:vars` defines variables for all hosts in a group.
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

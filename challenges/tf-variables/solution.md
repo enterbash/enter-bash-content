@@ -1,5 +1,18 @@
 # Solution: Define and Use Variables
 
+## What the validator checks
+
+- Expected to find: variable 
+- Expected to find: variable 
+- Expected to find: variable 
+- Expected to find: var\.project_name
+- Expected to find: var\.environment
+- Expected to find: var\.file_count
+- project_name variable should have default = \
+- environment variable should have default = \
+- file_count variable should have default = 3
+- terraform plan shows pending changes — your config may be incomplete
+
 ## Solution
 
 ```hcl
@@ -17,7 +30,7 @@ variable "environment" {
 }
 
 variable "file_count" {
-  description = "Number of config files to create"
+  description = "Number of config files"
   type        = number
   default     = 3
 }
@@ -29,6 +42,6 @@ resource "local_file" "config" {
 }
 ```
 
-## Why this works
-
-Variables decouple configuration from code. `default` values make them optional. Reference with `var.name`. Override at runtime with `-var` flags or `terraform.tfvars`.
+```bash
+terraform apply -auto-approve
+```

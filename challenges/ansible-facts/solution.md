@@ -1,14 +1,19 @@
 # Solution: Ansible Facts
 
-## Approach
+## What the validator checks
 
-Use `ansible_facts` to access system information gathered automatically.
+- Playbook had failures
+- /tmp/system_info.txt not created
+- OS line missing
+- Hostname line missing
+- Architecture line missing
+- Unresolved variables in output
+
+## Solution
+
+Ansible auto-collects facts at play start. Reference them directly as variables.
 
 ```yaml
-- name: Gather system info
-  hosts: local
-  become: yes
-
   tasks:
     - name: Write system info
       copy:
@@ -17,10 +22,9 @@ Use `ansible_facts` to access system information gathered automatically.
           os={{ ansible_distribution }} {{ ansible_distribution_version }}
           kernel={{ ansible_kernel }}
           memory_mb={{ ansible_memtotal_mb }}
-          cpu_count={{ ansible_processor_vcpus }}
         dest: /tmp/system_info.txt
 ```
 
-## Why this works
-
-Ansible automatically runs the `setup` module at the start of each play, populating `ansible_facts`. Access them directly as variables (e.g. `ansible_hostname`) or via `ansible_facts['hostname']`.
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

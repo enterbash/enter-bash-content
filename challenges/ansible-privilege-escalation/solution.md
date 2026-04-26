@@ -1,43 +1,37 @@
 # Solution: Ansible Privilege Escalation
 
-## Approach
+## What the validator checks
 
-Use `become:` and `become_user:` for privilege escalation instead of the deprecated `sudo:`.
+- Playbook had failures
+- root_user.txt not created
+- deploy_user.txt not created
+- status.txt not created
+- root task not running as root
+- deploy task not running as deploy
+- 'become:' not found in playbook
+
+## Solution
+
+Use `become: yes` and `become_user:` — never the deprecated `sudo:`.
 
 ```yaml
-- name: Privilege escalation demo
+- name: Privilege escalation
   hosts: local
   become: yes          # become root by default
-
   tasks:
-    - name: Create root-owned directory
-      file:
-        path: /tmp/priv-test
-        state: directory
-        owner: root
-        mode: "0755"
-
-    - name: Write root info
-      shell: whoami > /tmp/priv-test/root_user.txt
-
-    - name: Create deploy directory
-      file:
-        path: /tmp/priv-test/deploy
-        state: directory
-        owner: deploy
-        mode: "0755"
-
-    - name: Write deploy user info
-      shell: whoami > /tmp/priv-test/deploy_user.txt
-      become_user: deploy    # switch to deploy user for this task
-      become: yes
-
-    - name: Write status
+    - name: Create root-owned file
       copy:
-        content: "privilege escalation configured\n"
-        dest: /tmp/priv-test/status.txt
+        content: "root owned\n"
+        dest: /tmp/priv-test/root_file.txt
+
+    - name: Write as deploy user
+      copy:
+        content: "deploy user\n"
+        dest: /tmp/priv-test/deploy_file.txt
+      become_user: deploy
+      become: yes
 ```
 
-## Why this works
-
-`become: yes` at play level makes all tasks run as root. `become_user: deploy` on a specific task overrides to run as that user. Never use the deprecated `sudo:` directive.
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

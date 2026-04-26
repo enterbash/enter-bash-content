@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Generate solution.md for all 165 challenges.
-Reads challenge.yaml + validate.sh + starter files to produce accurate solutions.
+"""
+Generate solution.md for all 165 challenges by parsing validate.sh directly.
+Each solution is derived from the actual FAIL conditions in validate.sh,
+so it precisely addresses what the validator checks.
+
 Run from content repo root: python3 scripts/generate-solutions.py
 """
-import os, re, yaml
+import re, yaml
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -13,40 +16,219 @@ def read(p):
     try: return Path(p).read_text()
     except: return ""
 
-def grep_checks(vs):
-    """Extract what validate.sh checks for (grep -q patterns)."""
-    return re.findall(r"grep -q ['\"]([^'\"]+)['\"]", vs)
+def parse_checks(validate_sh: str) -> list[dict]:
+    """
+    Extract (condition, fail_message, comment) triples from validate.sh.
+    Returns list of dicts with keys: fail_msg, condition, comment
+    """
+    checks = []
+    lines = validate_sh.split('\n')
+    pending_comment = ''
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        # Accumulate comments above a check
+        if line.startswith('#') and not line.startswith('#!'):
+            pending_comment = line.lstrip('#').strip()
+            i += 1
+            continue
+        # Pattern: if [ ! -f ... ] or if ! cmd ...; then
+        if line.startswith('if ') and i + 1 < len(lines):
+            # Collect the full if block
+            block_lines = [line]
+            j = i + 1
+            while j < len(lines) and not lines[j].strip().startswith('fi'):
+                block_lines.append(lines[j].strip())
+                j += 1
+            block = '\n'.join(block_lines)
+            # Extract FAIL message
+            fail_match = re.search(r'echo "FAIL: ([^"]+)"', block)
+            if fail_match:
+                checks.append({
+                    'fail_msg': fail_match.group(1),
+                    'condition': line,
+                    'comment': pending_comment,
+                    'block': block,
+                })
+            pending_comment = ''
+            i = j + 1
+            continue
+        # Pattern: [ -f file ] || { echo "FAIL..." }
+        if '|| {' in line or "|| { echo" in line:
+            fail_match = re.search(r'echo "FAIL: ([^"]+)"', line)
+            if fail_match:
+                checks.append({
+                    'fail_msg': fail_match.group(1),
+                    'condition': line,
+                    'comment': pending_comment,
+                    'block': line,
+                })
+            pending_comment = ''
+        else:
+            if not line.startswith('#'):
+                pending_comment = ''
+        i += 1
+    return checks
 
-def grep_file_checks(vs):
-    """Extract file paths validate.sh checks exist."""
-    return re.findall(r"\[ [!-]f ([^\]]+)\]", vs)
+def extract_files_needed(checks: list[dict]) -> list[str]:
+    """Extract file paths that must exist from FAIL conditions."""
+    files = []
+    for c in checks:
+        # [ ! -f /path ] or [ ! -x /path ]
+        m = re.search(r'\[ [!-][fx] ([^\]]+)\]', c['condition'])
+        if m:
+            files.append(m.group(1).strip())
+        # FAIL message mentions a path
+        m = re.search(r'(~/\S+|/home/runner/\S+|/tmp/\S+)', c['fail_msg'])
+        if m:
+            p = m.group(1).rstrip('.')
+            if p not in files:
+                files.append(p)
+    return list(dict.fromkeys(files))  # deduplicate preserving order
 
+def extract_grep_patterns(checks: list[dict]) -> list[tuple[str, str]]:
+    """Extract (pattern, file) pairs from grep -q checks."""
+    patterns = []
+    for c in checks:
+        # grep -q 'pattern' file or grep -qi 'pattern' file
+        m = re.search(r"grep -qi? '([^']+)' ([^\s;]+)", c['block'])
+        if m:
+            patterns.append((m.group(1), m.group(2), c['fail_msg']))
+        # grep -qE 'pattern' file
+        m = re.search(r"grep -qE '([^']+)' ([^\s;]+)", c['block'])
+        if m:
+            patterns.append((m.group(1), m.group(2), c['fail_msg']))
+    return patterns
 
-# ── Category-specific solution generators ──────────────────────────────────
+def generate_solution(ch_dir: Path) -> str:
+    name = ch_dir.name
+    cy_path = ch_dir / "challenge.yaml"
+    vs_path = ch_dir / "validate.sh"
+    if not cy_path.is_file() or not vs_path.is_file():
+        return ""
 
-def solve_linux(name, data, vs, files_dir):
-    title = data['name']
-    instructions = data.get('instructions', '')
-    checks = grep_checks(vs)
-    
+    data = yaml.safe_load(cy_path.read_text())
+    validate_sh = vs_path.read_text()
+    category = data.get('category', '')
+    title = data.get('name', name)
+    checks = parse_checks(validate_sh)
+
+    # Read starter files for context
+    starter_files = {}
+    files_dir = ch_dir / "files"
+    if files_dir.is_dir():
+        for f in files_dir.iterdir():
+            if f.suffix in ('.yml', '.yaml', '.tf', '.sh', '.ini', '.j2', '.txt', '.conf', '.md'):
+                starter_files[f.name] = f.read_text()
+
     lines = [f"# Solution: {title}\n"]
-    
-    # Derive solution from validate.sh checks
-    if 'log-analysis' in name:
-        lines.append("""## Approach
 
-Examine the log file, count occurrences of each level, find the most common error, then write a report.
+    # Build solution based on category + validate.sh checks
+    if category == 'linux':
+        lines.append(generate_linux(name, data, checks, validate_sh, starter_files))
+    elif category == 'ansible':
+        lines.append(generate_ansible(name, data, checks, validate_sh, starter_files))
+    elif category == 'docker':
+        lines.append(generate_docker(name, data, checks, validate_sh, starter_files))
+    elif category == 'kubernetes':
+        lines.append(generate_k8s(name, data, checks, validate_sh, starter_files))
+    elif category == 'terraform':
+        lines.append(generate_terraform(name, data, checks, validate_sh, starter_files))
+    else:
+        lines.append(generate_generic(name, data, checks, validate_sh))
 
-```bash
+    return '\n'.join(lines) + '\n'
+
+
+# ── Linux ──────────────────────────────────────────────────────────────────
+
+def generate_linux(name, data, checks, validate_sh, starter_files):
+    title = data.get('name', name)
+    out = ["## What the validator checks\n"]
+
+    # List every FAIL condition as a requirement
+    for c in checks:
+        if c['comment']:
+            out.append(f"- **{c['comment']}**: {c['fail_msg']}")
+        else:
+            out.append(f"- {c['fail_msg']}")
+
+    out.append("\n## Solution\n")
+
+    # Build solution from checks
+    solution_cmds = []
+    notes = []
+
+    for c in checks:
+        fail = c['fail_msg']
+        block = c['block']
+
+        # File must exist
+        m = re.search(r'\[ [!-]f ([^\]]+)\]', block)
+        if m and 'not found' in fail.lower():
+            path = m.group(1).strip()
+            solution_cmds.append(f"# Create {path} if it doesn't exist")
+            continue
+
+        # File must be executable
+        if '! -x' in block or 'not executable' in fail.lower():
+            m = re.search(r'\[ [!-]x ([^\]]+)\]', block)
+            if m:
+                path = m.group(1).strip()
+                solution_cmds.append(f"chmod +x {path}")
+            continue
+
+        # Crontab check
+        if 'crontab' in fail.lower() or 'cron' in fail.lower():
+            m = re.search(r"grep -qE '([^']+)'", block)
+            if m:
+                pattern = m.group(1)
+                # Extract the cron expression from the pattern
+                cron_match = re.search(r'\^([\d\s\*]+)', pattern)
+                if cron_match:
+                    cron = cron_match.group(1).strip()
+                    solution_cmds.append(f'(crontab -l 2>/dev/null; echo "{cron} /home/runner/backup.sh") | crontab -')
+            continue
+
+        # Permission checks
+        if 'should be' in fail and ('700' in fail or '600' in fail or '644' in fail or '755' in fail):
+            m = re.search(r'(\S+) should be (\d+)', fail)
+            if m:
+                path_hint = m.group(1)
+                perm = m.group(2)
+                solution_cmds.append(f"chmod {perm} ~/{path_hint.lstrip('~/')}")
+            continue
+
+        # grep content checks — what must be in a file
+        m = re.search(r"grep -qi? '([^']+)' ([^\s;]+)", block)
+        if m:
+            pattern = m.group(1)
+            target_file = m.group(2)
+            notes.append(f"- `{target_file}` must contain text matching `{pattern}`")
+            continue
+
+        # grep -qE pattern
+        m = re.search(r"grep -qE '([^']+)' ([^\s;]+)", block)
+        if m:
+            pattern = m.group(1)
+            target_file = m.group(2)
+            notes.append(f"- `{target_file}` must match pattern `{pattern}`")
+            continue
+
+    # Emit the solution based on challenge name patterns
+    if 'analyze' in name and 'log' in name:
+        out.append("""```bash
 # Count log levels
 ERROR_COUNT=$(grep -c 'ERROR' /var/log/webapp/app.log)
 WARN_COUNT=$(grep -c 'WARN' /var/log/webapp/app.log)
 INFO_COUNT=$(grep -c 'INFO' /var/log/webapp/app.log)
 
 # Find most common error message
-COMMON_ERROR=$(grep 'ERROR' /var/log/webapp/app.log | sort | uniq -c | sort -rn | head -1 | sed 's/^ *[0-9]* *//')
+COMMON_ERROR=$(grep 'ERROR' /var/log/webapp/app.log \\
+  | sort | uniq -c | sort -rn | head -1 \\
+  | sed 's/^ *[0-9]* *//')
 
-# Write the report
+# Write the report (must contain "ERROR", a count, and "database"/"connection"/"timeout")
 cat > /home/runner/log-analysis.txt << EOF
 ERROR count: $ERROR_COUNT
 WARN count: $WARN_COUNT
@@ -55,158 +237,118 @@ Most common error: $COMMON_ERROR
 EOF
 ```
 
-## Why this works
-
-`grep -c` counts matching lines. `sort | uniq -c | sort -rn` ranks by frequency. The report contains the word "ERROR" and a count, satisfying all validation checks.""")
+The validator checks that `/home/runner/log-analysis.txt`:
+1. Exists and is non-empty
+2. Contains the word `ERROR`
+3. Contains at least one number
+4. Contains `database`, `connection`, or `timeout` (the most common error in the log)""")
 
     elif 'crontab' in name:
-        lines.append("""## Approach
-
-Make `backup.sh` executable, add the correct cron entry, and verify the script creates the backup file.
-
-```bash
-# Make backup script executable
+        out.append("""```bash
+# 1. Make the backup script executable
 chmod +x /home/runner/backup.sh
 
-# Add cron job — runs at 2AM daily
+# 2. Add the cron entry — runs at 2:00 AM every day
 (crontab -l 2>/dev/null; echo "0 2 * * * /home/runner/backup.sh") | crontab -
 
-# Verify it was added
+# 3. Verify
 crontab -l
+
+# 4. Run it once to confirm it creates the backup file
+bash /home/runner/backup.sh
+ls /home/runner/backups/
 ```
 
-## Why this works
-
-The cron expression `0 2 * * *` means: minute 0, hour 2, every day, every month, every weekday — i.e. 2:00 AM daily. The validate checks for `^0 2 \* \* \*` at the start of the line.""")
+The cron expression `0 2 * * *` means: minute=0, hour=2, every day. The validator checks for `^0 2 * * *` at the start of the crontab line.""")
 
     elif 'compress' in name or 'archive' in name:
-        lines.append("""## Approach
-
-Create a gzip-compressed tar archive of the webapp directory.
-
-```bash
+        out.append("""```bash
+# Create a gzip-compressed tar archive of the webapp directory
 tar -czf /home/runner/webapp-backup.tar.gz -C /home/runner webapp/
 
-# Verify contents
+# Verify the archive contains the expected files
 tar -tzf /home/runner/webapp-backup.tar.gz
 ```
 
-## Why this works
-
-`-c` creates, `-z` gzip-compresses, `-f` specifies the output file. `-C /home/runner` changes to that directory first so paths inside the archive are relative (e.g. `webapp/public/index.html` not `/home/runner/webapp/...`).""")
+`-c` = create, `-z` = gzip compress, `-f` = output file. `-C /home/runner` changes to that directory first so paths inside the archive are relative.""")
 
     elif 'symlink' in name:
-        lines.append("""## Approach
-
-Fix each broken symlink to point to the correct target in `current/` instead of the deleted `old/` directory.
-
-```bash
+        out.append("""```bash
 # Check which symlinks are broken
 ls -la /home/runner/myapp/
 
-# Fix each one
-ln -sf /home/runner/myapp/current/config.env /home/runner/myapp/config.env
-ln -sf /home/runner/myapp/current/start.sh   /home/runner/myapp/start.sh
+# Fix each broken symlink to point to current/ instead of old/
+ln -sf /home/runner/myapp/current/config.env  /home/runner/myapp/config.env
+ln -sf /home/runner/myapp/current/start.sh    /home/runner/myapp/start.sh
 ln -sf /home/runner/myapp/current/version.txt /home/runner/myapp/version.txt
-ln -sf /home/runner/myapp/current/lib        /home/runner/myapp/lib
+ln -sf /home/runner/myapp/current/lib         /home/runner/myapp/lib
 
-# Verify
+# Verify — should show -> current/... not -> old/...
 ls -la /home/runner/myapp/
 ```
 
-## Why this works
-
-`ln -sf` creates a symbolic link, overwriting any existing one (`-f`). The target must be an absolute path or relative to the symlink's location.""")
+`ln -sf` creates a symlink, overwriting any existing one (`-f`). The target must exist.""")
 
     elif 'find-and-replace' in name:
-        lines.append("""## Approach
+        out.append("""```bash
+# Replace old hostname with new one in all config files
+find /home/runner/configs -name "*.conf" \\
+  -exec sed -i 's/old-server.example.com/new-server.example.com/g' {} +
 
-Use `sed` to replace all occurrences of the old hostname with the new one across all config files.
-
-```bash
-# Replace in all .conf files
-find /home/runner/configs -name "*.conf" -exec sed -i 's/old-server.example.com/new-server.example.com/g' {} +
-
-# Verify
-grep -r 'old-server' /home/runner/configs/  # should return nothing
-grep -r 'new-server' /home/runner/configs/  # should show all replacements
+# Verify no old references remain
+grep -r 'old-server' /home/runner/configs/   # should return nothing
+grep -r 'new-server' /home/runner/configs/   # should show all files
 ```
 
-## Why this works
-
-`sed -i` edits files in-place. The `s/old/new/g` substitution replaces all occurrences on each line. `find -exec` applies it to every `.conf` file.""")
+`sed -i` edits files in-place. `s/old/new/g` replaces all occurrences per line.""")
 
     elif 'find-large' in name:
-        lines.append("""## Approach
-
-Use `find` to locate files over 100MB and remove them.
-
-```bash
+        out.append("""```bash
 # Find files over 100MB
 find / -type f -size +100M 2>/dev/null
 
-# Remove them (after reviewing)
+# Remove them
 find / -type f -size +100M -delete 2>/dev/null
 
 # Verify none remain
-find / -type f -size +100M 2>/dev/null | wc -l
+find / -type f -size +100M 2>/dev/null | wc -l  # should be 0
 ```
 
-## Why this works
-
-`-size +100M` matches files strictly larger than 100 megabytes. The `2>/dev/null` suppresses permission errors on system directories.""")
+`-size +100M` matches files strictly larger than 100 megabytes.""")
 
     elif 'suid' in name:
-        lines.append("""## Approach
-
-Find SUID binaries, identify suspicious ones, remove the SUID bit, and write an audit report.
-
-```bash
+        out.append("""```bash
 # Find all SUID binaries
 find / -perm -4000 -type f 2>/dev/null
 
-# Remove SUID bit from suspicious binaries (not system ones like sudo, passwd)
+# Remove SUID bit from suspicious ones (not system binaries like sudo/passwd)
 chmod u-s /path/to/suspicious/binary
 
 # Write audit report
 find / -perm -4000 -type f 2>/dev/null > /home/runner/suid-audit.txt
-echo "Suspicious SUID binaries neutralized" >> /home/runner/suid-audit.txt
+echo "Audit complete" >> /home/runner/suid-audit.txt
 ```
 
-## Why this works
-
-`-perm -4000` matches files with the SUID bit set. `chmod u-s` removes it. Legitimate system SUID binaries (sudo, passwd, ping) should be left alone.""")
+`-perm -4000` matches files with the SUID bit set. `chmod u-s` removes it.""")
 
     elif 'disk-space' in name or 'manage-disk' in name:
-        lines.append("""## Approach
-
-Remove old log files, clean the build cache, and delete old downloads.
-
-```bash
+        out.append("""```bash
 # Remove old log files
 find /var/log/myapp -name "*.log.old" -delete
 
-# Clean build cache (keep under 5MB)
+# Clean build cache
 rm -rf /tmp/build-cache/*
 
-# Remove old .deb downloads
+# Remove old downloads
 find /home/runner/downloads -name "*.deb" -delete
 
-# Verify disk usage improved
+# Verify
 df -h
-```
+```""")
 
-## Why this works
-
-Each `find -delete` targets exactly what the validation checks for. The build cache check allows up to 5MB, so removing all files satisfies it.""")
-
-    elif 'environment-var' in name:
-        lines.append("""## Approach
-
-Add the required environment variables to `~/.bashrc` and source it.
-
-```bash
-# Add to .bashrc
+    elif 'environment' in name:
+        out.append("""```bash
+# Add required environment variables to ~/.bashrc
 cat >> ~/.bashrc << 'EOF'
 export APP_HOME=/home/runner/app
 export APP_PORT=8080
@@ -219,55 +361,30 @@ source ~/.bashrc
 
 # Verify
 echo $APP_HOME $APP_PORT $APP_ENV
-
-# Run the app to create the flag file
-bash /home/runner/app/start.sh
-```
-
-## Why this works
-
-`export` makes variables available to child processes. Sourcing `.bashrc` applies them to the current shell session.""")
+```""")
 
     elif 'redirect' in name:
-        lines.append("""## Approach
+        out.append("""```bash
+# Fix the redirections in process.sh:
+# > redirects stdout, 2> redirects stderr, >> appends
 
-Fix the redirections in `process.sh` — stdout to results file, stderr to errors log, and append (not overwrite) the summary.
-
-```bash
-# Edit process.sh to fix redirections
 cat > /home/runner/process.sh << 'SCRIPT'
 #!/bin/bash
-# stdout → results file
-echo "Processing started at $(date)" > ~/output/results.txt
+echo "Processing started" > ~/output/results.txt
 echo "Record 1: OK" >> ~/output/results.txt
 echo "Record 2: OK" >> ~/output/results.txt
-echo "Record 3: OK" >> ~/output/results.txt
-echo "Processing complete: 3 records" >> ~/output/results.txt
-
-# stderr → errors log
-echo "WARN: Record 4 had missing fields" 2>> ~/output/errors.log
-echo "ERROR: Record 5 failed validation" 2>> ~/output/errors.log
-
-# APPEND to summary (not overwrite)
-echo "Run completed: $(date) — 3 success, 1 warn, 1 error" >> ~/output/summary.txt
+echo "WARN: missing field" 2>> ~/output/errors.log
+echo "Run completed" >> ~/output/summary.txt
 SCRIPT
 
 bash /home/runner/process.sh
 ```
 
-## Why this works
-
-`>` redirects stdout, `2>` redirects stderr, `>>` appends instead of overwriting.""")
+Key: `>` overwrites, `>>` appends, `2>` redirects stderr.""")
 
     elif 'kill' in name or 'runaway' in name:
-        lines.append("""## Approach
-
-Find the CPU-hogging process and kill it.
-
-```bash
-# Find the process
-ps aux | grep cpu_hog
-# or
+        out.append("""```bash
+# Find the CPU-hogging process
 pgrep -f cpu_hog
 
 # Kill it
@@ -277,185 +394,98 @@ pkill -f cpu_hog
 pgrep -f cpu_hog  # should return nothing
 ```
 
-## Why this works
-
-`pkill -f` matches against the full command line, not just the process name. This reliably kills the background bash script.""")
+`pkill -f` matches against the full command line.""")
 
     elif 'monitor' in name:
-        lines.append("""## Approach
-
-Kill the rogue processes and write a system resource report.
-
-```bash
+        out.append("""```bash
 # Kill rogue processes
 pkill -f mem_leak
 pkill -f cpu_hog2
 
 # Write system report
 cat > /home/runner/system-report.txt << EOF
-CPU Usage: $(top -bn1 | grep "Cpu(s)" | awk '{print $2}')%
+CPU: $(top -bn1 | grep "Cpu(s)" | awk '{print $2}')%
 Memory: $(free -h | awk '/^Mem:/{print $3 "/" $2}')
-Load Average: $(uptime | awk -F'load average:' '{print $2}')
+Rogue processes terminated
 EOF
-
-echo "Rogue processes terminated" >> /home/runner/system-report.txt
-```
-
-## Why this works
-
-`pkill -f` kills by command pattern. The report file needs to exist with content — the exact format is flexible.""")
+```""")
 
     elif 'recover' in name:
-        lines.append("""## Approach
-
-The file was deleted but a process still has it open. Find the file descriptor in `/proc` and copy it out.
-
-```bash
-# Find the process holding the deleted file open
+        out.append("""```bash
+# The file was deleted but a process still has it open.
+# Find the process holding it:
 lsof | grep config.json
-# or
-ls /proc/*/fd -la 2>/dev/null | grep config.json
 
-# Get the PID and fd number from the output, then recover
+# Get PID and file descriptor number from the output, then recover:
 PID=$(lsof | grep config.json | awk '{print $2}' | head -1)
-FD=$(lsof -p $PID | grep config.json | awk '{print $4}' | tr -d 'r')
+FD=$(lsof -p $PID | grep config.json | awk '{print $4}' | tr -d 'rw')
 
-# Copy the file content out
+# Copy the file back from /proc
 cp /proc/$PID/fd/$FD /home/runner/app/config.json
 ```
 
-## Why this works
-
-Linux keeps file data alive as long as any process has an open file descriptor, even after `unlink()`. The `/proc/PID/fd/` directory exposes those descriptors as symlinks.""")
+Linux keeps file data alive as long as any process has an open file descriptor, even after `unlink()`. `/proc/PID/fd/` exposes those descriptors.""")
 
     elif 'users' in name or 'groups' in name:
-        lines.append("""## Approach
-
-Create the required users, groups, and shared directory with correct permissions.
-
-```bash
-# Create group
+        out.append("""```bash
 sudo groupadd developers
-
-# Create users
 sudo useradd -m -s /bin/bash alice
 sudo useradd -m -s /bin/bash bob
-
-# Add to group
 sudo usermod -aG developers alice
 sudo usermod -aG developers bob
-
-# Create shared directory
 sudo mkdir -p /home/shared
 sudo chown root:developers /home/shared
-sudo chmod 2775 /home/shared  # setgid so new files inherit group
-```
-
-## Why this works
-
-`chmod 2775` sets the setgid bit — new files created in the directory automatically inherit the `developers` group. `775` gives group write access.""")
+sudo chmod 2775 /home/shared   # setgid: new files inherit group
+```""")
 
     elif 'ssh' in name and 'key' in name:
-        lines.append("""## Approach
-
-Generate an SSH key pair and configure the correct permissions.
-
-```bash
-# Generate key pair (no passphrase for automation)
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
+        out.append("""```bash
+# Generate Ed25519 key pair
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N ""
 
 # Set correct permissions
 chmod 700 ~/.ssh
-chmod 600 ~/.ssh/id_rsa
-chmod 644 ~/.ssh/id_rsa.pub
+chmod 600 ~/.ssh/id_ed25519
+chmod 644 ~/.ssh/id_ed25519.pub
 
-# Add public key to authorized_keys
-cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+# Add to authorized_keys
+cat ~/.ssh/id_ed25519.pub >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
-
-# Create SSH config
-cat > ~/.ssh/config << 'EOF'
-Host localhost
-    IdentityFile ~/.ssh/id_rsa
-    StrictHostKeyChecking no
-EOF
-chmod 600 ~/.ssh/config
 ```
 
-## Why this works
-
-SSH enforces strict permission requirements. Private keys must be `600` (owner read/write only). The `.ssh` directory must be `700`.""")
+The validator checks: key type is `ssh-ed25519`, public key is in `authorized_keys`, `.ssh/` is 700, private key is 600.""")
 
     elif 'ssh' in name and 'config' in name:
-        lines.append("""## Approach
-
-Fix the SSH file permissions to match what SSH requires.
-
-```bash
+        out.append("""```bash
 chmod 700 ~/.ssh
-chmod 600 ~/.ssh/id_rsa
-chmod 644 ~/.ssh/id_rsa.pub
-chmod 600 ~/.ssh/config
+chmod 600 ~/.ssh/id_rsa 2>/dev/null || true
+chmod 644 ~/.ssh/id_rsa.pub 2>/dev/null || true
+chmod 600 ~/.ssh/config 2>/dev/null || true
 chmod 600 ~/.ssh/authorized_keys
 ```
 
-## Why this works
-
-SSH refuses to use keys with overly permissive permissions. The required permissions are: `.ssh/` → 700, private key → 600, public key → 644, config → 600, authorized_keys → 600 or 644.""")
+SSH refuses to use keys with overly permissive permissions.""")
 
     elif 'rsync' in name:
-        lines.append("""## Approach
-
-Configure and run an rsync backup from source to destination.
-
-```bash
-# Create backup destination
+        out.append("""```bash
 mkdir -p /home/runner/backup
-
-# Run rsync backup
 rsync -av --delete /home/runner/source/ /home/runner/backup/
-
-# Verify
 ls /home/runner/backup/
-diff -r /home/runner/source/ /home/runner/backup/
 ```
 
-## Why this works
-
-`-a` (archive) preserves permissions, timestamps, symlinks. `-v` verbose. `--delete` removes files in destination that no longer exist in source. The trailing `/` on source is important — it copies contents, not the directory itself.""")
+`-a` preserves permissions/timestamps, `--delete` removes files no longer in source.""")
 
     elif 'nfs' in name:
-        lines.append("""## Approach
-
-Configure the NFS server, export the share, and mount it.
-
-```bash
-# Add export to /etc/exports
+        out.append("""```bash
 echo "/srv/nfs/shared *(rw,sync,no_subtree_check)" | sudo tee -a /etc/exports
-
-# Apply the export
 sudo exportfs -ra
-
-# Start NFS server
 sudo service nfs-kernel-server start
-
-# Mount the share locally to test
 sudo mount -t nfs localhost:/srv/nfs/shared /mnt/nfs-test
-
-# Verify
 ls /mnt/nfs-test/
-```
-
-## Why this works
-
-`/etc/exports` defines what directories are shared and to whom. `exportfs -ra` re-reads the file. The `rw` option allows read-write access.""")
+```""")
 
     elif 'logrotate' in name:
-        lines.append("""## Approach
-
-Create a logrotate configuration file for the application logs.
-
-```bash
+        out.append("""```bash
 sudo tee /etc/logrotate.d/myapp << 'EOF'
 /var/log/myapp/*.log {
     daily
@@ -468,344 +498,131 @@ sudo tee /etc/logrotate.d/myapp << 'EOF'
 }
 EOF
 
-# Test the configuration
-sudo logrotate -d /etc/logrotate.d/myapp
-```
-
-## Why this works
-
-`daily` rotates every day, `rotate 7` keeps 7 old logs, `compress` gzips old logs, `missingok` doesn't error if log is missing, `notifempty` skips empty logs.""")
+sudo logrotate -d /etc/logrotate.d/myapp  # dry-run to verify
+```""")
 
     elif 'swap' in name:
-        lines.append("""## Approach
-
-Create a swap file, format it, and enable it permanently.
-
-```bash
-# Create a 512MB swap file
+        out.append("""```bash
 sudo dd if=/dev/zero of=/swapfile bs=1M count=512
-
-# Set correct permissions
 sudo chmod 600 /swapfile
-
-# Format as swap
 sudo mkswap /swapfile
-
-# Enable swap
 sudo swapon /swapfile
-
-# Make permanent (add to fstab)
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-
-# Verify
 sudo swapon --show
-free -h
-```
-
-## Why this works
-
-`mkswap` formats the file as a swap area. `swapon` activates it. Adding to `/etc/fstab` ensures it persists across reboots.""")
+```""")
 
     elif 'lvm' in name:
-        lines.append("""## Approach
-
-Extend the LVM logical volume and resize the filesystem.
-
-```bash
-# Check current state
-sudo lvs
-sudo vgs
-sudo df -h /mnt/appdata
-
-# Extend the logical volume (use all free space)
+        out.append("""```bash
 sudo lvextend -l +100%FREE /dev/vg_data/lv_app
-
-# Resize the filesystem
 sudo resize2fs /dev/vg_data/lv_app
-
-# Verify
-sudo lvs
 df -h /mnt/appdata
-```
-
-## Why this works
-
-`lvextend -l +100%FREE` uses all remaining free space in the volume group. `resize2fs` then expands the ext4 filesystem to fill the new space.""")
+```""")
 
     elif 'fstab' in name:
-        lines.append("""## Approach
-
-Fix the broken fstab entry and mount the filesystem.
-
-```bash
-# View current fstab
-cat /etc/fstab
-
-# Remove the broken entry and add the correct one
+        out.append("""```bash
+# Remove the broken entry (references non-existent /dev/sdz99)
 sudo sed -i '/sdz99/d' /etc/fstab
+
+# Add correct loop-mount entry
 echo '/opt/disk.img  /mnt/data  ext4  loop  0  0' | sudo tee -a /etc/fstab
 
-# Mount all filesystems from fstab
 sudo mount -a
-
-# Verify
 mountpoint /mnt/data
-df -h /mnt/data
-```
-
-## Why this works
-
-The broken entry referenced a non-existent device `/dev/sdz99`. The correct entry uses the loop device option to mount an image file.""")
+```""")
 
     elif 'disk-perm' in name:
-        lines.append("""## Approach
-
-Fix the mount permissions so the runner user can access the data directory.
-
-```bash
-# Check current permissions
-ls -la /mnt/data
-
-# Fix ownership and permissions
+        out.append("""```bash
 sudo chown runner:runner /mnt/data
 sudo chmod 755 /mnt/data
-
-# Verify
 ls -la /mnt/data
-touch /mnt/data/test.txt && echo "Write access OK"
-```
-
-## Why this works
-
-The directory was created as root-owned with `700` permissions. Changing ownership to `runner` and setting `755` allows the user to read, write, and execute.""")
+```""")
 
     elif 'iptables' in name:
-        lines.append("""## Approach
-
-Configure iptables rules to allow SSH and HTTP while blocking everything else.
-
-```bash
-# Flush existing rules
+        out.append("""```bash
 sudo iptables -F
-
-# Set default policies
 sudo iptables -P INPUT DROP
 sudo iptables -P FORWARD DROP
 sudo iptables -P OUTPUT ACCEPT
-
-# Allow established connections
 sudo iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-
-# Allow loopback
 sudo iptables -A INPUT -i lo -j ACCEPT
-
-# Allow SSH (port 22)
 sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
-
-# Allow HTTP (port 80)
 sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
-
-# Verify
 sudo iptables -L -n
-```
-
-## Why this works
-
-Starting with DROP policy and explicitly allowing only needed ports is the principle of least privilege. The ESTABLISHED rule allows responses to outbound connections.""")
+```""")
 
     elif 'network-interface' in name:
-        lines.append("""## Approach
-
-Remove the wrong IP and assign the correct one to the dummy interface.
-
-```bash
-# Check current state
-ip addr show dummy0
-
-# Remove wrong IP
+        out.append("""```bash
 sudo ip addr del 192.168.99.99/24 dev dummy0
-
-# Add correct IP
 sudo ip addr add 10.0.0.10/24 dev dummy0
-
-# Bring interface up
 sudo ip link set dummy0 up
-
-# Verify
 ip addr show dummy0
-```
-
-## Why this works
-
-`ip addr del` removes a specific address. `ip addr add` assigns the new one. `ip link set up` ensures the interface is active.""")
+```""")
 
     elif 'dns' in name and 'fix' in name:
-        lines.append("""## Approach
-
-Replace the broken nameserver with a working public DNS server.
-
-```bash
-# View current resolv.conf
-cat /etc/resolv.conf
-
-# Fix it
+        out.append("""```bash
 echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
 echo "nameserver 8.8.4.4" | sudo tee -a /etc/resolv.conf
-
-# Test
 nslookup google.com
-```
-
-## Why this works
-
-`/etc/resolv.conf` controls DNS resolution. The broken nameserver `192.0.2.1` is a documentation IP (RFC 5737) that doesn't respond. Google's `8.8.8.8` is a reliable public resolver.""")
+```""")
 
     elif 'apt' in name:
-        lines.append("""## Approach
-
-Fix the APT sources list to use a valid mirror and update the package cache.
-
-```bash
-# Backup current sources
-sudo cp /etc/apt/sources.list /etc/apt/sources.list.bak
-
-# Fix the sources list
+        out.append("""```bash
 sudo tee /etc/apt/sources.list << 'EOF'
 deb http://archive.ubuntu.com/ubuntu noble main restricted universe multiverse
 deb http://archive.ubuntu.com/ubuntu noble-updates main restricted universe multiverse
 deb http://security.ubuntu.com/ubuntu noble-security main restricted universe multiverse
 EOF
-
-# Update package cache
 sudo apt-get update
-
-# Verify
-apt-cache show curl | head -5
-```
-
-## Why this works
-
-A broken mirror URL or wrong distribution codename causes `apt-get update` to fail. Using the official Ubuntu archive with the correct codename fixes it.""")
+```""")
 
     elif 'boot' in name or 'grub' in name:
-        lines.append("""## Approach
-
-Edit `/etc/default/grub` to set the correct timeout and kernel parameters.
-
-```bash
-# Edit the GRUB configuration
+        out.append("""```bash
 sudo tee /etc/default/grub << 'EOF'
 GRUB_DEFAULT=0
 GRUB_TIMEOUT=5
-GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
+GRUB_DISTRIBUTOR=`lsb_release -i -s 2>/dev/null || echo Debian`
 GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
 GRUB_CMDLINE_LINUX=""
 EOF
-
-# Verify (no need to run update-grub in container)
 cat /etc/default/grub
-```
-
-## Why this works
-
-`GRUB_TIMEOUT=5` sets a 5-second boot menu timeout. `GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"` suppresses verbose boot messages. In a real system you'd run `sudo update-grub` to apply changes.""")
+```""")
 
     elif 'locale' in name:
-        lines.append("""## Approach
-
-Generate the missing locale and set it as the system default.
-
-```bash
-# Generate the locale
+        out.append("""```bash
 sudo locale-gen en_US.UTF-8
-
-# Set as default
 sudo update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
-
-# Apply to current session
 export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-
-# Verify
 locale
-```
-
-## Why this works
-
-`locale-gen` compiles the locale data. `update-locale` writes to `/etc/default/locale`. The export makes it active in the current shell.""")
+```""")
 
     elif 'timezone' in name:
-        lines.append("""## Approach
-
-Set the system timezone to America/New_York.
-
-```bash
-# Set timezone
+        out.append("""```bash
 sudo timedatectl set-timezone America/New_York
-# or
+# or:
 sudo ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
 echo "America/New_York" | sudo tee /etc/timezone
-
-# Verify
 timedatectl
-date
-```
-
-## Why this works
-
-`/etc/localtime` is a symlink to the timezone data file. `/etc/timezone` stores the timezone name as text. Both need to be consistent.""")
+```""")
 
     elif 'selinux' in name:
-        lines.append("""## Approach
-
-Fix the SELinux file contexts using `chcon` or `restorecon`.
-
-```bash
-# Check current context
-ls -Z /srv/www/html/
-
-# Fix context to match httpd content type
+        out.append("""```bash
 sudo chcon -R -t httpd_sys_content_t /srv/www/html/
-
-# Or restore to default policy context
+# or restore to policy default:
 sudo restorecon -Rv /srv/www/html/
-
-# Verify
 ls -Z /srv/www/html/
-getfattr -n security.selinux /srv/www/html/index.html
-```
-
-## Why this works
-
-SELinux uses file contexts to control access. Web server files need the `httpd_sys_content_t` type for nginx/apache to read them. `chcon` changes context directly; `restorecon` uses the policy database.""")
+```""")
 
     elif 'sudo' in name and 'configure' in name:
-        lines.append("""## Approach
-
-Grant the `developer` user sudo access for specific commands.
-
-```bash
-# Create a sudoers drop-in file (safer than editing /etc/sudoers directly)
-echo "developer ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/systemctl" | sudo tee /etc/sudoers.d/developer
+        out.append("""```bash
+echo "developer ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/systemctl" \\
+  | sudo tee /etc/sudoers.d/developer
 sudo chmod 0440 /etc/sudoers.d/developer
-
-# Verify syntax
 sudo visudo -c -f /etc/sudoers.d/developer
-
-# Test
 sudo -l -U developer
-```
+```""")
 
-## Why this works
-
-Drop-in files in `/etc/sudoers.d/` are included by the main sudoers file. `NOPASSWD:` allows running without a password prompt. Always use `visudo -c` to validate syntax before applying.""")
-
-    elif 'systemd' in name or 'service' in name:
-        lines.append("""## Approach
-
-Create a valid systemd service unit file for the application.
-
-```bash
+    elif 'systemd' in name or ('service' in name and 'manage' in name):
+        out.append("""```bash
 sudo tee /etc/systemd/system/myapp.service << 'EOF'
 [Unit]
 Description=My Application Service
@@ -817,69 +634,87 @@ User=runner
 WorkingDirectory=/opt/myapp
 ExecStart=/usr/bin/python3 /opt/myapp/server.py
 Restart=on-failure
-RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-# Verify the app actually runs
+# Verify the app runs
 python3 /opt/myapp/server.py &
-sleep 2
-curl -sf http://localhost:8080
-kill %1
-```
+sleep 2 && curl -sf http://localhost:8080 && kill %1
+```""")
 
-## Why this works
+    elif 'debug' in name and 'permission' in name:
+        out.append("""```bash
+# Check current permissions
+ls -la /home/runner/app/
 
-`[Unit]` describes the service and its dependencies. `[Service]` defines how to run it. `[Install]` controls when it starts at boot. `WantedBy=multi-user.target` enables it for normal multi-user mode.""")
+# Fix ownership and permissions
+chmod 755 /home/runner/app
+chmod 644 /home/runner/app/*.conf 2>/dev/null || true
+chmod +x /home/runner/app/*.sh 2>/dev/null || true
+```""")
+
+    elif 'nginx' in name:
+        out.append("""```bash
+# Check what's wrong with the nginx config
+sudo nginx -t
+
+# Common fixes:
+# - Wrong server_name or listen port
+# - Missing semicolons
+# - Wrong root path
+
+# After fixing /etc/nginx/nginx.conf or /etc/nginx/sites-enabled/*:
+sudo nginx -t   # must pass
+sudo service nginx start
+curl http://localhost
+```""")
 
     else:
-        # Generic linux solution
-        lines.append(f"""## Approach
+        # Generic linux — but still show the specific checks
+        out.append("```bash")
+        for c in checks:
+            if c['fail_msg'] and 'docker' not in c['fail_msg'].lower():
+                out.append(f"# Fix: {c['fail_msg']}")
+        out.append("```\n")
+        if notes:
+            out.append("**File content requirements:**")
+            out.extend(notes)
 
-Review the challenge instructions and the validation checks to understand exactly what's required.
-
-```bash
-# Read the instructions carefully
-cat ~/README.md 2>/dev/null || true
-
-# Check what validation expects
-# The key checks are:
-""")
-        for check in checks[:5]:
-            lines.append(f"# - {check}")
-        lines.append("```\n")
-        lines.append("""## Key concepts
-
-- Read the error messages carefully — they tell you exactly what's missing
-- Use `man <command>` to look up command options
-- Test your solution before validating""")
-
-    return "\n".join(lines)
+    return '\n'.join(out)
 
 
-def solve_ansible(name, data, vs, files_dir):
-    title = data['name']
-    starter = read(files_dir / 'playbook.yml')
+# ── Ansible ────────────────────────────────────────────────────────────────
 
-    lines = [f"# Solution: {title}\n"]
+def generate_ansible(name, data, checks, validate_sh, starter_files):
+    title = data.get('name', name)
+    out = ["## What the validator checks\n"]
+    for c in checks:
+        if c['fail_msg'] and 'syntax' not in c['fail_msg'].lower() and 'daemon' not in c['fail_msg'].lower():
+            out.append(f"- {c['fail_msg']}")
+    out.append("\n## Solution\n")
+
+    # Extract files that must exist from checks
+    required_files = [c['fail_msg'] for c in checks if 'not created' in c['fail_msg'] or 'not found' in c['fail_msg']]
+    required_content = [c['fail_msg'] for c in checks if 'should' in c['fail_msg'] or 'must' in c['fail_msg'] or 'wrong' in c['fail_msg']]
+
+    # Get starter playbook for context
+    starter = starter_files.get('playbook.yml', '')
 
     if 'copy-module' in name:
-        lines.append("""## Approach
-
-The `copy` module has two modes: `src:` (copy a file) and `content:` (write inline text). They are mutually exclusive. Fix each task to use the right one.
+        out.append("""The `copy` module uses either `src:` (copy a file) or `content:` (write inline text) — never both.
 
 ```yaml
 - name: Copy config from source
   copy:
-    src: source_config.txt      # copies the file — db.conf gets "host=localhost"
+    src: source_config.txt      # copies the file → db.conf gets "host=localhost"
     dest: /tmp/copymod/db.conf
     mode: "0644"
 
 - name: Create app config with content
   copy:
-    content: |                  # inline content
+    content: |
       [app]
       name=myapp
       debug=false
@@ -894,14 +729,10 @@ The `copy` module has two modes: `src:` (copy a file) and `content:` (write inli
     owner: root
 ```
 
-## Why this works
-
-`src:` and `content:` are mutually exclusive — using both causes Ansible to fail. The validation checks that `db.conf` contains `host=localhost` (from `source_config.txt`) and `app.conf` contains `name=myapp` (from inline content).""")
+The validator checks that `db.conf` contains `host=localhost` (from `source_config.txt`) and `app.conf` contains `name=myapp` (from inline content).""")
 
     elif 'handlers' in name:
-        lines.append("""## Approach
-
-Handlers are tasks that only run when notified. Define them in a `handlers:` section and use `notify:` in tasks.
+        out.append("""Handlers only run when notified by a task that reports `changed`.
 
 ```yaml
 - name: Deploy application
@@ -912,24 +743,20 @@ Handlers are tasks that only run when notified. Define them in a `handlers:` sec
       copy:
         content: "restarted\\n"
         dest: /tmp/myapp/restart.log
-
     - name: reload config
       copy:
         content: "reloaded\\n"
         dest: /tmp/myapp/reload.log
-
   tasks:
     - name: Create app directory
       file:
         path: /tmp/myapp
         state: directory
-
     - name: Deploy app config
       copy:
         content: "app_port=8080\\n"
         dest: /tmp/myapp/app.conf
       notify: restart myapp
-
     - name: Deploy logging config
       copy:
         content: "log_level=INFO\\n"
@@ -937,14 +764,27 @@ Handlers are tasks that only run when notified. Define them in a `handlers:` sec
       notify: reload config
 ```
 
-## Why this works
+The validator checks that `/tmp/myapp/restart.log` and `/tmp/myapp/reload.log` exist — they're created by the handlers.""")
 
-Handlers run once at the end of a play, even if notified multiple times. They only run if the notifying task reports `changed`.""")
+    elif 'fix-syntax' in name:
+        out.append("""Fix the three YAML syntax errors in the playbook:
+
+1. **Extra space before `mode:`** — indentation must be consistent
+2. **Missing colon after task name** — `- name Create` → `- name: Create`
+3. **Wrong indentation on module parameters** — must be indented under the module name
+
+```yaml
+    - name: Create log directory
+      file:
+        path: /tmp/myproject/logs   # indented under file:, not at same level
+        state: directory
+        mode: "0755"
+```
+
+Run `ansible-playbook --syntax-check` to see the exact line numbers.""")
 
     elif 'variables' in name:
-        lines.append("""## Approach
-
-Define variables in `vars:` and reference them with `{{ var_name }}` syntax.
+        out.append("""Define variables in `vars:` and reference them with `{{ var_name }}`.
 
 ```yaml
 - name: Configure application
@@ -955,37 +795,27 @@ Define variables in `vars:` and reference them with `{{ var_name }}` syntax.
     app_port: 8080
     app_env: production
     log_directory: /var/log/myapp
-
   tasks:
-    - name: Create app directory
+    - name: Create log directory
       file:
         path: "{{ log_directory }}"
         state: directory
-
-    - name: Create config file
+    - name: Create config
       copy:
         content: |
-          [application]
+          [app]
           name={{ app_name }}
           port={{ app_port }}
           env={{ app_env }}
-          log_dir={{ log_directory }}
         dest: "{{ log_directory }}/config.ini"
 ```
 
-## Why this works
-
-Variables defined in `vars:` are scoped to the play. Jinja2 `{{ }}` syntax interpolates them. Paths containing variables must be quoted.""")
+Paths containing variables must be quoted.""")
 
     elif 'loops' in name:
-        lines.append("""## Approach
-
-Use `loop:` to iterate over a list and create multiple resources.
+        out.append("""Use `loop:` to iterate over a list. Access the current item with `item`.
 
 ```yaml
-- name: Create app configs
-  hosts: local
-  become: yes
   vars:
     apps:
       - name: web
@@ -994,7 +824,6 @@ Use `loop:` to iterate over a list and create multiple resources.
         port: 5000
       - name: worker
         port: 9000
-
   tasks:
     - name: Create app directories
       file:
@@ -1007,25 +836,15 @@ Use `loop:` to iterate over a list and create multiple resources.
         content: "app={{ item.name }}\\nport={{ item.port }}\\n"
         dest: "/tmp/apps/{{ item.name }}/config.txt"
       loop: "{{ apps }}"
-```
-
-## Why this works
-
-`loop:` replaces the deprecated `with_items:`. Each iteration exposes the current item as `item`. For dictionaries, access fields with `item.key`.""")
+```""")
 
     elif 'conditionals' in name:
-        lines.append("""## Approach
-
-Use `when:` to conditionally execute tasks based on variable values.
+        out.append("""Use `when:` with Jinja2 expressions. No `{{ }}` needed inside `when:`.
 
 ```yaml
-- name: Configure based on environment
-  hosts: local
-  become: yes
   vars:
     app_port: 8080
     app_env: production
-
   tasks:
     - name: Create production config
       copy:
@@ -1038,28 +857,12 @@ Use `when:` to conditionally execute tasks based on variable values.
         content: "port={{ app_port }}\\n"
         dest: /tmp/port_info.txt
       when: app_port > 1024
-
-    - name: Create logging config
-      copy:
-        content: "log_level=INFO\\n"
-        dest: /tmp/logging.conf
-      when: app_env != "development"
-```
-
-## Why this works
-
-`when:` accepts Jinja2 expressions. Note: no `{{ }}` needed in `when:` — Ansible evaluates it as an expression automatically.""")
+```""")
 
     elif 'facts' in name:
-        lines.append("""## Approach
-
-Use `ansible_facts` to access system information gathered automatically.
+        out.append("""Ansible auto-collects facts at play start. Reference them directly as variables.
 
 ```yaml
-- name: Gather system info
-  hosts: local
-  become: yes
-
   tasks:
     - name: Write system info
       copy:
@@ -1068,57 +871,30 @@ Use `ansible_facts` to access system information gathered automatically.
           os={{ ansible_distribution }} {{ ansible_distribution_version }}
           kernel={{ ansible_kernel }}
           memory_mb={{ ansible_memtotal_mb }}
-          cpu_count={{ ansible_processor_vcpus }}
         dest: /tmp/system_info.txt
-```
-
-## Why this works
-
-Ansible automatically runs the `setup` module at the start of each play, populating `ansible_facts`. Access them directly as variables (e.g. `ansible_hostname`) or via `ansible_facts['hostname']`.""")
+```""")
 
     elif 'register' in name:
-        lines.append("""## Approach
-
-Use `register:` to capture task output and reference it in subsequent tasks.
+        out.append("""Use `register:` to capture task output. Access `.stdout` for command output.
 
 ```yaml
-- name: Capture command output
-  hosts: local
-  become: yes
-
   tasks:
     - name: Get hostname
       command: hostname
       register: hostname_result
 
-    - name: Get kernel version
-      command: uname -r
-      register: kernel_result
-
-    - name: Write system report
+    - name: Write report
       copy:
-        content: |
-          hostname={{ hostname_result.stdout }}
-          kernel={{ kernel_result.stdout }}
+        content: "hostname={{ hostname_result.stdout }}\\n"
         dest: /tmp/system_report.txt
-```
-
-## Why this works
-
-`register:` stores the full task result as a variable. For `command`/`shell` tasks, `.stdout` contains the output, `.rc` the return code, `.stderr` any errors.""")
+```""")
 
     elif 'set-fact' in name:
-        lines.append("""## Approach
-
-Use `set_fact:` to create or transform variables during playbook execution.
+        out.append("""Use `set_fact:` to create computed variables during playbook execution.
 
 ```yaml
-- name: Use set_fact
-  hosts: local
-  become: yes
-
   tasks:
-    - name: Get current date
+    - name: Get date
       command: date +%Y-%m-%d
       register: date_output
 
@@ -1130,127 +906,14 @@ Use `set_fact:` to create or transform variables during playbook execution.
 
     - name: Write deployment info
       copy:
-        content: "version={{ app_version }}\\ndate={{ deploy_date }}\\ntag={{ deploy_tag }}\\n"
+        content: "version={{ app_version }}\\ndate={{ deploy_date }}\\n"
         dest: /tmp/deploy_info.txt
-```
-
-## Why this works
-
-`set_fact:` creates host-scoped variables that persist for the rest of the play. Useful for computed values or transforming registered output.""")
-
-    elif 'tags' in name:
-        lines.append("""## Approach
-
-Add `tags:` to tasks to allow selective execution with `--tags` or `--skip-tags`.
-
-```yaml
-- name: Deploy application
-  hosts: local
-  become: yes
-
-  tasks:
-    - name: Install packages
-      apt:
-        name: curl
-        state: present
-      tags: [packages, install]
-
-    - name: Deploy config
-      copy:
-        content: "app=myapp\\n"
-        dest: /tmp/app.conf
-      tags: [config, deploy]
-
-    - name: Run health check
-      command: echo "healthy"
-      tags: [health, verify]
-```
-
-Run specific tags:
-```bash
-ansible-playbook -i inventory.ini playbook.yml --tags config
-ansible-playbook -i inventory.ini playbook.yml --skip-tags packages
-```
-
-## Why this works
-
-Tags let you run subsets of a playbook. A task can have multiple tags. `always` and `never` are special tags.""")
-
-    elif 'lookup' in name:
-        lines.append("""## Approach
-
-Use lookup plugins to read data from external sources like files or environment variables.
-
-```yaml
-- name: Use lookup plugins
-  hosts: local
-  become: yes
-
-  tasks:
-    - name: Read from file
-      copy:
-        content: "{{ lookup('file', '/etc/hostname') }}"
-        dest: /tmp/hostname.txt
-
-    - name: Read environment variable
-      copy:
-        content: "path={{ lookup('env', 'PATH') }}\\n"
-        dest: /tmp/env_info.txt
-
-    - name: Generate password
-      copy:
-        content: "token={{ lookup('password', '/tmp/token length=16 chars=ascii_letters,digits') }}\\n"
-        dest: /tmp/token.txt
-```
-
-## Why this works
-
-Lookup plugins run on the control node (not the target). `lookup('file', path)` reads a local file. `lookup('env', var)` reads an environment variable.""")
-
-    elif 'assert' in name:
-        lines.append("""## Approach
-
-Use the `assert` module to validate conditions and fail with clear messages.
-
-```yaml
-- name: Validate system requirements
-  hosts: local
-  become: yes
-
-  tasks:
-    - name: Check memory is sufficient
-      assert:
-        that:
-          - ansible_memtotal_mb >= 512
-        fail_msg: "Need at least 512MB RAM, got {{ ansible_memtotal_mb }}MB"
-        success_msg: "Memory check passed: {{ ansible_memtotal_mb }}MB"
-
-    - name: Check OS is Ubuntu
-      assert:
-        that:
-          - ansible_distribution == "Ubuntu"
-        fail_msg: "This playbook requires Ubuntu"
-
-    - name: Write results
-      copy:
-        content: "assertions passed\\nmemory={{ ansible_memtotal_mb }}MB\\n"
-        dest: /tmp/assert_results.txt
-```
-
-## Why this works
-
-`assert` fails the play immediately if conditions aren't met, with a clear message. `that:` is a list of Jinja2 expressions that must all be true.""")
+```""")
 
     elif 'error' in name:
-        lines.append("""## Approach
-
-Use `block`/`rescue`/`always` for structured error handling.
+        out.append("""Use `block`/`rescue`/`always` for structured error handling.
 
 ```yaml
-- name: Error handling demo
-  hosts: local
-  become: yes
-
   tasks:
     - name: Create work directory
       file:
@@ -1260,14 +923,12 @@ Use `block`/`rescue`/`always` for structured error handling.
     - block:
         - name: Attempt risky operation
           command: cat /tmp/nonexistent_file_12345.txt
-          register: file_content
 
       rescue:
         - name: Handle the error
           copy:
             content: "Error caught: file not found\\n"
             dest: /tmp/errorhandling/error.log
-
         - name: Create fallback data
           copy:
             content: "fallback data\\n"
@@ -1280,76 +941,122 @@ Use `block`/`rescue`/`always` for structured error handling.
             dest: /tmp/errorhandling/done.txt
 ```
 
-## Why this works
+`rescue` runs if any `block` task fails. `always` runs regardless.""")
 
-`block` groups tasks. `rescue` runs if any block task fails (like try/catch). `always` runs regardless of success or failure (like finally).""")
-
-    elif 'privilege' in name:
-        lines.append("""## Approach
-
-Use `become:` and `become_user:` for privilege escalation instead of the deprecated `sudo:`.
+    elif 'assert' in name:
+        out.append("""Use `assert` to validate conditions with clear failure messages.
 
 ```yaml
-- name: Privilege escalation demo
-  hosts: local
-  become: yes          # become root by default
-
   tasks:
-    - name: Create root-owned directory
-      file:
-        path: /tmp/priv-test
-        state: directory
-        owner: root
-        mode: "0755"
+    - name: Check memory
+      assert:
+        that:
+          - ansible_memtotal_mb >= 512
+        fail_msg: "Need at least 512MB RAM"
+        success_msg: "Memory OK: {{ ansible_memtotal_mb }}MB"
 
-    - name: Write root info
-      shell: whoami > /tmp/priv-test/root_user.txt
-
-    - name: Create deploy directory
-      file:
-        path: /tmp/priv-test/deploy
-        state: directory
-        owner: deploy
-        mode: "0755"
-
-    - name: Write deploy user info
-      shell: whoami > /tmp/priv-test/deploy_user.txt
-      become_user: deploy    # switch to deploy user for this task
-      become: yes
-
-    - name: Write status
+    - name: Write results
       copy:
-        content: "privilege escalation configured\\n"
-        dest: /tmp/priv-test/status.txt
+        content: "assertions passed\\nmemory={{ ansible_memtotal_mb }}MB\\n"
+        dest: /tmp/assert_results.txt
+```""")
+
+    elif 'tags' in name:
+        out.append("""Add `tags:` to tasks to allow selective execution.
+
+```yaml
+  tasks:
+    - name: Install packages
+      apt:
+        name: curl
+        state: present
+      tags: [packages, install]
+
+    - name: Deploy config
+      copy:
+        content: "app=myapp\\n"
+        dest: /tmp/app.conf
+      tags: [config, deploy]
 ```
 
-## Why this works
+Run with: `ansible-playbook playbook.yml --tags config`""")
 
-`become: yes` at play level makes all tasks run as root. `become_user: deploy` on a specific task overrides to run as that user. Never use the deprecated `sudo:` directive.""")
+    elif 'template' in name:
+        out.append("""Fix the Jinja2 syntax errors in `app.conf.j2` and use the `template` module.
 
-    elif 'service' in name:
-        lines.append("""## Approach
-
-Use the `command` module to manage the fake service (no systemd in container).
+Common errors to fix:
+- `{{ app_name }` → `{{ app_name }}` (missing closing brace)
+- `{% if enable_ssl` → `{% if enable_ssl %}` (missing closing `%}`)
 
 ```yaml
-- name: Manage application service
-  hosts: local
-  become: yes
-
   tasks:
-    - name: Create service config directory
-      file:
-        path: /tmp/myservice-conf
-        state: directory
+    - name: Deploy config from template
+      template:
+        src: app.conf.j2
+        dest: /tmp/app.conf
+        mode: "0644"
+```""")
 
-    - name: Write service config
+    elif 'vault' in name:
+        out.append("""Create a vault password file, encrypt secrets, and reference them in the playbook.
+
+```bash
+# Create vault password file
+echo "mysecretpassword" > ~/.vault_pass
+chmod 600 ~/.vault_pass
+
+# Create encrypted secrets file
+ansible-vault create --vault-password-file ~/.vault_pass secrets.yml
+# Add: db_password: supersecret123
+# Add: api_key: abc123xyz
+```
+
+```yaml
+- name: Use vault secrets
+  hosts: local
+  vars_files:
+    - secrets.yml
+  tasks:
+    - name: Write config
+      copy:
+        content: "db_pass={{ db_password }}\\n"
+        dest: /tmp/app-secret.conf
+```
+
+Run: `ansible-playbook -i inventory.ini playbook.yml --vault-password-file ~/.vault_pass`""")
+
+    elif 'privilege' in name:
+        out.append("""Use `become: yes` and `become_user:` — never the deprecated `sudo:`.
+
+```yaml
+- name: Privilege escalation
+  hosts: local
+  become: yes          # become root by default
+  tasks:
+    - name: Create root-owned file
+      copy:
+        content: "root owned\\n"
+        dest: /tmp/priv-test/root_file.txt
+
+    - name: Write as deploy user
+      copy:
+        content: "deploy user\\n"
+        dest: /tmp/priv-test/deploy_file.txt
+      become_user: deploy
+      become: yes
+```""")
+
+    elif 'service' in name:
+        out.append("""Use the `command` module to manage the fake service (no systemd in container).
+
+```yaml
+  tasks:
+    - name: Create service config
       copy:
         content: |
           [service]
           name=myservice
           port=9090
-          workers=4
         dest: /tmp/myservice-conf/service.conf
         mode: "0644"
 
@@ -1357,409 +1064,64 @@ Use the `command` module to manage the fake service (no systemd in container).
       command: myservice start
       register: start_result
 
-    - name: Check service status
+    - name: Check status
       command: myservice status
       register: service_status
 
-    - name: Write status to file
+    - name: Write status
       copy:
         content: "{{ service_status.stdout }}\\n"
         dest: /tmp/myservice-conf/status.txt
-```
-
-## Why this works
-
-In a container without systemd, use `command:` to run the service script directly. The `myservice` script was created by setup.sh at `/usr/local/bin/myservice`.""")
+```""")
 
     elif 'package' in name:
-        lines.append("""## Approach
-
-Use the `apt` module with correct state values to install packages.
+        out.append("""Use `state: present` (not `state: installed`) and `name:` (not `pkg:`).
 
 ```yaml
-- name: Install required packages
-  hosts: local
-  become: yes
-
   tasks:
     - name: Update apt cache
       apt:
         update_cache: yes
 
-    - name: Install curl
+    - name: Install packages
       apt:
-        name: curl
-        state: present      # not "installed" — that's invalid
-
-    - name: Install jq
-      apt:
-        name: jq
-        state: present      # not "latest" unless you want upgrades
-
-    - name: Install tree
-      apt:
-        name: tree          # use "name:", not "pkg:"
-        state: present
-
-    - name: Write version info
-      copy:
-        content: "packages installed successfully\\n"
-        dest: /tmp/packages_installed.txt
-```
-
-## Why this works
-
-Valid `state` values for `apt`: `present`, `absent`, `latest`, `build-dep`. `installed` is not valid. Use `name:` not the deprecated `pkg:` alias.""")
+        name: "{{ item }}"
+        state: present      # valid: present, absent, latest
+      loop:
+        - curl
+        - jq
+        - tree              # use name:, not pkg:
+```""")
 
     elif 'user' in name:
-        lines.append("""## Approach
-
-Use the `user` and `group` modules to manage system users.
+        out.append("""Use `name:` (not `username:`) for the user module.
 
 ```yaml
-- name: Manage system users
-  hosts: local
-  become: yes
-
   tasks:
-    - name: Create deploy group
+    - name: Create group
       group:
         name: deploy
         state: present
 
-    - name: Create deploy user
+    - name: Create user
       user:
-        name: deploy        # use "name:", not "username:"
+        name: deploy        # correct param — not "username:"
         shell: /bin/bash
         group: deploy
-        home: /home/deploy
         create_home: yes
         state: present
-
-    - name: Create appuser
-      user:
-        name: appuser
-        shell: /bin/bash
-        groups: deploy
-        append: yes
-        create_home: yes
-
-    - name: Write user info
-      copy:
-        content: "users created\\n"
-        dest: /tmp/users.txt
-```
-
-## Why this works
-
-The correct parameter is `name:`, not `username:`. `groups:` (plural) adds supplementary groups. `append: yes` adds to existing groups rather than replacing them.""")
-
-    elif 'template' in name:
-        lines.append("""## Approach
-
-Use the `template` module with a `.j2` file and fix the Jinja2 syntax errors.
-
-First, fix `config.tftpl` → `templates/app.conf.j2`:
-```
-# Application Configuration
-[general]
-name = {{ app_name }}
-port = {{ app_port }}
-environment = {{ app_env }}
-
-[performance]
-max_connections = {{ max_connections }}
-
-[security]
-{% if enable_ssl %}
-ssl_enabled = true
-ssl_cert = /etc/ssl/{{ app_name }}.crt
-{% else %}
-ssl_enabled = false
-{% endif %}
-```
-
-Then the playbook:
-```yaml
-- name: Deploy with templates
-  hosts: local
-  become: yes
-  vars:
-    app_name: myapp
-    app_port: 8080
-    app_env: production
-    max_connections: 100
-    enable_ssl: false
-
-  tasks:
-    - name: Deploy config from template
-      template:
-        src: app.conf.j2
-        dest: /tmp/app.conf
-        mode: "0644"
-```
-
-## Why this works
-
-The original template had `{{ app_name }` (missing closing brace) and `{% if enable_ssl` (missing closing `%}`). The `template` module processes `.j2` files with Jinja2 and writes the result to the destination.""")
-
-    elif 'vault' in name:
-        lines.append("""## Approach
-
-Create a vault password file, encrypt secrets with `ansible-vault`, and reference them in the playbook.
-
-```bash
-# Create vault password file
-echo "mysecretpassword" > ~/.vault_pass
-chmod 600 ~/.vault_pass
-
-# Create and encrypt secrets file
-ansible-vault create --vault-password-file ~/.vault_pass secrets.yml
-# Add: db_password: supersecret123
-# Add: api_key: abc123xyz
-
-# Or encrypt an existing file
-ansible-vault encrypt --vault-password-file ~/.vault_pass secrets.yml
-```
-
-Playbook using vault:
-```yaml
-- name: Use vault secrets
-  hosts: local
-  vars_files:
-    - secrets.yml
-
-  tasks:
-    - name: Write config with secret
-      copy:
-        content: "db_pass={{ db_password }}\\n"
-        dest: /tmp/app-secret.conf
-```
-
-Run with vault:
-```bash
-ansible-playbook -i inventory.ini playbook.yml --vault-password-file ~/.vault_pass
-```
-
-## Why this works
-
-`ansible-vault` encrypts YAML files using AES-256. The vault password file avoids interactive prompts. Never commit unencrypted secrets.""")
-
-    elif 'delegation' in name:
-        lines.append("""## Approach
-
-Use `delegate_to:` to run a task on a different host than the current target.
-
-```yaml
-- name: Deploy with delegation
-  hosts: webservers
-  become: yes
-
-  tasks:
-    - name: Deploy app config
-      copy:
-        content: "[app]\\nversion=1.0\\n"
-        dest: /tmp/delegation-test/app.conf
-
-    - name: Log deployment to monitoring server
-      copy:
-        content: "deployed to {{ inventory_hostname }} at {{ ansible_date_time.iso8601 }}\\n"
-        dest: /tmp/delegation-test/monitoring.txt
-      delegate_to: localhost    # run this task on localhost instead
-
-    - name: Write deploy log
-      copy:
-        content: "deployment complete\\n"
-        dest: /tmp/delegation-test/deploy.log
-```
-
-## Why this works
-
-`delegate_to:` redirects a specific task to run on a different host. The task still uses variables from the current host (`inventory_hostname`), but executes on the delegated host.""")
-
-    elif 'serial' in name:
-        lines.append("""## Approach
-
-Add `serial:` to the play to control how many hosts are updated at once (rolling deployment).
-
-```yaml
-- name: Rolling deployment
-  hosts: webservers
-  become: yes
-  serial: 1          # update 1 host at a time (or use "50%" for percentage)
-
-  tasks:
-    - name: Create deploy directory
-      file:
-        path: /tmp/serial-deploy
-        state: directory
-
-    - name: Deploy application
-      copy:
-        content: |
-          version=2.0
-          host={{ inventory_hostname }}
-        dest: /tmp/serial-deploy/app.conf
-
-    - name: Write deploy marker
-      copy:
-        content: "deployed\\n"
-        dest: /tmp/serial-deploy/deployed.txt
-```
-
-## Why this works
-
-`serial: 1` processes one host at a time. `serial: "50%"` does half the hosts at once. This prevents all hosts from being updated simultaneously, enabling zero-downtime deployments.""")
-
-    elif 'roles' in name:
-        lines.append("""## Approach
-
-Create a role directory structure and call it from the playbook.
-
-```bash
-# Create role structure
-mkdir -p ~/ansible-project/roles/webserver/{tasks,handlers,defaults,files}
-
-# roles/webserver/tasks/main.yml
-cat > ~/ansible-project/roles/webserver/tasks/main.yml << 'EOF'
-- name: Create web directory
-  file:
-    path: /tmp/webserver
-    state: directory
-
-- name: Deploy index
-  copy:
-    content: "<h1>Hello from role</h1>"
-    dest: /tmp/webserver/index.html
-EOF
-
-# roles/webserver/defaults/main.yml
-cat > ~/ansible-project/roles/webserver/defaults/main.yml << 'EOF'
-web_port: 80
-web_root: /tmp/webserver
-EOF
-```
-
-Playbook:
-```yaml
-- name: Deploy web server
-  hosts: local
-  become: yes
-  roles:
-    - webserver
-```
-
-## Why this works
-
-Roles provide a structured way to organize tasks, handlers, variables, and files. Ansible automatically loads `tasks/main.yml` when a role is applied.""")
-
-    elif 'callback' in name:
-        lines.append("""## Approach
-
-Fix the `ansible.cfg` to configure callback plugins correctly.
-
-```ini
-[defaults]
-stdout_callback = yaml
-callbacks_enabled = timer, profile_tasks
-```
-
-> Note: In Ansible 2.10+, `callback_whitelist` was renamed to `callbacks_enabled`.
-
-```bash
-# Write the fixed config
-cat > ~/ansible-project/ansible.cfg << 'EOF'
-[defaults]
-stdout_callback = yaml
-callbacks_enabled = timer, profile_tasks
-EOF
-
-# Run the playbook to verify callbacks work
-ansible-playbook -i inventory.ini playbook.yml
-```
-
-## Why this works
-
-`stdout_callback = yaml` changes output format to YAML (more readable). `callbacks_enabled` activates the timer (shows total time) and profile_tasks (shows per-task timing) plugins.""")
-
-    elif 'inventory' in name:
-        lines.append("""## Approach
-
-Fix the inventory syntax and use group variables correctly.
-
-```ini
-[webservers]
-localhost ansible_connection=local
-
-[dbservers]
-localhost ansible_connection=local
-
-[production:children]
-webservers
-dbservers
-
-[production:vars]
-env=production
-deploy_user=deploy
-```
-
-Key fixes:
-- `ansible_connection local` → `ansible_connection=local` (needs `=`)
-- `[production:child]` → `[production:children]`
-- `[production:var]` → `[production:vars]`
-
-## Why this works
-
-Inventory group syntax requires `=` for variable assignments. `:children` defines a group of groups. `:vars` defines variables for all hosts in a group.""")
-
-    elif 'include' in name or 'import' in name:
-        lines.append("""## Approach
-
-Replace deprecated `include:` with `include_tasks:` or `import_tasks:`.
-
-```yaml
-- name: Deploy application
-  hosts: local
-  become: yes
-  tasks:
-    - import_tasks: tasks/setup_dirs.yml    # static — loaded at parse time
-    - include_tasks: tasks/deploy_app.yml   # dynamic — loaded at runtime
-```
-
-**Difference:**
-- `import_tasks:` — static, processed at playbook parse time. Tags and conditions apply to all tasks inside.
-- `include_tasks:` — dynamic, processed at runtime. Can use variables in the filename.
-
-## Why this works
-
-`include:` was deprecated in Ansible 2.4 and removed in 2.8. Use `import_tasks:` for static includes (most common) or `include_tasks:` when you need dynamic file names.""")
+```""")
 
     elif 'lineinfile' in name:
-        lines.append("""## Approach
-
-Use `lineinfile` to add, modify, or remove specific lines in a file.
+        out.append("""Use `lineinfile` to add or replace specific lines.
 
 ```yaml
-- name: Manage config lines
-  hosts: local
-  become: yes
-
   tasks:
-    - name: Ensure config file exists
-      file:
-        path: /tmp/app.conf
-        state: touch
-
     - name: Set max connections
       lineinfile:
         path: /tmp/app.conf
         regexp: '^max_connections'
         line: 'max_connections = 100'
-
-    - name: Add debug mode
-      lineinfile:
-        path: /tmp/app.conf
-        line: 'debug = false'
         create: yes
 
     - name: Remove deprecated option
@@ -1769,26 +1131,13 @@ Use `lineinfile` to add, modify, or remove specific lines in a file.
         state: absent
 ```
 
-## Why this works
-
-`regexp:` matches the line to replace. If no match, the `line:` is appended. `state: absent` removes matching lines. `create: yes` creates the file if it doesn't exist.""")
+`regexp:` matches the line to replace. If no match, `line:` is appended.""")
 
     elif 'blockinfile' in name:
-        lines.append("""## Approach
-
-Use `blockinfile` to insert or update a block of text in a file.
+        out.append("""Use `blockinfile` to insert a block of text identified by marker comments.
 
 ```yaml
-- name: Manage config blocks
-  hosts: local
-  become: yes
-
   tasks:
-    - name: Create config file
-      file:
-        path: /tmp/nginx.conf
-        state: touch
-
     - name: Add server block
       blockinfile:
         path: /tmp/nginx.conf
@@ -1797,136 +1146,203 @@ Use `blockinfile` to insert or update a block of text in a file.
           server {
               listen 80;
               server_name example.com;
-              root /var/www/html;
           }
-
-    - name: Add upstream block
-      blockinfile:
-        path: /tmp/nginx.conf
-        marker: "# {mark} UPSTREAM BLOCK"
-        block: |
-          upstream backend {
-              server 127.0.0.1:8080;
-          }
+        create: yes
 ```
 
-## Why this works
+`{mark}` is replaced with `BEGIN` and `END` in the marker comments.""")
 
-`blockinfile` wraps the block with marker comments so it can be identified and updated on subsequent runs. `{mark}` is replaced with `BEGIN` and `END`.""")
-
-    elif 'command' in name and 'shell' in name:
-        lines.append("""## Approach
-
-Use `command:` for simple commands and `shell:` only when you need shell features (pipes, redirects, globs).
+    elif 'include' in name or 'import' in name:
+        out.append("""Replace deprecated `include:` with `import_tasks:` or `include_tasks:`.
 
 ```yaml
-- name: Command vs Shell demo
+  tasks:
+    - import_tasks: tasks/setup_dirs.yml    # static — loaded at parse time
+    - include_tasks: tasks/deploy_app.yml   # dynamic — loaded at runtime
+```
+
+`include:` was removed in Ansible 2.8. Use `import_tasks:` for most cases.""")
+
+    elif 'inventory' in name:
+        out.append("""Fix the inventory syntax errors:
+
+```ini
+[webservers]
+localhost ansible_connection=local   # = required, not a space
+
+[dbservers]
+localhost ansible_connection=local
+
+[production:children]               # :children not :child
+webservers
+dbservers
+
+[production:vars]                   # :vars not :var
+env=production
+```""")
+
+    elif 'delegation' in name:
+        out.append("""Use `delegate_to:` to run a task on a different host.
+
+```yaml
+  tasks:
+    - name: Deploy config
+      copy:
+        content: "version=1.0\\n"
+        dest: /tmp/delegation-test/app.conf
+
+    - name: Log to monitoring (runs on localhost)
+      copy:
+        content: "deployed at {{ ansible_date_time.iso8601 }}\\n"
+        dest: /tmp/delegation-test/monitoring.txt
+      delegate_to: localhost
+```""")
+
+    elif 'serial' in name:
+        out.append("""Add `serial:` to the play to control rolling deployment batch size.
+
+```yaml
+- name: Rolling deployment
+  hosts: webservers
+  become: yes
+  serial: 1          # update 1 host at a time; use "50%" for percentage
+  tasks:
+    - name: Deploy app
+      copy:
+        content: "version=2.0\\n"
+        dest: /tmp/serial-deploy/app.conf
+    - name: Write marker
+      copy:
+        content: "deployed\\n"
+        dest: /tmp/serial-deploy/deployed.txt
+```""")
+
+    elif 'roles' in name:
+        out.append("""Create the role directory structure and call it from the playbook.
+
+```bash
+mkdir -p ~/ansible-project/roles/webserver/{tasks,defaults}
+```
+
+```yaml
+# roles/webserver/tasks/main.yml
+- name: Create web directory
+  file:
+    path: /tmp/webserver
+    state: directory
+- name: Deploy index
+  copy:
+    content: "<h1>Hello</h1>"
+    dest: /tmp/webserver/index.html
+```
+
+```yaml
+# playbook.yml
+- name: Deploy
   hosts: local
   become: yes
+  roles:
+    - webserver
+```""")
 
+    elif 'callback' in name:
+        out.append("""Fix `ansible.cfg` — use `callbacks_enabled` (not the deprecated `callback_whitelist`).
+
+```ini
+[defaults]
+stdout_callback = yaml
+callbacks_enabled = timer, profile_tasks
+```
+
+```bash
+cat > ~/ansible-project/ansible.cfg << 'EOF'
+[defaults]
+stdout_callback = yaml
+callbacks_enabled = timer, profile_tasks
+EOF
+```""")
+
+    elif 'lookup' in name:
+        out.append("""Use lookup plugins to read data from external sources.
+
+```yaml
   tasks:
-    - name: Get hostname (use command — no shell features needed)
+    - name: Read from file
+      copy:
+        content: "{{ lookup('file', '/etc/hostname') }}"
+        dest: /tmp/hostname.txt
+
+    - name: Read env variable
+      copy:
+        content: "path={{ lookup('env', 'PATH') }}\\n"
+        dest: /tmp/env_info.txt
+```""")
+
+    elif 'command' in name and 'shell' in name:
+        out.append("""Use `command:` for simple commands, `shell:` only when you need pipes/redirects.
+
+```yaml
+  tasks:
+    - name: Get hostname (no shell features needed)
       command: hostname
       register: hostname_out
 
-    - name: Write hostname
-      copy:
-        content: "{{ hostname_out.stdout }}\\n"
-        dest: /tmp/cmdshell/hostname.txt
-
-    - name: Get disk usage with pipe (must use shell)
+    - name: Get disk usage with pipe (needs shell)
       shell: df -h | grep -v tmpfs | tail -1
       register: disk_out
 
-    - name: Write disk info
+    - name: Write summary
       copy:
-        content: "{{ disk_out.stdout }}\\n"
-        dest: /tmp/cmdshell/disk.txt
+        content: "hostname={{ hostname_out.stdout }}\\n"
+        dest: /tmp/cmdshell/summary.txt
+```""")
 
-    - name: Write summary using shell redirect
-      shell: echo "hostname={{ hostname_out.stdout }}" > /tmp/cmdshell/summary.txt
-```
-
-## Why this works
-
-`command:` is safer — it doesn't invoke a shell, so no injection risk. `shell:` is needed for pipes (`|`), redirects (`>`), and shell builtins. Prefer `command:` when possible.""")
-
-    elif 'fix-syntax' in name:
-        lines.append("""## Approach
-
-Fix the three YAML syntax errors in the playbook.
-
-**Error 1:** Extra indentation on `mode:`
-```yaml
-# Wrong:
-        state: directory
-         mode: "0755"   # extra space before mode
-
-# Fixed:
-        state: directory
-        mode: "0755"
-```
-
-**Error 2:** Missing colon after task name
-```yaml
-# Wrong:
-    - name Create config file
-
-# Fixed:
-    - name: Create config file
-```
-
-**Error 3:** Wrong indentation on file module parameters
-```yaml
-# Wrong:
-    - name: Create log directory
-      file:
-      path: /tmp/myproject/logs   # should be indented under file:
-
-# Fixed:
-    - name: Create log directory
-      file:
-        path: /tmp/myproject/logs
-        state: directory
-        mode: "0755"
-```
-
-## Why this works
-
-YAML is whitespace-sensitive. Each level of nesting requires consistent indentation (2 spaces is standard for Ansible). Task names require a colon after `name`.""")
-
-    else:
-        lines.append(f"""## Approach
-
-Review the playbook and fix the issues so it runs successfully.
+    elif 'fix-ansible' in name or 'fix_ansible' in name:
+        out.append("""Fix the broken playbook so it runs without errors.
 
 ```bash
 # Check syntax first
 ansible-playbook -i inventory.ini playbook.yml --syntax-check
 
-# Run with verbose output to see what's happening
+# Run with verbose output to see what's failing
 ansible-playbook -i inventory.ini playbook.yml -v
 ```
 
-## Key concepts
+Common issues to look for:
+- `src:` and `content:` used together in `copy` module (mutually exclusive)
+- Missing `dest:` in copy tasks
+- Wrong indentation
+- Invalid module parameter names""")
 
-- Always run `--syntax-check` before executing
-- Use `-v`, `-vv`, or `-vvv` for increasing verbosity
-- Check `failed=0` in the PLAY RECAP to confirm success""")
+    else:
+        # Generic ansible — show what files must be created
+        out.append("```yaml\n# playbook.yml\n- name: Solution\n  hosts: local\n  become: yes\n  tasks:")
+        for c in checks:
+            if 'not created' in c['fail_msg'] or 'not found' in c['fail_msg']:
+                m = re.search(r'(/tmp/\S+|~/\S+)', c['fail_msg'])
+                if m:
+                    out.append(f"    - name: Create {m.group(1)}\n      copy:\n        content: \"solution\\n\"\n        dest: {m.group(1)}")
+        out.append("```")
 
-    return "\n".join(lines)
+    out.append("\n```bash\nansible-playbook -i inventory.ini playbook.yml\n```")
+    return '\n'.join(out)
 
 
-def solve_docker(name, data, vs, files_dir):
-    title = data['name']
-    lines = [f"# Solution: {title}\n"]
+# ── Docker ─────────────────────────────────────────────────────────────────
+
+def generate_docker(name, data, checks, validate_sh, starter_files):
+    out = ["## What the validator checks\n"]
+    for c in checks:
+        if c['fail_msg'] and 'daemon' not in c['fail_msg'].lower():
+            out.append(f"- {c['fail_msg']}")
+    out.append("\n## Solution\n")
+
+    # Extract image names the validator expects
+    image_checks = [c for c in checks if 'image' in c['fail_msg'].lower() or ':latest' in c['fail_msg'] or ':' in c['fail_msg']]
+    container_checks = [c for c in checks if 'container' in c['fail_msg'].lower() or 'running' in c['fail_msg'].lower()]
 
     if 'build-image' in name:
-        lines.append("""## Approach
-
-Create a `Dockerfile` and build the image.
-
-```bash
+        out.append("""```bash
 mkdir -p ~/myapp
 cat > ~/myapp/Dockerfile << 'EOF'
 FROM alpine:latest
@@ -1938,69 +1354,63 @@ docker build -t myapp:latest ~/myapp/
 docker images | grep myapp
 ```
 
-## Why this works
-
-`docker build -t name:tag context/` builds an image from a Dockerfile in the given directory. The `-t` flag tags it with a name and version.""")
+The validator checks that `myapp:latest` exists in `docker images`.""")
 
     elif 'fix-dockerfile' in name:
-        lines.append("""## Approach
+        # Read the broken Dockerfile from setup.sh
+        setup = starter_files.get('setup.sh', '')
+        out.append("""```bash
+# Read the broken Dockerfile
+cat ~/webapp/Dockerfile
 
-Fix the errors in the Dockerfile and rebuild.
+# Check the build error
+docker build -t webapp:latest ~/webapp/ 2>&1 | head -20
+```
 
+Common Dockerfile errors to fix:
+- Typo in base image name (e.g. `ngix` → `nginx`)
+- Missing `COPY` before `RUN`
+- Wrong `EXPOSE` port
+- `CMD` using wrong syntax
+
+After fixing:
 ```bash
-cat ~/webapp/Dockerfile  # read the broken file
-
-# Common fixes:
-# - Wrong base image name (typo)
-# - Missing COPY before RUN
-# - Wrong EXPOSE port
-# - CMD using wrong syntax
-
 docker build -t webapp:latest ~/webapp/
 ```
 
-## Why this works
-
-Read the build error carefully — Docker reports the exact line that failed. Fix the syntax, rebuild, and verify the image exists.""")
+The validator checks that `webapp:latest` exists.""")
 
     elif 'build-args' in name:
-        lines.append("""## Approach
-
-Use `ARG` in the Dockerfile and pass values with `--build-arg`.
-
-```dockerfile
+        out.append("""```bash
+cat > ~/myapp/Dockerfile << 'EOF'
 FROM alpine:latest
 ARG APP_VERSION=1.0.0
 ARG APP_ENV=production
 RUN echo "version=$APP_VERSION env=$APP_ENV" > /app/config.txt
 CMD ["cat", "/app/config.txt"]
-```
+EOF
 
-```bash
-docker build -t myapp:latest \
-  --build-arg APP_VERSION=2.0.0 \
-  --build-arg APP_ENV=staging \
+docker build -t myapp:latest \\
+  --build-arg APP_VERSION=2.0.0 \\
+  --build-arg APP_ENV=staging \\
   ~/myapp/
-```
-
-## Why this works
-
-`ARG` declares a build-time variable. `--build-arg` passes the value. Unlike `ENV`, `ARG` values are not available in the running container.""")
+```""")
 
     elif 'compose' in name:
-        lines.append("""## Approach
+        out.append("""Fix the two errors in `docker-compose.yml`:
 
-Fix the two errors in `docker-compose.yml`: the image typo and the indentation.
+1. `ngix` → `nginx` (image name typo)
+2. `api` service was indented under `web` — it must be a sibling
 
 ```yaml
 version: "3"
 services:
   web:
-    image: nginx:alpine      # fix: "ngix" → "nginx"
+    image: nginx:alpine
     ports:
       - "8080:80"
   api:
-    image: python:3-alpine   # fix: indentation (was under "web")
+    image: python:3-alpine
     ports:
       - "5000:5000"
     command: python -m http.server 5000
@@ -2009,355 +1419,211 @@ services:
 ```bash
 docker compose -f ~/project/docker-compose.yml up -d
 docker compose -f ~/project/docker-compose.yml ps
-```
-
-## Why this works
-
-The `api` service block was indented under `web`, making it a property of `web` rather than a sibling service. The image name `ngix` was a typo.""")
+```""")
 
     elif 'volume' in name:
-        lines.append("""## Approach
-
-Run a container with a volume mount to persist data.
-
-```bash
-# Create a named volume
+        out.append("""```bash
+# Create a named volume and mount it
 docker volume create mydata
 
-# Run container with volume
-docker run -d \
-  --name databox \
-  -v mydata:/data \
+docker run -d \\
+  --name databox \\
+  -v mydata:/data \\
   alpine sleep infinity
 
-# Or bind mount a host directory
-docker run -d \
-  --name databox \
-  -v ~/mydata:/data \
-  alpine sleep infinity
-
-# Write data and verify persistence
+# Write data and verify it persists
 docker exec databox sh -c "echo 'hello' > /data/test.txt"
-docker rm -f databox
-docker run --rm -v mydata:/data alpine cat /data/test.txt
-```
-
-## Why this works
-
-Named volumes persist beyond container lifecycle. Bind mounts link a host directory directly into the container.""")
+docker exec databox cat /data/test.txt
+```""")
 
     elif 'env' in name:
-        lines.append("""## Approach
-
-Pass environment variables using `-e` flags or an env file.
-
-```bash
-# Using -e flags
-docker run -d \
-  --name envbox \
-  -e APP_ENV=production \
-  -e APP_PORT=3000 \
-  -e APP_DEBUG=false \
+        out.append("""```bash
+# Run with -e flags
+docker run -d \\
+  --name envbox \\
+  -e APP_ENV=production \\
+  -e APP_PORT=3000 \\
+  -e APP_DEBUG=false \\
   alpine sleep infinity
 
-# Create env file
+# Create env file for second container
 cat > ~/app.env << 'EOF'
 DB_HOST=localhost
 DB_PORT=5432
 EOF
 
-# Run second container with env file
-docker run -d \
-  --name envbox2 \
-  --env-file ~/app.env \
+docker run -d \\
+  --name envbox2 \\
+  --env-file ~/app.env \\
   alpine sleep infinity
 
 # Verify
 docker exec envbox env | grep APP_
-```
+```""")
 
-## Why this works
-
-`-e KEY=VALUE` sets individual variables. `--env-file` reads from a file (one `KEY=VALUE` per line). Both are available inside the container via `env`.""")
-
-    elif 'network' in name and 'bridge' in name:
-        lines.append("""## Approach
-
-Create a custom bridge network with a specific subnet and run containers on it.
-
-```bash
-# Create network with specific subnet
-docker network create \
-  --driver bridge \
-  --subnet 172.20.0.0/16 \
-  --gateway 172.20.0.1 \
+    elif 'bridge' in name:
+        out.append("""```bash
+docker network create \\
+  --driver bridge \\
+  --subnet 172.20.0.0/16 \\
+  --gateway 172.20.0.1 \\
   appnet
 
-# Run containers on the network with specific IPs
-docker run -d \
-  --name webhost \
-  --network appnet \
-  --ip 172.20.0.10 \
+docker run -d \\
+  --name webhost \\
+  --network appnet \\
+  --ip 172.20.0.10 \\
   nginx:alpine
 
-docker run -d \
-  --name checker \
-  --network appnet \
+docker run -d \\
+  --name checker \\
+  --network appnet \\
   alpine sleep infinity
 
-# Verify connectivity
+# Verify DNS resolution by container name
 docker exec checker ping -c 2 webhost
-```
-
-## Why this works
-
-Custom bridge networks provide DNS resolution by container name. `--ip` assigns a static IP within the subnet.""")
+```""")
 
     elif 'create-network' in name:
-        lines.append("""## Approach
-
-Create a custom network and run containers that can communicate by name.
-
-```bash
+        out.append("""```bash
 docker network create mynet
 
 docker run -d --name web --network mynet nginx:alpine
 docker run -d --name tester --network mynet alpine sleep infinity
 
-# Verify DNS resolution
+# Verify containers can reach each other by name
 docker exec tester ping -c 2 web
 docker exec tester wget -qO- http://web
-```
-
-## Why this works
-
-Containers on the same custom network can reach each other by container name. The default bridge network doesn't support this — you need a user-defined network.""")
+```""")
 
     elif 'container-networking' in name:
-        lines.append("""## Approach
-
-Connect the client container to the web container's network.
+        out.append("""The `web` container is on `net-web` and `client` is on `net-client` — they can't communicate. Connect `client` to `net-web`:
 
 ```bash
-# Check current networks
-docker network ls
-docker inspect web | grep -A5 Networks
-
-# Connect client to web's network
 docker network connect net-web client
 
 # Verify
 docker exec client curl -sf http://web:8080
-```
+```""")
 
-## Why this works
-
-The setup put `web` on `net-web` and `client` on `net-client`. Connecting `client` to `net-web` gives it access to `web` by name.""")
-
-    elif 'expose' in name or 'port' in name:
-        lines.append("""## Approach
-
-Re-run the container with the correct port mapping.
-
-```bash
-# Remove the existing container
+    elif 'expose' in name or ('port' in name and 'fix' not in name and 'container' not in name):
+        out.append("""```bash
+# Remove the container without port mapping
 docker rm -f webserver
 
-# Run with port mapping
-docker run -d \
-  --name webserver \
-  -p 8080:80 \
+# Re-run with port mapping
+docker run -d \\
+  --name webserver \\
+  -p 8080:80 \\
   nginx:alpine
 
-# Verify
 curl http://localhost:8080
 ```
 
-## Why this works
-
-`-p host_port:container_port` maps a port on the host to a port inside the container. Without `-p`, the container port is only accessible from within Docker networks.""")
+`-p host_port:container_port` maps a host port to a container port.""")
 
     elif 'exec' in name:
-        lines.append("""## Approach
-
-Use `docker exec` to run commands inside a running container.
-
-```bash
+        out.append("""```bash
 # Run an interactive shell
 docker exec -it workbox sh
 
 # Run a single command
 docker exec workbox ls /
 
-# Run as a specific user
-docker exec -u root workbox whoami
-
 # Create a file inside the container
 docker exec workbox sh -c "echo 'hello' > /tmp/test.txt"
 docker exec workbox cat /tmp/test.txt
 ```
 
-## Why this works
-
-`docker exec` runs a command in a running container. `-it` allocates a pseudo-TTY and keeps stdin open for interactive use. `-u` specifies the user.""")
+`-it` allocates a pseudo-TTY for interactive use.""")
 
     elif 'copy' in name and 'file' in name:
-        lines.append("""## Approach
-
-Use `docker cp` to copy files between host and container in both directions.
-
-```bash
+        out.append("""```bash
 # Copy FROM container TO host
 docker cp filebox:/var/log/app.log ~/extracted.log
 
-# Create a file to inject
-echo "mode=active" > ~/inject.conf
-
 # Copy FROM host TO container
+echo "mode=active" > ~/inject.conf
 docker cp ~/inject.conf filebox:/etc/inject.conf
 
 # Verify
 cat ~/extracted.log
 docker exec filebox cat /etc/inject.conf
-```
-
-## Why this works
-
-`docker cp src dest` copies files. Use `container:/path` syntax for container paths. Works for both running and stopped containers.""")
+```""")
 
     elif 'inspect' in name:
-        lines.append("""## Approach
-
-Use `docker inspect` to extract container metadata and write a report.
-
-```bash
-# Get all info
-docker inspect mystery
-
-# Extract specific fields
+        out.append("""```bash
+# Extract container metadata
 IP=$(docker inspect mystery --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
 IMAGE=$(docker inspect mystery --format '{{.Config.Image}}')
 HOSTNAME=$(docker inspect mystery --format '{{.Config.Hostname}}')
-PORTS=$(docker inspect mystery --format '{{json .NetworkSettings.Ports}}')
 
-# Write report
 cat > ~/report.txt << EOF
 Container: mystery
 IP Address: $IP
 Image: $IMAGE
 Hostname: $HOSTNAME
-Ports: $PORTS
 EOF
-```
-
-## Why this works
-
-`docker inspect` returns JSON. `--format` uses Go templates to extract specific fields. `{{range}}` iterates over maps/slices.""")
+```""")
 
     elif 'logs' in name:
-        lines.append("""## Approach
-
-Use `docker logs` to find the failing container and extract the error.
-
-```bash
+        out.append("""```bash
 # Check logs for each container
 docker logs app1
 docker logs app2
 docker logs app3
 
 # Find the one with errors
-docker logs app2 2>&1 | grep ERROR
+for c in app1 app2 app3; do
+  echo "=== $c ==="
+  docker logs $c 2>&1 | grep -i error | head -3
+done
 
-# Write the report
+# Write the report (container name on line 1, error on line 2)
 CONTAINER="app2"
 ERROR=$(docker logs $CONTAINER 2>&1 | grep ERROR | head -1)
-
-cat > ~/error-report.txt << EOF
-$CONTAINER
-$ERROR
-EOF
-```
-
-## Why this works
-
-`docker logs` shows stdout and stderr from a container. `2>&1` merges stderr into stdout for piping. The report needs the container name on line 1 and the error on line 2.""")
+printf "%s\\n%s\\n" "$CONTAINER" "$ERROR" > ~/error-report.txt
+```""")
 
     elif 'restart' in name:
-        lines.append("""## Approach
+        out.append("""```bash
+docker run -d --name always-up    --restart always          alpine sleep infinity
+docker run -d --name on-fail      --restart on-failure:3    alpine sleep infinity
+docker run -d --name unless-manual --restart unless-stopped  alpine sleep infinity
 
-Run containers with different restart policies.
-
-```bash
-# always: restart regardless of exit code
-docker run -d --name always-up --restart always alpine sleep infinity
-
-# on-failure with max retries
-docker run -d --name on-fail --restart on-failure:3 alpine sleep infinity
-
-# unless-stopped: restart unless manually stopped
-docker run -d --name unless-manual --restart unless-stopped alpine sleep infinity
-
-# Verify policies
+# Verify
 docker inspect always-up --format '{{.HostConfig.RestartPolicy.Name}}'
-docker inspect on-fail --format '{{.HostConfig.RestartPolicy.MaximumRetryCount}}'
-```
-
-## Why this works
-
-Restart policies control what Docker does when a container exits. `always` restarts even after `docker stop`. `unless-stopped` doesn't restart after a manual stop.""")
+```""")
 
     elif 'healthcheck' in name:
-        lines.append("""## Approach
-
-Run a container with a `HEALTHCHECK` configured.
-
-```bash
-docker run -d \
-  --name healthyweb \
-  --health-cmd "wget -qO- http://localhost/ || exit 1" \
-  --health-interval 10s \
-  --health-timeout 5s \
-  --health-retries 3 \
+        out.append("""```bash
+docker run -d \\
+  --name healthyweb \\
+  --health-cmd "wget -qO- http://localhost/ || exit 1" \\
+  --health-interval 10s \\
+  --health-timeout 5s \\
+  --health-retries 3 \\
   nginx:alpine
 
-# Wait for health check to run
 sleep 15
-
-# Check health status
 docker inspect healthyweb --format '{{.State.Health.Status}}'
-```
-
-## Why this works
-
-`--health-cmd` runs periodically inside the container. Exit 0 = healthy, exit 1 = unhealthy. Docker marks the container status accordingly.""")
+```""")
 
     elif 'resource' in name and 'limit' in name:
-        lines.append("""## Approach
-
-Run a container with memory and CPU limits.
-
-```bash
-docker run -d \
-  --name limited \
-  --memory 128m \
-  --cpus 0.5 \
+        out.append("""```bash
+docker run -d \\
+  --name limited \\
+  --memory 128m \\
+  --cpus 0.5 \\
   nginx:alpine
 
-# Verify limits
-docker inspect limited --format '{{.HostConfig.Memory}}'      # 134217728 (128MB in bytes)
-docker inspect limited --format '{{.HostConfig.NanoCpus}}'    # 500000000 (0.5 CPUs)
-```
-
-## Why this works
-
-`--memory` sets a hard memory limit. `--cpus` limits CPU usage as a fraction of one core. These prevent a single container from starving other processes.""")
+# Verify
+docker inspect limited --format '{{.HostConfig.Memory}}'    # 134217728 (128MB)
+docker inspect limited --format '{{.HostConfig.NanoCpus}}'  # 500000000 (0.5 CPU)
+```""")
 
     elif 'multi-stage' in name:
-        lines.append("""## Approach
-
-Use a multi-stage build to compile in one stage and copy only the binary to a minimal final image.
-
-```dockerfile
+        out.append("""```dockerfile
 # Stage 1: build
 FROM golang:1.21-alpine AS builder
 WORKDIR /app
@@ -2365,7 +1631,7 @@ COPY go.mod .
 COPY main.go .
 RUN go build -o server .
 
-# Stage 2: minimal runtime image
+# Stage 2: minimal runtime
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/server .
@@ -2378,54 +1644,37 @@ docker build -t goapp:latest ~/goapp/
 docker images goapp  # should be well under 50MB
 ```
 
-## Why this works
-
-The Go toolchain (~300MB) is only in the builder stage. The final image only contains the compiled binary and Alpine (~5MB). `COPY --from=builder` copies across stages.""")
+`COPY --from=builder` copies only the compiled binary — the Go toolchain (~300MB) stays in the builder stage.""")
 
     elif 'image-layers' in name:
-        lines.append("""## Approach
-
-Optimize the Dockerfile to minimize layer count and image size.
+        out.append("""Combine `RUN` commands and clean apt cache in the same layer:
 
 ```dockerfile
-# Bloated (each RUN creates a layer, apt cache not cleaned)
 FROM ubuntu:22.04
-RUN apt-get update
-RUN apt-get install -y curl
-RUN apt-get install -y wget
-RUN rm -rf /var/lib/apt/lists/*
+# Bad: each RUN creates a layer, cache not cleaned
+# RUN apt-get update
+# RUN apt-get install -y curl
 
-# Optimized (single RUN, cache cleaned in same layer)
-FROM ubuntu:22.04
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl wget && \
+# Good: single layer, cache cleaned in same RUN
+RUN apt-get update && \\
+    apt-get install -y --no-install-recommends curl wget && \\
     rm -rf /var/lib/apt/lists/*
 ```
 
 ```bash
-docker build -t bloated:latest -f Dockerfile.bloated .
-docker build -t optimized:latest -f Dockerfile.optimized .
-docker images | grep -E 'bloated|optimized'
-```
-
-## Why this works
-
-Each `RUN` instruction creates a new layer. Combining commands with `&&` reduces layers. Cleaning apt cache in the same `RUN` actually removes it (cleaning in a later layer doesn't reduce size).""")
+docker build -t optimized:latest ~/myapp/
+docker history optimized:latest
+```""")
 
     elif 'save' in name or 'load' in name:
-        lines.append("""## Approach
-
-Save an image to a tar file and load it back with a new tag.
-
-```bash
-# Build or pull the source image
-docker pull alpine:latest
+        out.append("""```bash
+# Tag the image
 docker tag alpine:latest savetest:v1
 
 # Save to tar
 docker save savetest:v1 -o ~/savetest.tar
 
-# Remove original (simulate transfer)
+# Remove original
 docker rmi savetest:v1
 
 # Load from tar
@@ -2434,101 +1683,54 @@ docker load -i ~/savetest.tar
 # Tag as restored
 docker tag savetest:v1 restored:v1
 
-# Verify it runs
-docker run --rm restored:v1 echo "save test"
-```
-
-## Why this works
-
-`docker save` exports an image with all its layers and metadata. `docker load` imports it. This is how you transfer images without a registry.""")
+# Verify
+docker run --rm restored:v1 echo "restored OK"
+```""")
 
     elif 'tag' in name:
-        lines.append("""## Approach
-
-Build an image and apply multiple tags to it.
-
-```bash
-# Build the base image
+        out.append("""```bash
 docker build -t tagme:v1.0 ~/myapp/
 
 # Add additional tags (all point to same image ID)
 docker tag tagme:v1.0 tagme:v1.0.0
 docker tag tagme:v1.0 myregistry/tagme:v1.0
 
-# Verify all tags exist
 docker images | grep tagme
-```
-
-## Why this works
-
-`docker tag` creates an alias — all tags point to the same image layers. No data is duplicated. This is how you prepare an image for pushing to different registries.""")
+```""")
 
     elif 'prune' in name:
-        lines.append("""## Approach
-
-Remove stopped containers, unused networks, and dangling images.
-
-```bash
-# Remove specific stopped containers
+        out.append("""```bash
+# Remove stopped containers
 docker rm old1 old2 old3
-
-# Or remove all stopped containers
-docker container prune -f
 
 # Remove unused networks
 docker network rm unused-net1 unused-net2
-# Or remove all unused networks
-docker network prune -f
 
-# Remove dangling images (untagged)
+# Remove dangling images
 docker image prune -f
-
-# Nuclear option — remove everything unused
-docker system prune -f
 
 # Verify
 docker ps -a --filter status=exited
 docker network ls
-```
-
-## Why this works
-
-`docker prune` commands remove unused resources. `-f` skips the confirmation prompt. `docker system prune` combines container, network, and image cleanup.""")
+```""")
 
     elif 'overlay' in name:
-        lines.append("""## Approach
-
-Initialize Docker Swarm and create an overlay network with a service.
-
-```bash
-# Initialize swarm
+        out.append("""```bash
 docker swarm init
-
-# Create overlay network
 docker network create --driver overlay --attachable myoverlay
 
-# Deploy a service on the overlay network
-docker service create \
-  --name web-service \
-  --network myoverlay \
-  --replicas 2 \
+docker service create \\
+  --name web-service \\
+  --network myoverlay \\
+  --replicas 2 \\
   nginx:alpine
 
-# Verify
 docker network ls | grep overlay
 docker service ls
-```
-
-## Why this works
-
-Overlay networks span multiple Docker hosts in a swarm. `--attachable` allows standalone containers to connect. Services on the same overlay network can communicate by service name.""")
+```""")
 
     elif 'fix-build-context' in name:
-        lines.append("""## Approach
-
-Create a `.dockerignore` file to exclude large directories from the build context.
-
-```bash
+        out.append("""```bash
 cat > ~/bigproject/.dockerignore << 'EOF'
 data/
 node_modules/
@@ -2537,51 +1739,33 @@ node_modules/
 tmp/
 EOF
 
-# Build the optimized image
 docker build -t slim-project:latest ~/bigproject/
-
-# Verify excluded files aren't in the image
-docker run --rm slim-project:latest ls /app/
 ```
 
-## Why this works
-
-`.dockerignore` works like `.gitignore` — it prevents files from being sent to the Docker daemon as build context. Large `node_modules/` or `data/` directories can make builds slow and images bloated.""")
+`.dockerignore` prevents large directories from being sent to the Docker daemon.""")
 
     elif 'fix-dns' in name:
-        lines.append("""## Approach
-
-Re-run the container with a working DNS server.
-
-```bash
-# Remove the broken container
+        out.append("""```bash
 docker rm -f dnsbox
 
-# Run with correct DNS
-docker run -d \
-  --name dnsbox-fixed \
-  --dns 8.8.8.8 \
+docker run -d \\
+  --name dnsbox-fixed \\
+  --dns 8.8.8.8 \\
   alpine sleep infinity
 
-# Verify DNS works
 docker exec dnsbox-fixed nslookup google.com
 ```
 
-## Why this works
-
-`--dns` overrides the DNS server for the container. The broken container used `192.0.2.1` (a documentation IP that doesn't respond). Google's `8.8.8.8` is a reliable public resolver.""")
+The broken container used `192.0.2.1` (a documentation IP). `--dns 8.8.8.8` sets a working resolver.""")
 
     elif 'fix-entrypoint' in name:
-        lines.append("""## Approach
-
-Fix the typo in the Dockerfile and change to exec form entrypoint.
+        out.append("""Fix the typo and switch to exec form (JSON array):
 
 ```dockerfile
 FROM python:3-alpine
 WORKDIR /app
 COPY app.py .
-# Fix 1: "pythonn" → "python3"
-# Fix 2: use exec form (JSON array) not shell form
+# Fix: "pythonn" → "python3", use exec form not shell form
 ENTRYPOINT ["python3", "app.py"]
 ```
 
@@ -2591,19 +1775,13 @@ docker run -d --name myserver fixed-server:latest
 docker ps | grep myserver
 ```
 
-## Why this works
-
-Shell form (`ENTRYPOINT python3 app.py`) runs via `/bin/sh -c`, which means PID 1 is the shell, not your app. Exec form (`["python3", "app.py"]`) makes your app PID 1, enabling proper signal handling.""")
+Exec form makes your app PID 1 — shell form wraps it in `/bin/sh -c`.""")
 
     elif 'fix-permissions' in name:
-        lines.append("""## Approach
-
-Fix the Dockerfile to create a non-root user and set correct directory permissions.
-
-```dockerfile
+        out.append("""```dockerfile
 FROM alpine:latest
-RUN adduser -D -u 1001 appuser && \
-    mkdir -p /app/data && \
+RUN adduser -D -u 1001 appuser && \\
+    mkdir -p /app/data && \\
     chown -R appuser:appuser /app
 USER appuser
 WORKDIR /app
@@ -2613,147 +1791,90 @@ CMD ["sh", "-c", "while true; do sleep 1; done"]
 ```bash
 docker build -t fixed-app:latest ~/app/
 docker run -d --name permbox fixed-app:latest
-docker exec permbox id
-docker exec permbox test -w /app/data && echo "writable"
-```
-
-## Why this works
-
-Running as non-root reduces attack surface. The `chown` must happen before `USER` (while still root). `/app/data` needs to be owned by the app user to be writable.""")
+docker exec permbox id   # should show uid=1001
+```""")
 
     elif 'fix-storage' in name:
-        lines.append("""## Approach
-
-Fix the container to use the correct user ID and add tmpfs for writable paths.
-
-```bash
+        out.append("""```bash
 docker rm -f storebox
 
-docker run -d \
-  --name storebox \
-  -v ~/storage:/data \
-  -u $(id -u):$(id -g) \
-  --tmpfs /tmp \
+docker run -d \\
+  --name storebox \\
+  -v ~/storage:/data \\
+  -u $(id -u):$(id -g) \\
+  --tmpfs /tmp \\
   alpine sleep infinity
 
-# Verify
 docker exec storebox id
 docker exec storebox touch /tmp/test.txt && echo "tmpfs writable"
-```
-
-## Why this works
-
-`-u $(id -u):$(id -g)` runs the container as your current user, matching the volume mount ownership. `--tmpfs` mounts a temporary in-memory filesystem for paths that need to be writable.""")
+```""")
 
     elif 'debug' in name or 'crashed' in name:
-        lines.append("""## Approach
-
-Inspect the crashed container's logs and exit code to diagnose the issue.
-
-```bash
-# Check container status
+        out.append("""```bash
+# Check container status and exit code
 docker ps -a | grep webapp
+docker inspect webapp --format '{{.State.ExitCode}}'
 
 # Read the logs
 docker logs webapp
 
-# Check exit code
-docker inspect webapp --format '{{.State.ExitCode}}'
+# Debug interactively with same image
+docker run -it --rm --entrypoint sh \\
+  $(docker inspect webapp --format '{{.Config.Image}}')
 
-# Start a new container with the same image to debug interactively
-docker run -it --rm --entrypoint sh $(docker inspect webapp --format '{{.Config.Image}}')
-
-# Fix the issue (e.g., missing file, wrong command)
-# Then restart
+# After fixing, restart
 docker start webapp
-```
-
-## Why this works
-
-`docker logs` shows stdout/stderr even from stopped containers. The exit code tells you how it failed (1 = general error, 126 = permission denied, 127 = command not found).""")
+```""")
 
     elif 'linking' in name:
-        lines.append("""## Approach
-
-Use `--link` to connect containers (legacy feature).
-
-```bash
-# Start the redis server
+        out.append("""```bash
 docker run -d --name redis-server redis:alpine
 
-# Link the client to the server using an alias
-docker run -d \
-  --name redis-client \
-  --link redis-server:db \
+docker run -d \\
+  --name redis-client \\
+  --link redis-server:db \\
   alpine sleep infinity
 
-# Verify the link works (db resolves to redis-server's IP)
+# Verify the link (db resolves to redis-server's IP)
 docker exec redis-client ping -c 2 db
-```
-
-## Why this works
-
-`--link source:alias` adds the source container's IP to the client's `/etc/hosts` under the alias name. Note: `--link` is legacy — prefer custom networks for new projects.""")
+```""")
 
     elif 'read-only' in name:
-        lines.append("""## Approach
-
-Run nginx with a read-only root filesystem and tmpfs for writable paths.
-
-```bash
-docker run -d \
-  --name readonly-web \
-  --read-only \
-  --tmpfs /var/cache/nginx \
-  --tmpfs /var/run \
-  --tmpfs /tmp \
+        out.append("""```bash
+docker run -d \\
+  --name readonly-web \\
+  --read-only \\
+  --tmpfs /var/cache/nginx \\
+  --tmpfs /var/run \\
+  --tmpfs /tmp \\
   nginx:alpine
 
-# Verify read-only
-docker exec readonly-web touch /test.txt 2>&1  # should fail
-docker exec readonly-web touch /tmp/test.txt   # should succeed (tmpfs)
-```
-
-## Why this works
-
-`--read-only` makes the root filesystem immutable. nginx needs to write to `/var/cache/nginx` and `/var/run` — `--tmpfs` mounts in-memory filesystems at those paths.""")
+# Verify
+docker exec readonly-web touch /test.txt 2>&1   # should fail
+docker exec readonly-web touch /tmp/test.txt    # should succeed
+```""")
 
     elif 'tmpfs' in name:
-        lines.append("""## Approach
-
-Mount tmpfs filesystems for in-memory storage.
-
-```bash
-# Container with tmpfs cache
-docker run -d \
-  --name tmpbox \
-  --tmpfs /app/cache:size=64m \
+        out.append("""```bash
+docker run -d \\
+  --name tmpbox \\
+  --tmpfs /app/cache:size=64m \\
   alpine sleep infinity
 
-# Container with secure tmpfs (no exec, no suid)
-docker run -d \
-  --name securebox \
-  --tmpfs /run/secrets:noexec,nosuid,size=32m \
+docker run -d \\
+  --name securebox \\
+  --tmpfs /run/secrets:noexec,nosuid,size=32m \\
   alpine sleep infinity
 
-# Verify
 docker inspect tmpbox --format '{{json .HostConfig.Tmpfs}}'
-```
-
-## Why this works
-
-`--tmpfs` mounts a temporary in-memory filesystem. Data is lost when the container stops. Options like `noexec` and `nosuid` add security constraints.""")
+```""")
 
     elif 'user-namespace' in name:
-        lines.append("""## Approach
-
-Fix the Dockerfile to add a non-root user with UID 1001.
-
-```dockerfile
+        out.append("""```dockerfile
 FROM alpine:latest
 WORKDIR /app
 COPY app.sh .
-RUN chmod +x app.sh && \
+RUN chmod +x app.sh && \\
     adduser -D -u 1001 appuser
 USER appuser
 CMD ["./app.sh"]
@@ -2762,17 +1883,11 @@ CMD ["./app.sh"]
 ```bash
 docker build -t safebox:latest ~/nonroot/
 docker run -d --name safebox safebox:latest sleep infinity
-docker exec safebox id -u  # should return 1001
-```
-
-## Why this works
-
-`adduser -D -u 1001 appuser` creates a user with UID 1001. `USER appuser` switches to that user for all subsequent instructions and the container runtime.""")
+docker exec safebox id -u   # should return 1001
+```""")
 
     elif 'signal' in name:
-        lines.append("""## Approach
-
-Fix the Dockerfile to use exec form entrypoint so signals reach the process.
+        out.append("""Fix the Dockerfile to use exec form so signals reach the process:
 
 ```dockerfile
 FROM python:3-alpine
@@ -2786,58 +1901,59 @@ ENTRYPOINT ["python3", "app.py"]
 ```bash
 docker build -t signalapp:fixed ~/signalapp/
 docker inspect signalapp:fixed --format '{{.Config.Entrypoint}}'
-# Should show: [python3 app.py] — not [/bin/sh -c python3 app.py]
-```
-
-## Why this works
-
-Shell form wraps the command in `/bin/sh -c`, making the shell PID 1. Signals like SIGTERM go to the shell, not your app. Exec form makes your app PID 1 directly.""")
+# Should show: [python3 app.py]  — not [/bin/sh -c python3 app.py]
+```""")
 
     elif 'init' in name:
-        lines.append("""## Approach
-
-Run the container with the `--init` flag to use Docker's init process as PID 1.
-
-```bash
+        out.append("""```bash
 docker run -d --name with-init --init alpine sleep infinity
 
-# Verify PID 1 is an init process
-docker exec with-init ps -o comm= -p 1  # should show "init" or "tini"
+# Verify PID 1 is an init process (tini)
+docker exec with-init ps -o comm= -p 1   # should show "init" or "tini"
 ```
 
-## Why this works
+`--init` injects `tini` as PID 1, which properly handles zombie processes and signal forwarding.""")
 
-`--init` injects `tini` as PID 1. This properly handles zombie processes (reaping orphaned children) and forwards signals to child processes — something a naive `sleep infinity` or app process doesn't do.""")
+    elif 'container-restart' in name:
+        out.append("""```bash
+docker run -d --name always-up     --restart always          alpine sleep infinity
+docker run -d --name on-fail       --restart on-failure:3    alpine sleep infinity
+docker run -d --name unless-manual --restart unless-stopped  alpine sleep infinity
+```""")
 
     else:
-        lines.append("""## Approach
+        # Generic docker — show what images/containers must exist
+        out.append("```bash")
+        for c in checks:
+            if 'not found' in c['fail_msg'] or 'not running' in c['fail_msg']:
+                out.append(f"# Fix: {c['fail_msg']}")
+        out.append("```")
 
-```bash
-# Check what the validation expects
-# Run docker commands to satisfy the requirements
-docker ps -a
-docker images
-```
-
-## Key concepts
-
-- Use `docker ps -a` to see all containers (including stopped)
-- Use `docker images` to see all images
-- Use `docker inspect <name>` to get detailed container/image info
-- Check `docker logs <name>` for container output""")
-
-    return "\n".join(lines)
+    return '\n'.join(out)
 
 
-def solve_k8s(name, data, vs, files_dir):
-    title = data['name']
-    lines = [f"# Solution: {title}\n"]
-    checks = grep_checks(vs)
+# ── Kubernetes ─────────────────────────────────────────────────────────────
+
+def generate_k8s(name, data, checks, validate_sh, starter_files):
+    out = ["## What the validator checks\n"]
+    for c in checks:
+        if c['fail_msg'] and 'dry-run' not in c['fail_msg'].lower():
+            out.append(f"- {c['fail_msg']}")
+    out.append("\n## Solution\n")
+
+    # Extract required field values from grep checks
+    required = {}
+    for c in checks:
+        m = re.search(r"grep -q '([^']+)'", c['block'])
+        if m:
+            required[c['fail_msg']] = m.group(1)
+
+    # Read broken starter YAML from setup.sh if available
+    setup = starter_files.get('setup.sh', '')
 
     if 'create-deployment' in name:
-        lines.append("""## Solution
-
-```yaml
+        out.append("""```yaml
+# ~/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -2865,89 +1981,30 @@ spec:
 kubectl apply --dry-run=server -f ~/deployment.yaml
 ```
 
-## Why this works
+`spec.selector.matchLabels` must match `spec.template.metadata.labels` exactly.""")
 
-A Deployment needs `spec.selector.matchLabels` to match `spec.template.metadata.labels` — this is how it knows which Pods belong to it. The `replicas: 3` creates 3 identical Pods.""")
-
-    elif 'create-service' in name or 'fix-service' in name:
-        lines.append("""## Solution
-
-```yaml
+    elif 'fix-service' in name or 'create-service' in name:
+        out.append("""```yaml
+# ~/service.yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: web-service
 spec:
   selector:
-    app: web-app
+    app: web-app        # must match Pod labels
   ports:
-  - port: 80
-    targetPort: 8080
+  - port: 80            # integer, not string
+    targetPort: 8080    # integer, not string
   type: ClusterIP
 ```
 
-## Why this works
-
-`selector` must match the Pod labels exactly. `port` is what clients connect to; `targetPort` is the container port. Both must be integers (not strings).""")
-
-    elif 'create-secret' in name:
-        lines.append("""## Solution
-
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: app-secret
-type: Opaque
-data:
-  DB_USER: YWRtaW4=        # base64("admin")
-  DB_PASS: c3VwZXJzZWNyZXQ=  # base64("supersecret")
-```
-
-```yaml
-# Pod using the secret
-apiVersion: v1
-kind: Pod
-metadata:
-  name: secret-pod
-spec:
-  containers:
-  - name: app
-    image: alpine
-    env:
-    - name: DB_USER
-      valueFrom:
-        secretKeyRef:
-          name: app-secret
-          key: DB_USER
-    - name: DB_PASS
-      valueFrom:
-        secretKeyRef:
-          name: app-secret
-          key: DB_PASS
-    command: ["sleep", "infinity"]
-```
-
-```bash
-# Encode values
-echo -n "admin" | base64
-echo -n "supersecret" | base64
-```
-
-## Why this works
-
-Secret values must be base64-encoded in the YAML. `secretKeyRef` injects them as environment variables.""")
+The validator checks: `apiVersion: v1`, `app: web-app` in selector, `port: 80`, `targetPort: 8080`.""")
 
     elif 'fix-volume' in name:
-        lines.append("""## Solution
-
-The volume names in `volumeMounts` must exactly match the names in `volumes`.
+        out.append("""The `volumeMounts[].name` must exactly match `volumes[].name`.
 
 ```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: volume-pod
 spec:
   containers:
   - name: app
@@ -2955,24 +2012,18 @@ spec:
     volumeMounts:
     - name: config-vol      # must match volumes[].name below
       mountPath: /etc/config
-    - name: data-vol        # must match volumes[].name below
+    - name: data-vol
       mountPath: /data
   volumes:
   - name: config-vol        # matches volumeMounts[0].name
     configMap:
       name: app-config
-  - name: data-vol          # matches volumeMounts[1].name
+  - name: data-vol
     emptyDir: {}
-```
-
-## Why this works
-
-`volumeMounts[].name` is a reference to `volumes[].name`. A mismatch causes the Pod to fail with `MountVolume.SetUp failed`.""")
+```""")
 
     elif 'fix-configmap' in name:
-        lines.append("""## Solution
-
-ConfigMap values must be strings. Wrap numbers in quotes.
+        out.append("""ConfigMap values must be strings — wrap numbers in quotes.
 
 ```yaml
 apiVersion: v1
@@ -2981,79 +2032,35 @@ metadata:
   name: app-config
 data:
   DATABASE_HOST: "localhost"
-  DATABASE_PORT: "5432"      # must be a string, not integer 5432
-  MAX_CONNECTIONS: "100"     # must be a string, not integer 100
+  DATABASE_PORT: "5432"      # must be "5432" not 5432
+  MAX_CONNECTIONS: "100"     # must be "100" not 100
   APP_ENV: "production"
-```
-
-```yaml
-# Pod referencing the ConfigMap
-apiVersion: v1
-kind: Pod
-metadata:
-  name: config-pod
-spec:
-  containers:
-  - name: app
-    image: alpine
-    envFrom:
-    - configMapRef:
-        name: app-config    # must match ConfigMap name above
-    command: ["sleep", "infinity"]
-```
-
-## Why this works
-
-YAML integers are not strings. `DATABASE_PORT: 5432` is an integer; `DATABASE_PORT: "5432"` is a string. Kubernetes ConfigMap values must be strings.""")
+```""")
 
     elif 'fix-labels' in name or 'fix-selector' in name:
-        lines.append("""## Solution
-
-The Deployment's `matchLabels` and Service's `selector` must both match the Pod template labels.
+        out.append("""The Deployment `matchLabels`, Pod template labels, and Service `selector` must all match.
 
 ```yaml
 # deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-server
 spec:
-  replicas: 2
   selector:
     matchLabels:
       app: api-server      # must match template labels
   template:
     metadata:
       labels:
-        app: api-server    # this is what Pods get
-    spec:
-      containers:
-      - name: api
-        image: nginx:alpine
+        app: api-server    # Pods get this label
 ```
 
 ```yaml
 # service.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: api-service
 spec:
   selector:
     app: api-server        # must match Pod labels
-  ports:
-  - port: 80
-    targetPort: 8080
-```
-
-## Why this works
-
-Labels are the glue in Kubernetes. The Deployment uses `matchLabels` to find its Pods. The Service uses `selector` to find Pods to route traffic to. All three must be identical.""")
+```""")
 
     elif 'fix-rbac' in name:
-        lines.append("""## Solution
-
-```yaml
+        out.append("""```yaml
 # role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -3064,9 +2071,7 @@ rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "list", "watch"]
-```
-
-```yaml
+---
 # rolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -3079,18 +2084,12 @@ subjects:
   namespace: default
 roleRef:
   kind: Role           # must be "Role" not "ClusterRole"
-  name: pod-reader     # must match the Role name above
+  name: pod-reader     # must match Role name above
   apiGroup: rbac.authorization.k8s.io
-```
-
-## Why this works
-
-`roleRef.kind` must be `Role` (not `ClusterRole`) when binding to a namespace-scoped Role. `roleRef.name` must exactly match the Role's `metadata.name`.""")
+```""")
 
     elif 'fix-hpa' in name:
-        lines.append("""## Solution
-
-```yaml
+        out.append("""```yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -3098,7 +2097,7 @@ metadata:
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
-    kind: Deployment      # must be "Deployment" not "deployment"
+    kind: Deployment      # case-sensitive: "Deployment" not "deployment"
     name: web-app
   minReplicas: 2
   maxReplicas: 10
@@ -3109,17 +2108,11 @@ spec:
       target:
         type: Utilization
         averageUtilization: 70
-```
-
-## Why this works
-
-`scaleTargetRef.kind` is case-sensitive — must be `Deployment`. `minReplicas: 2` and `maxReplicas: 10` are the required values. Use `autoscaling/v2` (not the deprecated `v1`).""")
+```""")
 
     elif 'fix-ingress' in name:
-        lines.append("""## Solution
-
-```yaml
-apiVersion: networking.k8s.io/v1    # not extensions/v1beta1
+        out.append("""```yaml
+apiVersion: networking.k8s.io/v1    # not extensions/v1beta1 (removed in 1.22)
 kind: Ingress
 metadata:
   name: web-ingress
@@ -3135,16 +2128,10 @@ spec:
             name: web-svc
             port:
               number: 80
-```
-
-## Why this works
-
-`extensions/v1beta1` Ingress was removed in Kubernetes 1.22. The new `networking.k8s.io/v1` API requires `pathType` and uses a nested `service:` block instead of flat `serviceName`/`servicePort` fields.""")
+```""")
 
     elif 'fix-network-policy' in name:
-        lines.append("""## Solution
-
-```yaml
+        out.append("""```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -3152,29 +2139,23 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app: api           # target the api pods
+      app: api
   policyTypes:
   - Ingress
-  - Egress              # must include Egress
+  - Egress
   ingress:
   - from:
     - podSelector:
         matchLabels:
-          app: frontend  # only allow from frontend
+          app: frontend
     ports:
     - port: 8080
-  egress:               # allow all egress (empty = allow all)
-  - {}
-```
-
-## Why this works
-
-Including `Egress` in `policyTypes` without an `egress:` rule would block all outbound traffic. An empty `egress: [{}]` allows all egress while still declaring the policy type.""")
+  egress:
+  - {}              # allow all egress
+```""")
 
     elif 'fix-pvc' in name:
-        lines.append("""## Solution
-
-```yaml
+        out.append("""```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -3184,17 +2165,11 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 5Gi      # not "cpu" — PVCs request storage, not CPU
-```
-
-## Why this works
-
-PVCs request `storage`, not `cpu` or `memory`. Those belong in Pod resource requests. `ReadWriteOnce` means one node can mount it read-write at a time.""")
+      storage: 5Gi    # PVCs request "storage", not "cpu" or "memory"
+```""")
 
     elif 'fix-statefulset' in name:
-        lines.append("""## Solution
-
-Two fixes needed: add `clusterIP: None` to the Service (headless) and add `serviceName` to the StatefulSet.
+        out.append("""Two fixes needed: headless Service (`clusterIP: None`) and `serviceName` in StatefulSet.
 
 ```yaml
 apiVersion: v1
@@ -3202,20 +2177,18 @@ kind: Service
 metadata:
   name: postgres-headless
 spec:
-  clusterIP: None        # headless service — required for StatefulSet DNS
+  clusterIP: None        # headless — required for StatefulSet DNS
   selector:
     app: postgres
   ports:
   - port: 5432
-```
-
-```yaml
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres
 spec:
-  serviceName: postgres-headless   # must reference the headless service
+  serviceName: postgres-headless   # links to the headless service
   replicas: 3
   selector:
     matchLabels:
@@ -3228,63 +2201,29 @@ spec:
       containers:
       - name: postgres
         image: postgres:15
-```
-
-## Why this works
-
-StatefulSets require a headless Service (`clusterIP: None`) for stable DNS names (`pod-0.service.namespace.svc.cluster.local`). The `serviceName` field links them.""")
+```""")
 
     elif 'fix-tolerations' in name:
-        lines.append("""## Solution
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: toleration-pod
+        out.append("""```yaml
 spec:
   tolerations:
   - key: "dedicated"
     operator: "Equal"
     value: "gpu"
-    effect: "NoSchedule"
-  containers:
-  - name: app
-    image: nginx:alpine
-```
-
-## Why this works
-
-Tolerations must match the taint exactly: same `key`, `value`, and `effect`. `operator: Equal` requires a value match. `operator: Exists` matches any value for that key.""")
+    effect: "NoSchedule"   # must match the taint exactly
+```""")
 
     elif 'fix-node-selector' in name:
-        lines.append("""## Solution
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: node-selector-pod
+        out.append("""```yaml
 spec:
   nodeSelector:
-    disktype: ssd        # must match node label exactly
-  containers:
-  - name: app
-    image: nginx:alpine
+    disktype: ssd    # must match node label exactly
 ```
 
-## Why this works
-
-`nodeSelector` is a simple key-value match against node labels. The node must have the exact label for the Pod to be scheduled there. Use `kubectl get nodes --show-labels` to see available labels.""")
+Check available node labels: `kubectl get nodes --show-labels`""")
 
     elif 'fix-pod-security' in name:
-        lines.append("""## Solution
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: secure-pod
+        out.append("""```yaml
 spec:
   securityContext:
     runAsNonRoot: true
@@ -3298,20 +2237,10 @@ spec:
       capabilities:
         drop:
         - ALL
-```
-
-## Why this works
-
-`runAsNonRoot: true` prevents running as root. `allowPrivilegeEscalation: false` prevents gaining more privileges. `capabilities: drop: ALL` removes all Linux capabilities. These are Pod Security Standards best practices.""")
+```""")
 
     elif 'fix-env-vars' in name:
-        lines.append("""## Solution
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: env-pod
+        out.append("""```yaml
 spec:
   containers:
   - name: app
@@ -3320,90 +2249,43 @@ spec:
     - name: APP_ENV
       value: "production"
     - name: APP_PORT
-      value: "8080"        # must be string, not integer
-    - name: DB_HOST
-      value: "localhost"
+      value: "8080"        # must be string "8080", not integer 8080
     command: ["sleep", "infinity"]
-```
-
-## Why this works
-
-Environment variable values in Kubernetes must be strings. `value: 8080` (integer) causes a validation error — use `value: "8080"` (quoted string).""")
+```""")
 
     elif 'fix-dns' in name:
-        lines.append("""## Solution
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: dns-pod
+        out.append("""```yaml
 spec:
-  dnsPolicy: ClusterFirst    # not "None" without dnsConfig
+  dnsPolicy: ClusterFirst    # not "None" without a dnsConfig block
   containers:
   - name: app
     image: alpine
     command: ["sleep", "infinity"]
-```
-
-## Why this works
-
-`dnsPolicy: None` requires a `dnsConfig` block with explicit nameservers. `ClusterFirst` uses the cluster DNS (CoreDNS) which resolves both cluster-internal names and external names.""")
+```""")
 
     elif 'fix-image-pull' in name:
-        lines.append("""## Solution
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: image-pod
+        out.append("""```yaml
 spec:
   containers:
   - name: app
-    image: nginx:1.25        # fix: use a valid, accessible image tag
+    image: nginx:1.25           # fix typo in image name/tag
     imagePullPolicy: IfNotPresent
-```
-
-## Why this works
-
-`imagePullPolicy: Always` forces a pull every time, which fails if the registry is unreachable. `IfNotPresent` uses the cached image if available. Also ensure the image name and tag are correct — a typo causes `ImagePullBackOff`.""")
+```""")
 
     elif 'fix-container-port' in name:
-        lines.append("""## Solution
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: port-pod
+        out.append("""```yaml
 spec:
   containers:
   - name: web
     image: nginx:alpine
     ports:
-    - containerPort: 80      # integer, not string "80"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: port-service
-spec:
-  selector:
-    app: port-pod
-  ports:
-  - port: 80
-    targetPort: 80           # must match containerPort
-```
-
-## Why this works
-
-`containerPort` must be an integer. The Service `targetPort` must match the container's actual listening port.""")
+    - containerPort: 80    # integer, not string "80"
+```""")
 
     elif 'crashlooping' in name:
-        lines.append("""## Solution
+        out.append("""The pod crashes because `nginx-wrong` doesn't exist in the image.
 
-Fix the invalid command in the Pod manifest and re-apply it.
+Fix `~/pod.yaml` — either remove the `command:` entirely (use image default) or use the correct binary:
 
 ```yaml
 apiVersion: v1
@@ -3414,32 +2296,23 @@ spec:
   containers:
   - name: web
     image: nginx:alpine
-    # Option 1: remove the command entirely (use image default)
+    # Option 1: remove command entirely (recommended)
     ports:
     - containerPort: 80
 ```
 
-Or keep a command but use the correct binary:
+Or keep a command with the correct binary:
 ```yaml
     command: ["nginx", "-g", "daemon off;"]
 ```
 
 ```bash
-# Apply the fix
 kubectl apply -f ~/pod.yaml
-
-# Watch it come up
-kubectl get pod web-app -w
-```
-
-## Why this works
-
-`nginx-wrong` doesn't exist in the image, causing `exec format error` and immediate crash. Removing `command:` lets nginx use its default entrypoint. The Pod transitions from `CrashLoopBackOff` to `Running`.""")
+kubectl get pod web-app -w   # watch it reach Running
+```""")
 
     elif 'init-containers' in name:
-        lines.append("""## Solution
-
-```yaml
+        out.append("""```yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -3464,18 +2337,10 @@ spec:
     emptyDir: {}
 ```
 
-## Why this works
-
-Init containers run to completion before app containers start. They share volumes with app containers. Use them for setup tasks: waiting for dependencies, seeding data, or running migrations.""")
+Init containers run to completion before app containers start.""")
 
     elif 'liveness' in name:
-        lines.append("""## Solution
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: liveness-pod
+        out.append("""```yaml
 spec:
   containers:
   - name: app
@@ -3493,16 +2358,10 @@ spec:
         port: 80
       initialDelaySeconds: 5
       periodSeconds: 3
-```
-
-## Why this works
-
-`livenessProbe` restarts the container if it fails. `readinessProbe` removes the Pod from Service endpoints if it fails. `initialDelaySeconds` prevents false failures during startup.""")
+```""")
 
     elif 'multi-container' in name:
-        lines.append("""## Solution
-
-```yaml
+        out.append("""```yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -3523,20 +2382,10 @@ spec:
   volumes:
   - name: shared-data
     emptyDir: {}
-```
-
-## Why this works
-
-Containers in the same Pod share the same network namespace (same IP) and can share volumes. The `emptyDir` volume is created when the Pod starts and deleted when it stops.""")
+```""")
 
     elif 'resource-limits' in name:
-        lines.append("""## Solution
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: resource-pod
+        out.append("""```yaml
 spec:
   containers:
   - name: app
@@ -3550,18 +2399,10 @@ spec:
         memory: "256Mi"
 ```
 
-## Why this works
-
-`requests` is what the scheduler uses to find a node with enough capacity. `limits` is the hard cap — exceeding memory causes OOMKill; exceeding CPU causes throttling. `100m` = 0.1 CPU cores.""")
+`100m` = 0.1 CPU cores. `requests` is used for scheduling; `limits` is the hard cap.""")
 
     elif 'rolling-update' in name:
-        lines.append("""## Solution
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: rolling-app
+        out.append("""```yaml
 spec:
   replicas: 4
   strategy:
@@ -3570,31 +2411,10 @@ spec:
       maxSurge: 1
       maxUnavailable: 1
   minReadySeconds: 10
-  selector:
-    matchLabels:
-      app: rolling-app
-  template:
-    metadata:
-      labels:
-        app: rolling-app
-    spec:
-      containers:
-      - name: app
-        image: nginx:1.25
-```
-
-## Why this works
-
-`maxSurge: 1` allows one extra Pod during the update. `maxUnavailable: 1` allows one Pod to be down. `minReadySeconds: 10` waits 10s after a Pod is ready before continuing the rollout.""")
+```""")
 
     elif 'sidecar' in name:
-        lines.append("""## Solution
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: sidecar-pod
+        out.append("""```yaml
 spec:
   containers:
   - name: app
@@ -3608,73 +2428,53 @@ spec:
     volumeMounts:
     - name: log-volume
       mountPath: /logs
-      readOnly: true        # sidecar only reads logs
+      readOnly: true
   volumes:
   - name: log-volume
     emptyDir: {}
-```
-
-## Why this works
-
-The sidecar pattern uses a second container to augment the main container. Sharing a volume lets the log-shipper read logs written by nginx. `readOnly: true` prevents accidental writes.""")
+```""")
 
     elif 'create-namespace' in name:
-        lines.append("""## Solution
-
-```yaml
+        out.append("""```yaml
+# ~/namespace.yaml
 apiVersion: v1
 kind: Namespace
 metadata:
   name: staging
   labels:
     env: staging
-    team: backend
-  annotations:
-    description: "Staging environment for backend team"
 ```
 
 ```bash
 kubectl apply --dry-run=server -f ~/namespace.yaml
-```
-
-## Why this works
-
-Namespaces provide isolation between environments. Labels enable filtering and policy enforcement. Annotations store non-identifying metadata.""")
+```""")
 
     elif 'create-job' in name:
-        lines.append("""## Solution
-
-```yaml
+        out.append("""```yaml
+# ~/job.yaml
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: data-processor
 spec:
-  completions: 1
-  parallelism: 1
   template:
     spec:
-      restartPolicy: Never    # required for Jobs (not Always)
+      restartPolicy: Never    # required for Jobs — not "Always"
       containers:
       - name: processor
         image: alpine
-        command: ["sh", "-c", "echo 'processing data' && sleep 5 && echo 'done'"]
-```
-
-## Why this works
-
-Jobs run to completion (unlike Deployments which run forever). `restartPolicy: Never` or `OnFailure` are the only valid values for Jobs. `completions` sets how many successful runs are needed.""")
+        command: ["sh", "-c", "echo 'processing' && sleep 5 && echo 'done'"]
+```""")
 
     elif 'create-cronjob' in name:
-        lines.append("""## Solution
-
-```yaml
+        out.append("""```yaml
+# ~/cronjob.yaml
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: backup-job
 spec:
-  schedule: "0 2 * * *"      # 2AM daily
+  schedule: "0 2 * * *"
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
   jobTemplate:
@@ -3686,16 +2486,11 @@ spec:
           - name: backup
             image: alpine
             command: ["sh", "-c", "echo 'backup complete'"]
-```
-
-## Why this works
-
-CronJob schedule uses standard cron syntax. `successfulJobsHistoryLimit` and `failedJobsHistoryLimit` control how many completed Jobs are kept for debugging.""")
+```""")
 
     elif 'create-daemonset' in name:
-        lines.append("""## Solution
-
-```yaml
+        out.append("""```yaml
+# ~/daemonset.yaml
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -3712,7 +2507,7 @@ spec:
       containers:
       - name: collector
         image: alpine
-        command: ["sh", "-c", "while true; do echo 'collecting logs'; sleep 60; done"]
+        command: ["sh", "-c", "while true; do echo 'collecting'; sleep 60; done"]
         volumeMounts:
         - name: varlog
           mountPath: /var/log
@@ -3721,56 +2516,43 @@ spec:
       - name: varlog
         hostPath:
           path: /var/log
+```""")
+
+    elif 'create-secret' in name:
+        out.append("""```yaml
+# ~/secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secret
+type: Opaque
+data:
+  DB_USER: YWRtaW4=        # base64("admin")
+  DB_PASS: c3VwZXJzZWNyZXQ=  # base64("supersecret")
 ```
 
-## Why this works
-
-DaemonSets run exactly one Pod per node. They're used for node-level agents: log collectors, monitoring, network plugins. `hostPath` mounts the node's filesystem into the container.""")
+```bash
+# Encode values
+echo -n "admin" | base64
+echo -n "supersecret" | base64
+```""")
 
     elif 'create-pdb' in name:
-        lines.append("""## Solution
-
-```yaml
+        out.append("""```yaml
+# ~/pdb.yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: app-pdb
 spec:
-  minAvailable: 2           # or use maxUnavailable: 1
+  minAvailable: 2
   selector:
     matchLabels:
       app: web-app
-```
-
-```yaml
-# Deployment with enough replicas
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web-app
-spec:
-  replicas: 4               # must be > minAvailable
-  selector:
-    matchLabels:
-      app: web-app
-  template:
-    metadata:
-      labels:
-        app: web-app
-    spec:
-      containers:
-      - name: app
-        image: nginx:alpine
-```
-
-## Why this works
-
-PDBs prevent too many Pods from being disrupted simultaneously during voluntary disruptions (node drains, rolling updates). `minAvailable: 2` ensures at least 2 Pods are always running.""")
+```""")
 
     elif 'create-limit-range' in name:
-        lines.append("""## Solution
-
-```yaml
+        out.append("""```yaml
 apiVersion: v1
 kind: LimitRange
 metadata:
@@ -3787,19 +2569,10 @@ spec:
     max:
       cpu: "2"
       memory: "1Gi"
-    min:
-      cpu: "50m"
-      memory: "64Mi"
-```
-
-## Why this works
-
-LimitRange sets default resource requests/limits for containers that don't specify them. `default` is applied as the limit; `defaultRequest` as the request. `max`/`min` enforce boundaries.""")
+```""")
 
     elif 'create-resource-quota' in name:
-        lines.append("""## Solution
-
-```yaml
+        out.append("""```yaml
 apiVersion: v1
 kind: ResourceQuota
 metadata:
@@ -3812,17 +2585,10 @@ spec:
     limits.memory: "8Gi"
     pods: "20"
     services: "10"
-    persistentvolumeclaims: "5"
-```
-
-## Why this works
-
-ResourceQuota limits total resource consumption in a namespace. `requests.*` limits what can be requested; `limits.*` limits the hard caps. `pods`, `services` limit object counts.""")
+```""")
 
     elif 'create-priority-class' in name:
-        lines.append("""## Solution
-
-```yaml
+        out.append("""```yaml
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
@@ -3830,36 +2596,16 @@ metadata:
 value: 1000000
 globalDefault: false
 description: "High priority workloads"
-```
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: priority-pod
-spec:
-  priorityClassName: high-priority
-  containers:
-  - name: app
-    image: nginx:alpine
-```
-
-## Why this works
-
-Higher `value` means higher priority. When resources are scarce, the scheduler preempts lower-priority Pods to make room for higher-priority ones. `globalDefault: false` means it's not applied to all Pods automatically.""")
+```""")
 
     elif 'create-service-account' in name:
-        lines.append("""## Solution
-
-```yaml
+        out.append("""```yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: app-sa
   namespace: default
-```
-
-```yaml
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -3871,112 +2617,62 @@ subjects:
   namespace: default
 roleRef:
   kind: ClusterRole
-  name: edit              # built-in role with edit permissions
+  name: edit
   apiGroup: rbac.authorization.k8s.io
-```
-
-## Why this works
-
-ServiceAccounts provide an identity for Pods. RoleBindings grant permissions. The built-in `edit` ClusterRole allows creating/updating/deleting most resources in a namespace.""")
+```""")
 
     else:
-        lines.append(f"""## Approach
+        out.append("```bash\n# Apply your manifest\nkubectl apply --dry-run=server -f ~/manifest.yaml\n```\n")
+        if required:
+            out.append("**Required field values:**")
+            for fail_msg, pattern in required.items():
+                out.append(f"- `{pattern}` — {fail_msg}")
 
-```bash
-# Examine the broken manifest
-cat ~/pod.yaml  # or deployment.yaml, service.yaml, etc.
-
-# Check what validation expects
-kubectl apply --dry-run=server -f ~/manifest.yaml
-
-# Fix the issues and re-validate
-```
-
-## Key concepts
-
-- Read the error message from `kubectl apply` carefully
-- Check `apiVersion` matches the resource kind
-- Verify all required fields are present
-- Ensure label selectors match across resources""")
-
-    return "\n".join(lines)
+    return '\n'.join(out)
 
 
-def solve_terraform(name, data, vs, files_dir):
-    title = data['name']
-    lines = [f"# Solution: {title}\n"]
+# ── Terraform ──────────────────────────────────────────────────────────────
+
+def generate_terraform(name, data, checks, validate_sh, starter_files):
+    out = ["## What the validator checks\n"]
+    for c in checks:
+        if c['fail_msg'] and 'init failed' not in c['fail_msg'] and 'validate failed' not in c['fail_msg']:
+            out.append(f"- {c['fail_msg']}")
+    out.append("\n## Solution\n")
 
     if 'fix-syntax' in name:
-        lines.append("""## Approach
-
-Fix the HCL syntax error (missing closing brace) and validate.
-
-```hcl
-# main.tf — fixed
-terraform {
-  required_providers {
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.0"
-    }
-  }
-}
-
-resource "local_file" "config" {
-  content  = "app=myapp"
-  filename = "${path.module}/config.txt"
-}   # <-- this closing brace was missing
-
-resource "local_file" "readme" {
-  content  = "README"
-  filename = "${path.module}/README.txt"
-}
-```
-
-```bash
-terraform validate
-```
-
-## Why this works
-
-HCL requires every opening `{` to have a matching `}`. The `terraform validate` command checks syntax without making API calls.""")
-
-    elif 'terraform-fmt' in name:
-        lines.append("""## Approach
-
-Run `terraform fmt` to auto-format the HCL code.
+        out.append("""The broken `main.tf` has a missing closing brace `}`. Find it and fix it:
 
 ```bash
 cd ~/terraform-project
+terraform validate 2>&1   # shows the exact line with the error
+```
+
+```hcl
+# main.tf — fixed (add the missing closing brace)
+resource "local_file" "config" {
+  content  = "app=myapp"
+  filename = "${path.module}/config.txt"
+}   # ← this was missing
+```
+
+```bash
+terraform validate   # must pass
+```""")
+
+    elif 'terraform-fmt' in name:
+        out.append("""```bash
+cd ~/terraform-project
 terraform fmt
 
-# Verify it's now formatted correctly
-terraform fmt -check  # exits 0 if already formatted
+# Verify it's now formatted
+terraform fmt -check   # exits 0 if already formatted
 ```
 
-The formatter fixes indentation, alignment, and spacing:
-```hcl
-# Before (unformatted):
-terraform {
-required_providers {
-local = {
-source = "hashicorp/local"
-
-# After (formatted):
-terraform {
-  required_providers {
-    local = {
-      source  = "hashicorp/local"
-```
-
-## Why this works
-
-`terraform fmt` is an opinionated formatter — it enforces the canonical HCL style. `-check` mode exits non-zero if any files need formatting, useful in CI.""")
+`terraform fmt` enforces canonical HCL style: 2-space indentation, aligned `=` signs, consistent spacing.""")
 
     elif 'variables' in name:
-        lines.append("""## Solution
-
-```hcl
+        out.append("""```hcl
 # main.tf
 variable "project_name" {
   description = "Name of the project"
@@ -3991,7 +2687,7 @@ variable "environment" {
 }
 
 variable "file_count" {
-  description = "Number of config files to create"
+  description = "Number of config files"
   type        = number
   default     = 3
 }
@@ -4003,38 +2699,27 @@ resource "local_file" "config" {
 }
 ```
 
-## Why this works
-
-Variables decouple configuration from code. `default` values make them optional. Reference with `var.name`. Override at runtime with `-var` flags or `terraform.tfvars`.""")
+```bash
+terraform apply -auto-approve
+```""")
 
     elif 'outputs' in name:
-        lines.append("""## Solution
-
-```hcl
-resource "random_pet" "server" {
-  length = 2
-}
-
+        out.append("""```hcl
+resource "random_pet" "server" { length = 2 }
 resource "local_file" "config" {
   content  = "server=${random_pet.server.id}\\n"
   filename = "${path.module}/config.txt"
 }
-
-resource "random_integer" "priority" {
-  min = 1
-  max = 100
-}
+resource "random_integer" "priority" { min = 1; max = 100 }
 
 output "pet_name" {
   description = "The generated server name"
   value       = random_pet.server.id
 }
-
 output "config_path" {
   description = "Path to the config file"
   value       = local_file.config.filename
 }
-
 output "random_number" {
   description = "A random priority number"
   value       = random_integer.priority.result
@@ -4044,21 +2729,13 @@ output "random_number" {
 ```bash
 terraform apply -auto-approve
 terraform output
-```
-
-## Why this works
-
-Outputs expose values after `apply`. They're useful for passing data between modules or displaying important information. `description` is required by best practices.""")
+```""")
 
     elif 'state-management' in name:
-        lines.append("""## Approach
-
-Rename the resource in both the state and the configuration.
-
-```bash
+        out.append("""```bash
 cd ~/terraform-project
 
-# Step 1: rename in state
+# Step 1: rename in state (no destroy/recreate)
 terraform state mv random_pet.server random_pet.app_server
 
 # Step 2: update main.tf to match
@@ -4066,20 +2743,14 @@ sed -i 's/resource "random_pet" "server"/resource "random_pet" "app_server"/' ma
 sed -i 's/random_pet\.server\./random_pet.app_server./g' main.tf
 
 # Step 3: verify no changes pending
-terraform plan  # should show "No changes"
+terraform plan   # should show "No changes"
 ```
 
-## Why this works
-
-`terraform state mv` renames a resource in the state file without destroying/recreating it. The config must be updated to match, otherwise Terraform sees a deletion and creation.""")
+`terraform state mv` renames a resource in state without destroying it.""")
 
     elif 'import' in name:
-        lines.append("""## Approach
-
-Write a `local_file` resource that matches the existing file, then import it.
-
-```hcl
-# main.tf — add this resource
+        out.append("""```hcl
+# main.tf — add a resource matching the existing file
 resource "local_file" "app_config" {
   content  = file("${path.module}/app-config.txt")
   filename = "${path.module}/app-config.txt"
@@ -4088,38 +2759,19 @@ resource "local_file" "app_config" {
 
 ```bash
 cd ~/terraform-project
-
-# Import the existing file into state
 terraform import local_file.app_config ~/terraform-project/app-config.txt
-
-# Verify no changes pending
-terraform plan  # should show "No changes"
-```
-
-## Why this works
-
-`terraform import` brings existing infrastructure under Terraform management without recreating it. The resource config must match the actual state — otherwise `plan` will show changes.""")
+terraform plan   # should show "No changes"
+```""")
 
     elif 'backend-config' in name:
-        lines.append("""## Solution
-
-```hcl
-# main.tf
+        out.append("""```hcl
 terraform {
   required_providers {
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.0"
-    }
+    local = { source = "hashicorp/local"; version = "~> 2.0" }
   }
   backend "local" {
     path = "state/terraform.tfstate"
   }
-}
-
-resource "local_file" "config" {
-  content  = "app=myapp\\n"
-  filename = "${path.module}/app.conf"
 }
 ```
 
@@ -4127,27 +2779,16 @@ resource "local_file" "config" {
 terraform init   # re-init to configure the backend
 terraform apply -auto-approve
 ls state/        # tfstate file should be here
-```
-
-## Why this works
-
-The `backend` block configures where state is stored. The `local` backend stores state in a file. Changing the backend requires `terraform init` to migrate existing state.""")
+```""")
 
     elif 'workspace' in name:
-        lines.append("""## Approach
-
-Create a `staging` workspace and use `terraform.workspace` in the config.
-
-```bash
+        out.append("""```bash
 cd ~/terraform-project
-
-# Create and switch to staging workspace
 terraform workspace new staging
-terraform workspace list  # should show staging
-
-# Update main.tf to use workspace
+terraform workspace list   # should show staging
 ```
 
+Update `main.tf` to use `terraform.workspace`:
 ```hcl
 resource "local_file" "env_config" {
   content  = "environment=${terraform.workspace}\\n"
@@ -4157,25 +2798,14 @@ resource "local_file" "env_config" {
 
 ```bash
 terraform apply -auto-approve
-cat env.conf  # should show "environment=staging"
-```
-
-## Why this works
-
-Workspaces let you manage multiple environments with the same config. `terraform.workspace` returns the current workspace name. Each workspace has its own state file.""")
+cat env.conf   # should show "environment=staging"
+```""")
 
     elif 'modules' in name:
-        lines.append("""## Solution
-
-```hcl
+        out.append("""```hcl
 # modules/config/main.tf
-variable "app_name" {
-  type = string
-}
-
-variable "environment" {
-  type = string
-}
+variable "app_name" { type = string }
+variable "environment" { type = string }
 
 resource "local_file" "config" {
   content  = "app=${var.app_name}\\nenv=${var.environment}\\n"
@@ -4188,50 +2818,16 @@ output "config_path" {
 ```
 
 ```hcl
-# main.tf (root)
+# main.tf
 module "app_config" {
   source      = "./modules/config"
   app_name    = "myapp"
   environment = "production"
 }
-
-output "config_file" {
-  value = module.app_config.config_path
-}
-```
-
-## Why this works
-
-Modules encapsulate reusable infrastructure. Input variables are passed as arguments. Outputs expose values to the calling module. `source = "./modules/config"` references a local module.""")
-
-    elif 'data-sources' in name:
-        lines.append("""## Solution
-
-```hcl
-# Read existing files as data sources
-data "local_file" "source_config" {
-  filename = "${path.module}/source/config.txt"
-}
-
-data "local_file" "source_version" {
-  filename = "${path.module}/source/version.txt"
-}
-
-# Use the data in a resource
-resource "local_file" "combined" {
-  content  = "config=${data.local_file.source_config.content}version=${data.local_file.source_version.content}"
-  filename = "${path.module}/combined.txt"
-}
-```
-
-## Why this works
-
-Data sources read existing infrastructure without managing it. `data.local_file.name.content` accesses the file contents. Data sources are read during `plan`, before any resources are created.""")
+```""")
 
     elif 'count' in name:
-        lines.append("""## Solution
-
-```hcl
+        out.append("""```hcl
 variable "environments" {
   type    = list(string)
   default = ["dev", "staging", "prod"]
@@ -4245,24 +2841,14 @@ resource "local_file" "config" {
 ```
 
 ```bash
-terraform plan  # should show 3 resources to create
+terraform plan   # should show 3 resources
 terraform apply -auto-approve
-ls *.txt
-```
-
-## Why this works
-
-`count` creates multiple instances of a resource. `count.index` is the current iteration (0, 1, 2...). Access the list with `var.environments[count.index]`.""")
+```""")
 
     elif 'for-each' in name:
-        lines.append("""## Solution
-
-```hcl
+        out.append("""```hcl
 variable "services" {
-  type = map(object({
-    port = number
-    env  = string
-  }))
+  type = map(object({ port = number; env = string }))
   default = {
     web    = { port = 80,   env = "production" }
     api    = { port = 8080, env = "production" }
@@ -4275,24 +2861,13 @@ resource "local_file" "service_config" {
   content  = "service=${each.key}\\nport=${each.value.port}\\n"
   filename = "${path.module}/${each.key}.conf"
 }
-```
-
-## Why this works
-
-`for_each` creates one instance per map entry. `each.key` is the map key; `each.value` is the value. Unlike `count`, `for_each` resources are identified by key, not index — safer for additions/removals.""")
+```""")
 
     elif 'local-values' in name:
-        lines.append("""## Solution
-
-```hcl
+        out.append("""```hcl
 locals {
   project     = "myapp"
   environment = "production"
-  common_tags = {
-    project     = local.project
-    environment = local.environment
-    managed_by  = "terraform"
-  }
   config_content = "project=${local.project}\\nenv=${local.environment}\\n"
 }
 
@@ -4300,81 +2875,39 @@ resource "local_file" "config" {
   content  = local.config_content
   filename = "${path.module}/config.txt"
 }
+```""")
 
-resource "random_pet" "name" {
-  prefix = local.project
-}
-```
-
-## Why this works
-
-`locals` define computed values used multiple times. They reduce repetition and make changes easier — update once, applies everywhere. Reference with `local.name`.""")
-
-    elif 'dynamic-blocks' in name:
-        lines.append("""## Solution
-
-```hcl
-variable "provisioners" {
-  type    = list(string)
-  default = ["web", "api", "worker"]
+    elif 'data-sources' in name:
+        out.append("""```hcl
+data "local_file" "source_config" {
+  filename = "${path.module}/source/config.txt"
 }
 
-resource "null_resource" "app" {
-  dynamic "provisioner" {
-    for_each = var.provisioners
-    content {
-      # provisioner.value is the current item
-    }
-  }
+resource "local_file" "combined" {
+  content  = data.local_file.source_config.content
+  filename = "${path.module}/combined.txt"
 }
-
-# More practical example with local_file
-resource "local_file" "configs" {
-  for_each = toset(var.provisioners)
-  content  = "provisioner=${each.value}\\n"
-  filename = "${path.module}/${each.value}.conf"
-}
-```
-
-## Why this works
-
-`dynamic` blocks generate repeated nested blocks from a list or map. `for_each` iterates the collection; `content` defines the block body. `provisioner.value` (or the iterator name) accesses the current item.""")
+```""")
 
     elif 'conditional' in name:
-        lines.append("""## Solution
-
-```hcl
-variable "environment" {
-  type    = string
-  default = "production"
-}
-
-variable "enable_debug" {
-  type    = bool
-  default = false
-}
+        out.append("""```hcl
+variable "environment" { default = "production" }
+variable "enable_debug" { default = false }
 
 resource "local_file" "config" {
-  content  = "environment=${var.environment}\\ndebug=${var.enable_debug}\\n"
+  content  = "environment=${var.environment}\\n"
   filename = "${path.module}/config.txt"
 }
 
-# Conditional resource — only create debug log in non-production
 resource "local_file" "debug_log" {
   count    = var.environment != "production" ? 1 : 0
   content  = "debug mode enabled\\n"
   filename = "${path.module}/debug.log"
 }
-```
-
-## Why this works
-
-The ternary operator `condition ? true_val : false_val` works in HCL. Using `count = condition ? 1 : 0` conditionally creates a resource. `var.environment != "production"` evaluates to true/false.""")
+```""")
 
     elif 'depends-on' in name:
-        lines.append("""## Solution
-
-```hcl
+        out.append("""```hcl
 resource "null_resource" "create_dir" {
   provisioner "local-exec" {
     command = "mkdir -p ${path.module}/output"
@@ -4384,265 +2917,135 @@ resource "null_resource" "create_dir" {
 resource "local_file" "app_config" {
   content  = "app=myapp\\n"
   filename = "${path.module}/output/app.conf"
-
   depends_on = [null_resource.create_dir]
 }
-
-resource "local_file" "readme" {
-  content  = "README\\n"
-  filename = "${path.module}/output/README.txt"
-
-  depends_on = [local_file.app_config]
-}
-```
-
-## Why this works
-
-`depends_on` creates explicit ordering when Terraform can't infer it from references. Without it, Terraform might try to create `app_config` before the directory exists.""")
+```""")
 
     elif 'lifecycle' in name:
-        lines.append("""## Solution
-
-```hcl
+        out.append("""```hcl
 resource "local_file" "config" {
-  content  = "app=myapp\\nversion=1.0\\n"
+  content  = "app=myapp\\n"
   filename = "${path.module}/config.txt"
-
-  lifecycle {
-    create_before_destroy = true   # create new before destroying old
-    prevent_destroy       = false  # set true to protect critical resources
-    ignore_changes        = [content]  # don't update if content changes externally
-  }
-}
-
-resource "random_pet" "name" {
   lifecycle {
     create_before_destroy = true
+    ignore_changes        = [content]
   }
 }
-```
-
-## Why this works
-
-`lifecycle` blocks customize resource behavior. `create_before_destroy` prevents downtime during replacement. `prevent_destroy` protects critical resources. `ignore_changes` prevents drift detection for specified attributes.""")
+```""")
 
     elif 'null-resource' in name:
-        lines.append("""## Solution
-
-```hcl
+        out.append("""```hcl
 resource "null_resource" "setup" {
-  triggers = {
-    always_run = timestamp()  # re-run every apply
-  }
-
+  triggers = { always_run = timestamp() }
   provisioner "local-exec" {
     command = "echo 'Setup complete' > ${path.module}/setup.log"
   }
-}
-
-resource "null_resource" "cleanup" {
   provisioner "local-exec" {
     when    = destroy
     command = "rm -f ${path.module}/setup.log"
   }
 }
-```
-
-## Why this works
-
-`null_resource` has no real infrastructure — it's a container for `provisioner` blocks. `triggers` controls when it re-runs. `when = destroy` runs the provisioner on `terraform destroy`.""")
+```""")
 
     elif 'provisioners' in name:
-        lines.append("""## Solution
-
-```hcl
+        out.append("""```hcl
 resource "null_resource" "app_setup" {
   provisioner "local-exec" {
-    command = "echo 'Provisioning...' && mkdir -p ${path.module}/app"
+    command = "mkdir -p ${path.module}/app && echo 'app=myapp' > ${path.module}/app/config.txt"
   }
-
-  provisioner "local-exec" {
-    command = "echo 'app=myapp' > ${path.module}/app/config.txt"
-  }
-
   provisioner "local-exec" {
     when    = destroy
     command = "rm -rf ${path.module}/app"
   }
 }
-```
-
-> **Note:** Provisioners are a last resort. Prefer native Terraform resources when possible.
-
-## Why this works
-
-`local-exec` runs commands on the machine running Terraform. Multiple provisioners run in order. `when = destroy` runs during `terraform destroy`. Provisioners don't track state — they run once on create.""")
+```""")
 
     elif 'random-provider' in name:
-        lines.append("""## Solution
-
-```hcl
-resource "random_pet" "server_name" {
-  length    = 2
-  separator = "-"
-  prefix    = "srv"
-}
-
-resource "random_integer" "port" {
-  min = 8000
-  max = 9000
-}
-
-resource "random_password" "db_pass" {
-  length  = 16
-  special = true
-}
+        out.append("""```hcl
+resource "random_pet" "server_name" { length = 2; separator = "-"; prefix = "srv" }
+resource "random_integer" "port" { min = 8000; max = 9000 }
 
 resource "local_file" "config" {
   content  = "server=${random_pet.server_name.id}\\nport=${random_integer.port.result}\\n"
   filename = "${path.module}/config.txt"
 }
-```
-
-## Why this works
-
-The `random` provider generates values that are stable across applies (stored in state). `random_pet` generates human-readable names. `random_password` generates secure passwords.""")
+```""")
 
     elif 'sensitive' in name:
-        lines.append("""## Solution
-
-```hcl
+        out.append("""```hcl
 variable "db_password" {
   type      = string
-  sensitive = true    # won't appear in plan/apply output
+  sensitive = true    # redacted in plan/apply output
   default   = "changeme123"
 }
-
 variable "api_key" {
   type      = string
   sensitive = true
   default   = "abc123"
 }
-
-resource "local_file" "config" {
-  content  = "db_pass=${var.db_password}\\napi_key=${var.api_key}\\n"
-  filename = "${path.module}/secrets.conf"
-}
-
-output "app_id" {
-  value = "myapp-prod"
-}
-
 output "password_set" {
   value     = length(var.db_password) > 0
-  sensitive = true    # output is also sensitive
+  sensitive = true
 }
-```
-
-## Why this works
-
-`sensitive = true` on variables and outputs redacts values in CLI output (shown as `(sensitive value)`). The values are still stored in state — use remote state with encryption for real secrets.""")
+```""")
 
     elif 'splat' in name:
-        lines.append("""## Solution
+        out.append("""```hcl
+resource "random_pet" "servers" { count = 3 }
 
-```hcl
-variable "instance_count" {
-  default = 3
-}
-
-resource "random_pet" "servers" {
-  count = var.instance_count
-}
-
-# Splat expression — collect all IDs
 output "all_server_names" {
-  value = random_pet.servers[*].id  # splat: get .id from all instances
+  value = random_pet.servers[*].id   # splat: collect .id from all instances
 }
 
 resource "local_file" "inventory" {
   content  = join("\\n", random_pet.servers[*].id)
   filename = "${path.module}/inventory.txt"
 }
-```
-
-## Why this works
-
-The splat expression `resource[*].attribute` collects an attribute from all instances of a `count`-based resource into a list. Equivalent to `[for r in random_pet.servers : r.id]`.""")
+```""")
 
     elif 'string-interpolation' in name:
-        lines.append("""## Solution
-
-```hcl
+        out.append("""```hcl
 variable "app_name" { default = "myapp" }
 variable "environment" { default = "production" }
-variable "version" { default = "1.0.0" }
 
 locals {
   full_name = "${var.app_name}-${var.environment}"
-  tag       = "v${var.version}"
 }
 
 resource "local_file" "config" {
-  content  = <<-EOT
-    app_name    = ${var.app_name}
-    environment = ${var.environment}
-    full_name   = ${local.full_name}
-    tag         = ${local.tag}
-  EOT
+  content  = "app=${var.app_name}\\nenv=${var.environment}\\nfull=${local.full_name}\\n"
   filename = "${path.module}/config.txt"
 }
-```
-
-## Why this works
-
-`"${expression}"` interpolates values into strings. `<<-EOT ... EOT` is a heredoc (strips leading whitespace). String functions like `upper()`, `lower()`, `format()` work inside interpolations.""")
+```""")
 
     elif 'template-file' in name:
-        lines.append("""## Solution
-
-```hcl
-# config.tftpl (already created by setup)
-# Application Configuration
-# [general]
-# name = "${app_name}"
-# ...
-
+        out.append("""```hcl
 resource "local_file" "config" {
   content = templatefile("${path.module}/config.tftpl", {
-    app_name       = "myapp"
-    app_port       = 8080
-    app_env        = "production"
+    app_name        = "myapp"
+    app_port        = 8080
+    app_env         = "production"
     max_connections = 100
-    enable_ssl     = false
-    ports          = [80, 443, 8080]
+    enable_ssl      = false
+    ports           = [80, 443, 8080]
   })
   filename = "${path.module}/app.conf"
 }
 ```
 
-## Why this works
-
-`templatefile(path, vars)` renders a `.tftpl` file with the given variables. It's more readable than inline heredocs for complex templates. The template uses `${var}` for interpolation and `%{ for/if }` for control flow.""")
+`templatefile()` renders a `.tftpl` file with Jinja2-like syntax.""")
 
     elif 'try-function' in name:
-        lines.append("""## Solution
-
-```hcl
+        out.append("""```hcl
 variable "config" {
   type    = any
-  default = {
-    name    = "myapp"
-    port    = 8080
-    timeout = null
-  }
+  default = { name = "myapp"; port = 8080; timeout = null }
 }
 
 locals {
-  # try() returns the first successful expression
   app_name = try(var.config.name, "default-app")
   app_port = try(var.config.port, 80)
-  timeout  = try(var.config.timeout, 30)  # null falls through to default
+  timeout  = try(var.config.timeout, 30)
 }
 
 resource "local_file" "config" {
@@ -4651,222 +3054,157 @@ resource "local_file" "config" {
 }
 ```
 
-## Why this works
-
-`try(expr1, expr2, ...)` evaluates expressions in order and returns the first one that doesn't produce an error. Useful for optional attributes that might be null or missing.""")
+`try()` returns the first expression that doesn't error.""")
 
     elif 'type-constraints' in name:
-        lines.append("""## Solution
-
-```hcl
+        out.append("""```hcl
 variable "app_name" {
-  type        = string
-  description = "Application name"
-  default     = "myapp"
+  type    = string
+  default = "myapp"
 }
-
 variable "port" {
-  type        = number
-  description = "Application port"
-  default     = 8080
+  type    = number
+  default = 8080
 }
-
 variable "allowed_hosts" {
-  type        = list(string)
-  description = "Allowed hostnames"
-  default     = ["localhost", "example.com"]
+  type    = list(string)
+  default = ["localhost", "example.com"]
 }
-
 variable "feature_flags" {
-  type = object({
-    debug   = bool
-    metrics = bool
-    tracing = bool
-  })
-  default = {
-    debug   = false
-    metrics = true
-    tracing = false
-  }
+  type = object({ debug = bool; metrics = bool; tracing = bool })
+  default = { debug = false; metrics = true; tracing = false }
 }
-```
-
-## Why this works
-
-Type constraints catch configuration errors early. `string`, `number`, `bool` are primitives. `list(type)`, `map(type)`, `set(type)` are collections. `object({})` defines a structured type with named attributes.""")
+```""")
 
     elif 'validation-rules' in name:
-        lines.append("""## Solution
-
-```hcl
+        out.append("""```hcl
 variable "environment" {
   type = string
   validation {
     condition     = contains(["dev", "staging", "production"], var.environment)
-    error_message = "Environment must be dev, staging, or production."
+    error_message = "Must be dev, staging, or production."
   }
 }
-
 variable "port" {
   type = number
   validation {
     condition     = var.port >= 1024 && var.port <= 65535
-    error_message = "Port must be between 1024 and 65535."
+    error_message = "Port must be 1024-65535."
   }
 }
-
 variable "app_name" {
   type = string
   validation {
     condition     = can(regex("^[a-z][a-z0-9-]*$", var.app_name))
-    error_message = "App name must start with a letter and contain only lowercase letters, numbers, and hyphens."
+    error_message = "Must start with a letter, lowercase letters/numbers/hyphens only."
   }
 }
-```
-
-## Why this works
-
-`validation` blocks run before any resources are created. `condition` is a boolean expression. `error_message` is shown when validation fails. `can()` returns false instead of erroring if the expression fails.""")
+```""")
 
     elif 'moved-blocks' in name:
-        lines.append("""## Approach
-
-Use `moved` blocks to rename resources without destroying them.
-
-```hcl
+        out.append("""```hcl
 # Add to main.tf
 moved {
   from = local_file.old_config
   to   = local_file.new_config
 }
 
-# Rename the resource block
-resource "local_file" "new_config" {  # was "old_config"
+resource "local_file" "new_config" {   # renamed from old_config
   content  = "app=myapp\\n"
   filename = "${path.module}/config.txt"
 }
 ```
 
 ```bash
-terraform plan   # should show "1 to move, 0 to add, 0 to destroy"
+terraform plan   # shows "1 to move, 0 to add, 0 to destroy"
 terraform apply -auto-approve
-```
-
-## Why this works
-
-`moved` blocks tell Terraform that a resource was renamed. Without it, Terraform would destroy the old resource and create a new one. With it, the state entry is simply renamed.""")
+```""")
 
     elif 'override' in name:
-        lines.append("""## Solution
-
-Create an override file to change values for a specific environment.
-
-```hcl
+        out.append("""```hcl
 # main_override.tf (or any *_override.tf file)
 resource "random_pet" "name" {
-  length    = 3        # override: change from 2 to 3
-  separator = "_"      # override: change separator
-}
-
-resource "local_file" "config" {
-  content = "environment=development\\n"  # override content
+  length    = 3        # overrides the value in main.tf
+  separator = "_"
 }
 ```
 
-```bash
-terraform plan  # override file is automatically loaded
-```
-
-## Why this works
-
-Files ending in `_override.tf` or named `override.tf` are loaded last and merge with the main config. They're useful for local development overrides without modifying the main config.""")
+Override files are loaded last and merge with the main config.""")
 
     elif 'drift' in name:
-        lines.append("""## Approach
-
-Detect the drift and reconcile state with the actual file.
-
-```bash
+        out.append("""```bash
 cd ~/terraform-project
 
-# See what changed
-terraform plan  # shows drift between state and actual file
-
-# Option 1: restore the file to match state
-terraform apply -auto-approve  # overwrites the manually changed file
-
-# Option 2: update config to match the drift
-# Edit main.tf to match the new content, then apply
-```
-
-## Why this works
-
-Terraform detects drift by comparing the state file against the actual infrastructure. `terraform apply` reconciles them by updating infrastructure to match the desired config. For file resources, it overwrites the file.""")
-
-    else:
-        lines.append("""## Approach
-
-```bash
-cd ~/terraform-project
-terraform init
-terraform validate
+# See what drifted
 terraform plan
+
+# Option 1: restore to match Terraform state (overwrites manual change)
 terraform apply -auto-approve
+
+# Option 2: update config to match the drift, then apply
 ```
 
-## Key concepts
+Terraform detects drift by comparing state against actual files. `apply` reconciles them.""")
 
-- `terraform init` downloads providers
-- `terraform validate` checks HCL syntax
-- `terraform plan` shows what will change
-- `terraform apply` makes the changes
-- `terraform state list` shows managed resources""")
+    elif 'dynamic-blocks' in name:
+        out.append("""```hcl
+variable "provisioners" {
+  type    = list(string)
+  default = ["web", "api", "worker"]
+}
 
-    return "\n".join(lines)
+resource "local_file" "configs" {
+  for_each = toset(var.provisioners)
+  content  = "provisioner=${each.value}\\n"
+  filename = "${path.module}/${each.value}.conf"
+}
+```
 
+The validator checks that at least one `dynamic` block exists in your `.tf` files.""")
 
-# ── Main dispatcher ─────────────────────────────────────────────────────────
-
-def generate_solution(ch_dir: Path) -> str:
-    name = ch_dir.name
-    data = yaml.safe_load((ch_dir / "challenge.yaml").read_text())
-    vs   = read(ch_dir / "validate.sh")
-    files_dir = ch_dir / "files"
-    cat  = data.get("category", "")
-
-    if cat == "linux":
-        return solve_linux(name, data, vs, files_dir)
-    elif cat == "ansible":
-        return solve_ansible(name, data, vs, files_dir)
-    elif cat == "docker":
-        return solve_docker(name, data, vs, files_dir)
-    elif cat == "kubernetes":
-        return solve_k8s(name, data, vs, files_dir)
-    elif cat == "terraform":
-        return solve_terraform(name, data, vs, files_dir)
     else:
-        return f"# Solution: {data['name']}\n\nSolution coming soon."
+        out.append("```bash\ncd ~/terraform-project\nterraform init\nterraform validate\nterraform apply -auto-approve\n```")
+        for c in checks:
+            if c['fail_msg'] and 'init' not in c['fail_msg'] and 'validate' not in c['fail_msg']:
+                out.append(f"\n**Fix:** {c['fail_msg']}")
+
+    return '\n'.join(out)
+
+
+# ── Generic fallback ────────────────────────────────────────────────────────
+
+def generate_generic(name, data, checks, validate_sh):
+    out = ["## What the validator checks\n"]
+    for c in checks:
+        out.append(f"- {c['fail_msg']}")
+    out.append("\n## Solution\n")
+    out.append("Address each check above in order:\n")
+    for c in checks:
+        out.append(f"**{c['fail_msg']}**")
+        if c['comment']:
+            out.append(f"  → {c['comment']}")
+        out.append("")
+    return '\n'.join(out)
+
+
+# ── Entry point ─────────────────────────────────────────────────────────────
 
 def main():
     generated = 0
-    skipped   = 0
+    errors = 0
     for ch_dir in sorted(CHALLENGES.iterdir()):
-        if not ch_dir.is_dir():
-            continue
-        if not (ch_dir / "challenge.yaml").is_file():
-            continue
+        if not ch_dir.is_dir(): continue
+        if not (ch_dir / "challenge.yaml").is_file(): continue
         out = ch_dir / "solution.md"
-        if out.exists():
-            skipped += 1
-            continue
         try:
             content = generate_solution(ch_dir)
-            out.write_text(content + "\n")
-            generated += 1
+            if content:
+                out.write_text(content)
+                generated += 1
         except Exception as e:
             print(f"ERROR {ch_dir.name}: {e}")
-
-    print(f"Generated: {generated}  Skipped (already exist): {skipped}")
+            errors += 1
+    print(f"Generated: {generated}  Errors: {errors}")
 
 if __name__ == "__main__":
     main()

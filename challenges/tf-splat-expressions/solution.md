@@ -1,19 +1,21 @@
 # Solution: Use Splat Expressions
 
+## What the validator checks
+
+- Expected to find: \[\*\]
+- Expected to find: output 
+- Expected to find: output 
+- Expected to find: local_file.*summary
+- Expected to find: join
+- terraform plan shows pending changes — your config may be incomplete
+
 ## Solution
 
 ```hcl
-variable "instance_count" {
-  default = 3
-}
+resource "random_pet" "servers" { count = 3 }
 
-resource "random_pet" "servers" {
-  count = var.instance_count
-}
-
-# Splat expression — collect all IDs
 output "all_server_names" {
-  value = random_pet.servers[*].id  # splat: get .id from all instances
+  value = random_pet.servers[*].id   # splat: collect .id from all instances
 }
 
 resource "local_file" "inventory" {
@@ -21,7 +23,3 @@ resource "local_file" "inventory" {
   filename = "${path.module}/inventory.txt"
 }
 ```
-
-## Why this works
-
-The splat expression `resource[*].attribute` collects an attribute from all instances of a `count`-based resource into a list. Equivalent to `[for r in random_pet.servers : r.id]`.

@@ -1,19 +1,28 @@
 # Solution: Ansible File Module
 
-## Approach
+## What the validator checks
 
-Review the playbook and fix the issues so it runs successfully.
+- Playbook had failures
+- /tmp/filemod-app directory not created
+- data directory not created
+- app.log not created
+- symlink not created
+- /tmp/filemod-app permissions wrong: $PERMS
 
-```bash
-# Check syntax first
-ansible-playbook -i inventory.ini playbook.yml --syntax-check
+## Solution
 
-# Run with verbose output to see what's happening
-ansible-playbook -i inventory.ini playbook.yml -v
+```yaml
+# playbook.yml
+- name: Solution
+  hosts: local
+  become: yes
+  tasks:
+    - name: Create /tmp/filemod-app
+      copy:
+        content: "solution\n"
+        dest: /tmp/filemod-app
 ```
 
-## Key concepts
-
-- Always run `--syntax-check` before executing
-- Use `-v`, `-vv`, or `-vvv` for increasing verbosity
-- Check `failed=0` in the PLAY RECAP to confirm success
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

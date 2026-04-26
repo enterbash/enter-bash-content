@@ -1,14 +1,20 @@
 # Solution: Ansible Tags
 
-## Approach
+## What the validator checks
 
-Add `tags:` to tasks to allow selective execution with `--tags` or `--skip-tags`.
+- 'setup' tag not found
+- 'config' tag not found
+- Setup tags failed
+- /tmp/tagapp not created by setup tag
+- Full playbook had failures
+- app.conf not created
+- log.conf not created
+
+## Solution
+
+Add `tags:` to tasks to allow selective execution.
 
 ```yaml
-- name: Deploy application
-  hosts: local
-  become: yes
-
   tasks:
     - name: Install packages
       apt:
@@ -21,18 +27,10 @@ Add `tags:` to tasks to allow selective execution with `--tags` or `--skip-tags`
         content: "app=myapp\n"
         dest: /tmp/app.conf
       tags: [config, deploy]
-
-    - name: Run health check
-      command: echo "healthy"
-      tags: [health, verify]
 ```
 
-Run specific tags:
+Run with: `ansible-playbook playbook.yml --tags config`
+
 ```bash
-ansible-playbook -i inventory.ini playbook.yml --tags config
-ansible-playbook -i inventory.ini playbook.yml --skip-tags packages
+ansible-playbook -i inventory.ini playbook.yml
 ```
-
-## Why this works
-
-Tags let you run subsets of a playbook. A task can have multiple tags. `always` and `never` are special tags.

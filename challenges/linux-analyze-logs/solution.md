@@ -1,20 +1,37 @@
 # Solution: Analyze System Logs
 
-## Approach
+## What the validator checks
 
-Review the challenge instructions and the validation checks to understand exactly what's required.
+- **Check report exists**: /home/runner/log-analysis.txt not found
+- **Check report is not empty**: Report is empty
+- **Check report mentions ERROR count**: Report does not mention ERROR
+- **Check report contains some numbers (counts)**: Report does not contain any counts
+- **Check report mentions the most common error (database connection)**: Report does not identify the most common error (database connection timeout)
+
+## Solution
 
 ```bash
-# Read the instructions carefully
-cat ~/README.md 2>/dev/null || true
+# Count log levels
+ERROR_COUNT=$(grep -c 'ERROR' /var/log/webapp/app.log)
+WARN_COUNT=$(grep -c 'WARN' /var/log/webapp/app.log)
+INFO_COUNT=$(grep -c 'INFO' /var/log/webapp/app.log)
 
-# Check what validation expects
-# The key checks are:
+# Find most common error message
+COMMON_ERROR=$(grep 'ERROR' /var/log/webapp/app.log \
+  | sort | uniq -c | sort -rn | head -1 \
+  | sed 's/^ *[0-9]* *//')
 
+# Write the report (must contain "ERROR", a count, and "database"/"connection"/"timeout")
+cat > /home/runner/log-analysis.txt << EOF
+ERROR count: $ERROR_COUNT
+WARN count: $WARN_COUNT
+INFO count: $INFO_COUNT
+Most common error: $COMMON_ERROR
+EOF
 ```
 
-## Key concepts
-
-- Read the error messages carefully — they tell you exactly what's missing
-- Use `man <command>` to look up command options
-- Test your solution before validating
+The validator checks that `/home/runner/log-analysis.txt`:
+1. Exists and is non-empty
+2. Contains the word `ERROR`
+3. Contains at least one number
+4. Contains `database`, `connection`, or `timeout` (the most common error in the log)

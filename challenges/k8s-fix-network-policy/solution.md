@@ -1,5 +1,15 @@
 # Solution: Fix a NetworkPolicy
 
+## What the validator checks
+
+- ~/netpol.yaml not found
+- netpol.yaml does not pass validation
+- podSelector should target app: api
+- ingress should allow from app: frontend
+- ingress port should be 8080
+- policyTypes should include Egress
+- egress section is required to allow all egress
+
 ## Solution
 
 ```yaml
@@ -10,21 +20,17 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app: api           # target the api pods
+      app: api
   policyTypes:
   - Ingress
-  - Egress              # must include Egress
+  - Egress
   ingress:
   - from:
     - podSelector:
         matchLabels:
-          app: frontend  # only allow from frontend
+          app: frontend
     ports:
     - port: 8080
-  egress:               # allow all egress (empty = allow all)
-  - {}
+  egress:
+  - {}              # allow all egress
 ```
-
-## Why this works
-
-Including `Egress` in `policyTypes` without an `egress:` rule would block all outbound traffic. An empty `egress: [{}]` allows all egress while still declaring the policy type.

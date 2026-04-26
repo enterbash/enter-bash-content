@@ -1,26 +1,37 @@
 # Solution: Pass Environment Variables to Containers
 
-## Approach
+## What the validator checks
 
-Pass environment variables using `-e` flags or an env file.
+- envbox container is not running
+- APP_ENV not set to production
+- APP_PORT not set to 3000
+- APP_DEBUG not set to false
+- envbox2 container is not running
+- DB_HOST not set in envbox2
+- DB_PORT not set in envbox2
+
+## Solution
 
 ```bash
-# Using -e flags
-docker run -d   --name envbox   -e APP_ENV=production   -e APP_PORT=3000   -e APP_DEBUG=false   alpine sleep infinity
+# Run with -e flags
+docker run -d \
+  --name envbox \
+  -e APP_ENV=production \
+  -e APP_PORT=3000 \
+  -e APP_DEBUG=false \
+  alpine sleep infinity
 
-# Create env file
+# Create env file for second container
 cat > ~/app.env << 'EOF'
 DB_HOST=localhost
 DB_PORT=5432
 EOF
 
-# Run second container with env file
-docker run -d   --name envbox2   --env-file ~/app.env   alpine sleep infinity
+docker run -d \
+  --name envbox2 \
+  --env-file ~/app.env \
+  alpine sleep infinity
 
 # Verify
 docker exec envbox env | grep APP_
 ```
-
-## Why this works
-
-`-e KEY=VALUE` sets individual variables. `--env-file` reads from a file (one `KEY=VALUE` per line). Both are available inside the container via `env`.

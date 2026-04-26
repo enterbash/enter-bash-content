@@ -1,5 +1,17 @@
 # Solution: Create a PriorityClass
 
+## What the validator checks
+
+- priorityclass.yaml or pod.yaml not found
+- priorityclass.yaml does not pass validation
+- pod.yaml does not pass validation
+- kind should be PriorityClass
+- PriorityClass name should be high-priority
+- value should be 1000000
+- globalDefault should be false
+- Pod name should be critical-app
+- Pod should reference high-priority PriorityClass
+
 ## Solution
 
 ```yaml
@@ -11,19 +23,3 @@ value: 1000000
 globalDefault: false
 description: "High priority workloads"
 ```
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: priority-pod
-spec:
-  priorityClassName: high-priority
-  containers:
-  - name: app
-    image: nginx:alpine
-```
-
-## Why this works
-
-Higher `value` means higher priority. When resources are scarce, the scheduler preempts lower-priority Pods to make room for higher-priority ones. `globalDefault: false` means it's not applied to all Pods automatically.

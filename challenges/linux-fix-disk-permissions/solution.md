@@ -1,22 +1,18 @@
 # Solution: Fix Disk Mount Permissions
 
-## Approach
+## What the validator checks
 
-Fix the mount permissions so the runner user can access the data directory.
+- **Check mount point exists and is mounted**: /mnt/data is not mounted
+- /mnt/data should be owned by runner, got $OWNER
+- /mnt/data is still restricted to root
+- **Check uploads directory exists**: /mnt/data/uploads/ does not exist
+- **Check logs directory exists**: /mnt/data/logs/ does not exist
+- **Check runner can write**: runner user cannot write to /mnt/data
+
+## Solution
 
 ```bash
-# Check current permissions
-ls -la /mnt/data
-
-# Fix ownership and permissions
 sudo chown runner:runner /mnt/data
 sudo chmod 755 /mnt/data
-
-# Verify
 ls -la /mnt/data
-touch /mnt/data/test.txt && echo "Write access OK"
 ```
-
-## Why this works
-
-The directory was created as root-owned with `700` permissions. Changing ownership to `runner` and setting `755` allows the user to read, write, and execute.

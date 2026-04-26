@@ -1,25 +1,21 @@
 # Solution: Fix Broken fstab
 
-## Approach
+## What the validator checks
 
-Fix the broken fstab entry and mount the filesystem.
+- **Check that /mnt/data is mounted**: /mnt/data is not mounted
+- **Check that fstab has a valid entry for /mnt/data**: /etc/fstab does not have correct entry for /mnt/data
+- **Check that the broken entry is removed**: Broken /dev/sdz99 entry still in fstab
+- **Check mount -a works without errors**: mount -a fails
+
+## Solution
 
 ```bash
-# View current fstab
-cat /etc/fstab
-
-# Remove the broken entry and add the correct one
+# Remove the broken entry (references non-existent /dev/sdz99)
 sudo sed -i '/sdz99/d' /etc/fstab
+
+# Add correct loop-mount entry
 echo '/opt/disk.img  /mnt/data  ext4  loop  0  0' | sudo tee -a /etc/fstab
 
-# Mount all filesystems from fstab
 sudo mount -a
-
-# Verify
 mountpoint /mnt/data
-df -h /mnt/data
 ```
-
-## Why this works
-
-The broken entry referenced a non-existent device `/dev/sdz99`. The correct entry uses the loop device option to mount an image file.

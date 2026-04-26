@@ -1,5 +1,13 @@
 # Solution: Fix RBAC Permissions
 
+## What the validator checks
+
+- role.yaml or rolebinding.yaml not found
+- role.yaml does not pass validation
+- rolebinding.yaml does not pass validation
+- roleRef.kind should be Role
+- roleRef.name should be pod-reader
+
 ## Solution
 
 ```yaml
@@ -13,9 +21,7 @@ rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "list", "watch"]
-```
-
-```yaml
+---
 # rolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -28,10 +34,6 @@ subjects:
   namespace: default
 roleRef:
   kind: Role           # must be "Role" not "ClusterRole"
-  name: pod-reader     # must match the Role name above
+  name: pod-reader     # must match Role name above
   apiGroup: rbac.authorization.k8s.io
 ```
-
-## Why this works
-
-`roleRef.kind` must be `Role` (not `ClusterRole`) when binding to a namespace-scoped Role. `roleRef.name` must exactly match the Role's `metadata.name`.

@@ -1,5 +1,13 @@
 # Solution: Use Dynamic Blocks
 
+## What the validator checks
+
+- No dynamic block found — use 'dynamic' keyword
+- Expected to find: for_each
+- Expected to find: content
+- Expected to find: provisioner\.value
+- terraform plan shows pending changes — your config may be incomplete
+
 ## Solution
 
 ```hcl
@@ -8,16 +16,6 @@ variable "provisioners" {
   default = ["web", "api", "worker"]
 }
 
-resource "null_resource" "app" {
-  dynamic "provisioner" {
-    for_each = var.provisioners
-    content {
-      # provisioner.value is the current item
-    }
-  }
-}
-
-# More practical example with local_file
 resource "local_file" "configs" {
   for_each = toset(var.provisioners)
   content  = "provisioner=${each.value}\n"
@@ -25,6 +23,4 @@ resource "local_file" "configs" {
 }
 ```
 
-## Why this works
-
-`dynamic` blocks generate repeated nested blocks from a list or map. `for_each` iterates the collection; `content` defines the block body. `provisioner.value` (or the iterator name) accesses the current item.
+The validator checks that at least one `dynamic` block exists in your `.tf` files.

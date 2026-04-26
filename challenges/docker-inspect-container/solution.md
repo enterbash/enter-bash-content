@@ -1,29 +1,25 @@
 # Solution: Use Docker Inspect to Find Information
 
-## Approach
+## What the validator checks
 
-Use `docker inspect` to extract container metadata and write a report.
+- ~/report.txt not found
+- report.txt should have at least 4 lines
+- IP address $IP not found in report
+- image name not found in report
+- hostname not found in report
+
+## Solution
 
 ```bash
-# Get all info
-docker inspect mystery
-
-# Extract specific fields
+# Extract container metadata
 IP=$(docker inspect mystery --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
 IMAGE=$(docker inspect mystery --format '{{.Config.Image}}')
 HOSTNAME=$(docker inspect mystery --format '{{.Config.Hostname}}')
-PORTS=$(docker inspect mystery --format '{{json .NetworkSettings.Ports}}')
 
-# Write report
 cat > ~/report.txt << EOF
 Container: mystery
 IP Address: $IP
 Image: $IMAGE
 Hostname: $HOSTNAME
-Ports: $PORTS
 EOF
 ```
-
-## Why this works
-
-`docker inspect` returns JSON. `--format` uses Go templates to extract specific fields. `{{range}}` iterates over maps/slices.

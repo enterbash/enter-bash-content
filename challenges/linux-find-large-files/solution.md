@@ -1,20 +1,20 @@
 # Solution: Find Large Files
 
-## Approach
+## What the validator checks
 
-Use `find` to locate files over 100MB and remove them.
+- Large files still exist:
+
+## Solution
 
 ```bash
 # Find files over 100MB
 find / -type f -size +100M 2>/dev/null
 
-# Remove them (after reviewing)
+# Remove them
 find / -type f -size +100M -delete 2>/dev/null
 
 # Verify none remain
-find / -type f -size +100M 2>/dev/null | wc -l
+find / -type f -size +100M 2>/dev/null | wc -l  # should be 0
 ```
 
-## Why this works
-
-`-size +100M` matches files strictly larger than 100 megabytes. The `2>/dev/null` suppresses permission errors on system directories.
+`-size +100M` matches files strictly larger than 100 megabytes.

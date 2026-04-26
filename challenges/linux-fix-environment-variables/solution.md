@@ -1,11 +1,17 @@
 # Solution: Fix Environment Variables
 
-## Approach
+## What the validator checks
 
-Add the required environment variables to `~/.bashrc` and source it.
+- **Check .bashrc has the env vars**: APP_HOME not set in .bashrc
+- APP_PORT not set in .bashrc
+- APP_ENV not set in .bashrc
+- **Check the app was started (running flag exists)**: App has not been started — run ~/app/start.sh
+- **Check the flag has correct values**: App started with wrong environment values
+
+## Solution
 
 ```bash
-# Add to .bashrc
+# Add required environment variables to ~/.bashrc
 cat >> ~/.bashrc << 'EOF'
 export APP_HOME=/home/runner/app
 export APP_PORT=8080
@@ -18,11 +24,4 @@ source ~/.bashrc
 
 # Verify
 echo $APP_HOME $APP_PORT $APP_ENV
-
-# Run the app to create the flag file
-bash /home/runner/app/start.sh
 ```
-
-## Why this works
-
-`export` makes variables available to child processes. Sourcing `.bashrc` applies them to the current shell session.

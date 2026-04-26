@@ -1,18 +1,21 @@
 # Solution: Save and Load Docker Images
 
-## Approach
+## What the validator checks
 
-Save an image to a tar file and load it back with a new tag.
+- ~/savetest.tar not found
+- restored:v1 image not found
+- restored image doesn't produce expected output
+
+## Solution
 
 ```bash
-# Build or pull the source image
-docker pull alpine:latest
+# Tag the image
 docker tag alpine:latest savetest:v1
 
 # Save to tar
 docker save savetest:v1 -o ~/savetest.tar
 
-# Remove original (simulate transfer)
+# Remove original
 docker rmi savetest:v1
 
 # Load from tar
@@ -21,10 +24,6 @@ docker load -i ~/savetest.tar
 # Tag as restored
 docker tag savetest:v1 restored:v1
 
-# Verify it runs
-docker run --rm restored:v1 echo "save test"
+# Verify
+docker run --rm restored:v1 echo "restored OK"
 ```
-
-## Why this works
-
-`docker save` exports an image with all its layers and metadata. `docker load` imports it. This is how you transfer images without a registry.

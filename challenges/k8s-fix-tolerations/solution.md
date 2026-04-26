@@ -1,23 +1,21 @@
 # Solution: Fix Tolerations and Taints
 
+## What the validator checks
+
+- ~/pod.yaml not found
+- pod.yaml does not pass validation
+- dedicated toleration should use operator: Equal
+- dedicated toleration should have value: gpu
+- maintenance toleration should use operator: Exists
+- maintenance toleration should have tolerationSeconds: 3600
+
 ## Solution
 
 ```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: toleration-pod
 spec:
   tolerations:
   - key: "dedicated"
     operator: "Equal"
     value: "gpu"
-    effect: "NoSchedule"
-  containers:
-  - name: app
-    image: nginx:alpine
+    effect: "NoSchedule"   # must match the taint exactly
 ```
-
-## Why this works
-
-Tolerations must match the taint exactly: same `key`, `value`, and `effect`. `operator: Equal` requires a value match. `operator: Exists` matches any value for that key.

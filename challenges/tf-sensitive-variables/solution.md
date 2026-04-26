@@ -1,5 +1,15 @@
 # Solution: Handle Sensitive Variables
 
+## What the validator checks
+
+- db_password variable should have sensitive = true
+- api_key variable should have sensitive = true
+- Expected to find: output 
+- Expected to find: output 
+- password_set output should have sensitive = true
+- Expected to find: local_file.*config
+- terraform plan shows pending changes — your config may be incomplete
+
 ## Solution
 
 ```hcl
@@ -17,7 +27,7 @@ variable "environment" {
 }
 
 variable "file_count" {
-  description = "Number of config files to create"
+  description = "Number of config files"
   type        = number
   default     = 3
 }
@@ -29,6 +39,6 @@ resource "local_file" "config" {
 }
 ```
 
-## Why this works
-
-Variables decouple configuration from code. `default` values make them optional. Reference with `var.name`. Override at runtime with `-var` flags or `terraform.tfvars`.
+```bash
+terraform apply -auto-approve
+```

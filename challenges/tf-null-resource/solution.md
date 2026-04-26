@@ -1,26 +1,26 @@
 # Solution: Use null_resource with Triggers
 
+## What the validator checks
+
+- Expected to find: null_resource.*config_generator
+- Expected to find: null_resource.*always_run
+- Expected to find: triggers
+- Expected to find: config_version
+- Expected to find: timestamp()
+- Expected to find: provisioner 
+- terraform plan shows pending changes — your config may be incomplete
+
 ## Solution
 
 ```hcl
 resource "null_resource" "setup" {
-  triggers = {
-    always_run = timestamp()  # re-run every apply
-  }
-
+  triggers = { always_run = timestamp() }
   provisioner "local-exec" {
     command = "echo 'Setup complete' > ${path.module}/setup.log"
   }
-}
-
-resource "null_resource" "cleanup" {
   provisioner "local-exec" {
     when    = destroy
     command = "rm -f ${path.module}/setup.log"
   }
 }
 ```
-
-## Why this works
-
-`null_resource` has no real infrastructure — it's a container for `provisioner` blocks. `triggers` controls when it re-runs. `when = destroy` runs the provisioner on `terraform destroy`.

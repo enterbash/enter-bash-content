@@ -1,12 +1,19 @@
 # Solution: Fix Pod Security Context
 
+## What the validator checks
+
+- ~/pod.yaml not found
+- pod.yaml does not pass validation
+- privileged must be false
+- runAsUser must not be 0 (root)
+- runAsUser should be 1000
+- runAsNonRoot should be true
+- readOnlyRootFilesystem should be true
+- allowPrivilegeEscalation should be false
+
 ## Solution
 
 ```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: secure-pod
 spec:
   securityContext:
     runAsNonRoot: true
@@ -21,7 +28,3 @@ spec:
         drop:
         - ALL
 ```
-
-## Why this works
-
-`runAsNonRoot: true` prevents running as root. `allowPrivilegeEscalation: false` prevents gaining more privileges. `capabilities: drop: ALL` removes all Linux capabilities. These are Pod Security Standards best practices.

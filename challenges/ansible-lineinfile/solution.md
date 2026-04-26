@@ -1,30 +1,24 @@
 # Solution: Ansible Lineinfile
 
-## Approach
+## What the validator checks
 
-Use `lineinfile` to add, modify, or remove specific lines in a file.
+- Playbook had failures
+- port not changed to 9090
+- debug not set to true
+- log_level not set to info
+- environment line not added
+
+## Solution
+
+Use `lineinfile` to add or replace specific lines.
 
 ```yaml
-- name: Manage config lines
-  hosts: local
-  become: yes
-
   tasks:
-    - name: Ensure config file exists
-      file:
-        path: /tmp/app.conf
-        state: touch
-
     - name: Set max connections
       lineinfile:
         path: /tmp/app.conf
         regexp: '^max_connections'
         line: 'max_connections = 100'
-
-    - name: Add debug mode
-      lineinfile:
-        path: /tmp/app.conf
-        line: 'debug = false'
         create: yes
 
     - name: Remove deprecated option
@@ -34,6 +28,8 @@ Use `lineinfile` to add, modify, or remove specific lines in a file.
         state: absent
 ```
 
-## Why this works
+`regexp:` matches the line to replace. If no match, `line:` is appended.
 
-`regexp:` matches the line to replace. If no match, the `line:` is appended. `state: absent` removes matching lines. `create: yes` creates the file if it doesn't exist.
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

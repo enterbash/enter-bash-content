@@ -1,5 +1,17 @@
 # Solution: Create a LimitRange
 
+## What the validator checks
+
+- ~/limitrange.yaml not found
+- limitrange.yaml does not pass validation
+- kind should be LimitRange
+- name should be default-limits
+- type should be Container
+- default limits should be set
+- defaultRequest should be set
+- max limits should be set
+- min limits should be set
+
 ## Solution
 
 ```yaml
@@ -19,11 +31,4 @@ spec:
     max:
       cpu: "2"
       memory: "1Gi"
-    min:
-      cpu: "50m"
-      memory: "64Mi"
 ```
-
-## Why this works
-
-LimitRange sets default resource requests/limits for containers that don't specify them. `default` is applied as the limit; `defaultRequest` as the request. `max`/`min` enforce boundaries.

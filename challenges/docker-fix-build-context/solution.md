@@ -1,8 +1,14 @@
 # Solution: Fix Build Context Issues
 
-## Approach
+## What the validator checks
 
-Create a `.dockerignore` file to exclude large directories from the build context.
+- slim-project:latest image not found
+- .dockerignore not found
+- data/ directory should not be in the image
+- node_modules/ should not be in the image
+- *.log files should not be in the image
+
+## Solution
 
 ```bash
 cat > ~/bigproject/.dockerignore << 'EOF'
@@ -13,13 +19,7 @@ node_modules/
 tmp/
 EOF
 
-# Build the optimized image
 docker build -t slim-project:latest ~/bigproject/
-
-# Verify excluded files aren't in the image
-docker run --rm slim-project:latest ls /app/
 ```
 
-## Why this works
-
-`.dockerignore` works like `.gitignore` — it prevents files from being sent to the Docker daemon as build context. Large `node_modules/` or `data/` directories can make builds slow and images bloated.
+`.dockerignore` prevents large directories from being sent to the Docker daemon.

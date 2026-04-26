@@ -1,8 +1,12 @@
 # Solution: Multi-Stage Docker Build
 
-## Approach
+## What the validator checks
 
-Use a multi-stage build to compile in one stage and copy only the binary to a minimal final image.
+- goapp:latest image not found
+- image is ${SIZE}, must be under 50MB
+- image is ${SIZE}, must be under 50MB
+
+## Solution
 
 ```dockerfile
 # Stage 1: build
@@ -12,7 +16,7 @@ COPY go.mod .
 COPY main.go .
 RUN go build -o server .
 
-# Stage 2: minimal runtime image
+# Stage 2: minimal runtime
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/server .
@@ -25,6 +29,4 @@ docker build -t goapp:latest ~/goapp/
 docker images goapp  # should be well under 50MB
 ```
 
-## Why this works
-
-The Go toolchain (~300MB) is only in the builder stage. The final image only contains the compiled binary and Alpine (~5MB). `COPY --from=builder` copies across stages.
+`COPY --from=builder` copies only the compiled binary — the Go toolchain (~300MB) stays in the builder stage.

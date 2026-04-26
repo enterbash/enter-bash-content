@@ -1,44 +1,30 @@
 # Solution: Fix Ansible YAML Syntax
 
-## Approach
+## What the validator checks
 
-Fix the three YAML syntax errors in the playbook.
+- Playbook had failures
+- /tmp/myproject directory not created
+- config.txt not created
+- logs directory not created
 
-**Error 1:** Extra indentation on `mode:`
+## Solution
+
+Fix the three YAML syntax errors in the playbook:
+
+1. **Extra space before `mode:`** — indentation must be consistent
+2. **Missing colon after task name** — `- name Create` → `- name: Create`
+3. **Wrong indentation on module parameters** — must be indented under the module name
+
 ```yaml
-# Wrong:
-        state: directory
-         mode: "0755"   # extra space before mode
-
-# Fixed:
+    - name: Create log directory
+      file:
+        path: /tmp/myproject/logs   # indented under file:, not at same level
         state: directory
         mode: "0755"
 ```
 
-**Error 2:** Missing colon after task name
-```yaml
-# Wrong:
-    - name Create config file
+Run `ansible-playbook --syntax-check` to see the exact line numbers.
 
-# Fixed:
-    - name: Create config file
+```bash
+ansible-playbook -i inventory.ini playbook.yml
 ```
-
-**Error 3:** Wrong indentation on file module parameters
-```yaml
-# Wrong:
-    - name: Create log directory
-      file:
-      path: /tmp/myproject/logs   # should be indented under file:
-
-# Fixed:
-    - name: Create log directory
-      file:
-        path: /tmp/myproject/logs
-        state: directory
-        mode: "0755"
-```
-
-## Why this works
-
-YAML is whitespace-sensitive. Each level of nesting requires consistent indentation (2 spaces is standard for Ansible). Task names require a colon after `name`.

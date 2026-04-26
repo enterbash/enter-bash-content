@@ -1,20 +1,24 @@
 # Solution: Expose and Map Container Ports
 
-## Approach
+## What the validator checks
 
-Re-run the container with the correct port mapping.
+- webserver container is not running
+- port 80 is not mapped
+- cannot reach webserver on port 8080
+
+## Solution
 
 ```bash
-# Remove the existing container
+# Remove the container without port mapping
 docker rm -f webserver
 
-# Run with port mapping
-docker run -d   --name webserver   -p 8080:80   nginx:alpine
+# Re-run with port mapping
+docker run -d \
+  --name webserver \
+  -p 8080:80 \
+  nginx:alpine
 
-# Verify
 curl http://localhost:8080
 ```
 
-## Why this works
-
-`-p host_port:container_port` maps a port on the host to a port inside the container. Without `-p`, the container port is only accessible from within Docker networks.
+`-p host_port:container_port` maps a host port to a container port.

@@ -1,17 +1,21 @@
 # Solution: Set Resource Limits on Containers
 
-## Approach
+## What the validator checks
 
-Run a container with memory and CPU limits.
+- limited container is not running
+- memory limit is not 128MB (got $MEM)
+- CPU limit is not 0.5 (got $CPU)
+
+## Solution
 
 ```bash
-docker run -d   --name limited   --memory 128m   --cpus 0.5   nginx:alpine
+docker run -d \
+  --name limited \
+  --memory 128m \
+  --cpus 0.5 \
+  nginx:alpine
 
-# Verify limits
-docker inspect limited --format '{{.HostConfig.Memory}}'      # 134217728 (128MB in bytes)
-docker inspect limited --format '{{.HostConfig.NanoCpus}}'    # 500000000 (0.5 CPUs)
+# Verify
+docker inspect limited --format '{{.HostConfig.Memory}}'    # 134217728 (128MB)
+docker inspect limited --format '{{.HostConfig.NanoCpus}}'  # 500000000 (0.5 CPU)
 ```
-
-## Why this works
-
-`--memory` sets a hard memory limit. `--cpus` limits CPU usage as a fraction of one core. These prevent a single container from starving other processes.

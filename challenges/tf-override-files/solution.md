@@ -1,25 +1,21 @@
 # Solution: Use Override Files
 
-## Solution
+## What the validator checks
 
-Create an override file to change values for a specific environment.
+- Expected to find: development
+- Expected to find: random_pet
+- Expected to find: length.*=.*3
+- Expected to find: separator.*=.*
+- terraform plan shows pending changes — your config may be incomplete
+
+## Solution
 
 ```hcl
 # main_override.tf (or any *_override.tf file)
 resource "random_pet" "name" {
-  length    = 3        # override: change from 2 to 3
-  separator = "_"      # override: change separator
-}
-
-resource "local_file" "config" {
-  content = "environment=development\n"  # override content
+  length    = 3        # overrides the value in main.tf
+  separator = "_"
 }
 ```
 
-```bash
-terraform plan  # override file is automatically loaded
-```
-
-## Why this works
-
-Files ending in `_override.tf` or named `override.tf` are loaded last and merge with the main config. They're useful for local development overrides without modifying the main config.
+Override files are loaded last and merge with the main config.

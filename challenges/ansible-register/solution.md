@@ -1,31 +1,28 @@
 # Solution: Ansible Register and Debug
 
-## Approach
+## What the validator checks
 
-Use `register:` to capture task output and reference it in subsequent tasks.
+- Playbook had failures
+- register_output.txt not created
+- Raw register dict in output — use .stdout
+- hostname not captured correctly
+
+## Solution
+
+Use `register:` to capture task output. Access `.stdout` for command output.
 
 ```yaml
-- name: Capture command output
-  hosts: local
-  become: yes
-
   tasks:
     - name: Get hostname
       command: hostname
       register: hostname_result
 
-    - name: Get kernel version
-      command: uname -r
-      register: kernel_result
-
-    - name: Write system report
+    - name: Write report
       copy:
-        content: |
-          hostname={{ hostname_result.stdout }}
-          kernel={{ kernel_result.stdout }}
+        content: "hostname={{ hostname_result.stdout }}\n"
         dest: /tmp/system_report.txt
 ```
 
-## Why this works
-
-`register:` stores the full task result as a variable. For `command`/`shell` tasks, `.stdout` contains the output, `.rc` the return code, `.stderr` any errors.
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

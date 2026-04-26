@@ -1,40 +1,33 @@
 # Solution: Ansible Package Module
 
-## Approach
+## What the validator checks
 
-Use the `apt` module with correct state values to install packages.
+- Playbook had failures
+- curl not installed
+- jq not installed
+- tree not installed
+- verification file not created
+
+## Solution
+
+Use `state: present` (not `state: installed`) and `name:` (not `pkg:`).
 
 ```yaml
-- name: Install required packages
-  hosts: local
-  become: yes
-
   tasks:
     - name: Update apt cache
       apt:
         update_cache: yes
 
-    - name: Install curl
+    - name: Install packages
       apt:
-        name: curl
-        state: present      # not "installed" — that's invalid
-
-    - name: Install jq
-      apt:
-        name: jq
-        state: present      # not "latest" unless you want upgrades
-
-    - name: Install tree
-      apt:
-        name: tree          # use "name:", not "pkg:"
-        state: present
-
-    - name: Write version info
-      copy:
-        content: "packages installed successfully\n"
-        dest: /tmp/packages_installed.txt
+        name: "{{ item }}"
+        state: present      # valid: present, absent, latest
+      loop:
+        - curl
+        - jq
+        - tree              # use name:, not pkg:
 ```
 
-## Why this works
-
-Valid `state` values for `apt`: `present`, `absent`, `latest`, `build-dep`. `installed` is not valid. Use `name:` not the deprecated `pkg:` alias.
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

@@ -1,8 +1,10 @@
 # Solution: Build a Docker Image
 
-## Approach
+## What the validator checks
 
-Create a `Dockerfile` and build the image.
+- myapp:latest image not found
+
+## Solution
 
 ```bash
 mkdir -p ~/myapp
@@ -16,6 +18,4 @@ docker build -t myapp:latest ~/myapp/
 docker images | grep myapp
 ```
 
-## Why this works
-
-`docker build -t name:tag context/` builds an image from a Dockerfile in the given directory. The `-t` flag tags it with a name and version.
+The validator checks that `myapp:latest` exists in `docker images`.

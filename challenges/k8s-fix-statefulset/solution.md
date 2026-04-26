@@ -1,8 +1,17 @@
 # Solution: Fix a StatefulSet
 
+## What the validator checks
+
+- ~/statefulset.yaml not found
+- statefulset.yaml does not pass validation
+- should contain a StatefulSet
+- StatefulSet requires serviceName field
+- headless Service must have clusterIP: None
+- replicas should be 3
+
 ## Solution
 
-Two fixes needed: add `clusterIP: None` to the Service (headless) and add `serviceName` to the StatefulSet.
+Two fixes needed: headless Service (`clusterIP: None`) and `serviceName` in StatefulSet.
 
 ```yaml
 apiVersion: v1
@@ -10,20 +19,18 @@ kind: Service
 metadata:
   name: postgres-headless
 spec:
-  clusterIP: None        # headless service — required for StatefulSet DNS
+  clusterIP: None        # headless — required for StatefulSet DNS
   selector:
     app: postgres
   ports:
   - port: 5432
-```
-
-```yaml
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres
 spec:
-  serviceName: postgres-headless   # must reference the headless service
+  serviceName: postgres-headless   # links to the headless service
   replicas: 3
   selector:
     matchLabels:
@@ -37,7 +44,3 @@ spec:
       - name: postgres
         image: postgres:15
 ```
-
-## Why this works
-
-StatefulSets require a headless Service (`clusterIP: None`) for stable DNS names (`pod-0.service.namespace.svc.cluster.local`). The `serviceName` field links them.

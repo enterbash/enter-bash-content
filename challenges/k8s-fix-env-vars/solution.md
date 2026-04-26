@@ -1,12 +1,17 @@
 # Solution: Fix Environment Variables
 
+## What the validator checks
+
+- ~/pod.yaml not found
+- pod.yaml does not pass validation
+- POD_NAME should use metadata.name, not metadata.labels
+- POD_NAME should use fieldPath: metadata.name
+- NODE_NAME should use spec.nodeName (capital N)
+- NODE_NAME should use fieldPath: spec.nodeName
+
 ## Solution
 
 ```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: env-pod
 spec:
   containers:
   - name: app
@@ -15,12 +20,6 @@ spec:
     - name: APP_ENV
       value: "production"
     - name: APP_PORT
-      value: "8080"        # must be string, not integer
-    - name: DB_HOST
-      value: "localhost"
+      value: "8080"        # must be string "8080", not integer 8080
     command: ["sleep", "infinity"]
 ```
-
-## Why this works
-
-Environment variable values in Kubernetes must be strings. `value: 8080` (integer) causes a validation error — use `value: "8080"` (quoted string).

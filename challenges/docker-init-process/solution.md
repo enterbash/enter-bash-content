@@ -1,16 +1,18 @@
 # Solution: Use Init Process in Containers
 
-## Approach
+## What the validator checks
 
-Run the container with the `--init` flag to use Docker's init process as PID 1.
+- with-init container is not running
+- with-init doesn't have init as PID 1 (got: $PID1)
+- --init flag not set — PID 1 is '$PID1', expected init/tini
+
+## Solution
 
 ```bash
 docker run -d --name with-init --init alpine sleep infinity
 
-# Verify PID 1 is an init process
-docker exec with-init ps -o comm= -p 1  # should show "init" or "tini"
+# Verify PID 1 is an init process (tini)
+docker exec with-init ps -o comm= -p 1   # should show "init" or "tini"
 ```
 
-## Why this works
-
-`--init` injects `tini` as PID 1. This properly handles zombie processes (reaping orphaned children) and forwards signals to child processes — something a naive `sleep infinity` or app process doesn't do.
+`--init` injects `tini` as PID 1, which properly handles zombie processes and signal forwarding.

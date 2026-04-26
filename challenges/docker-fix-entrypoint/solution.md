@@ -1,15 +1,18 @@
 # Solution: Fix Broken ENTRYPOINT/CMD
 
-## Approach
+## What the validator checks
 
-Fix the typo in the Dockerfile and change to exec form entrypoint.
+- myserver container is not running
+
+## Solution
+
+Fix the typo and switch to exec form (JSON array):
 
 ```dockerfile
 FROM python:3-alpine
 WORKDIR /app
 COPY app.py .
-# Fix 1: "pythonn" → "python3"
-# Fix 2: use exec form (JSON array) not shell form
+# Fix: "pythonn" → "python3", use exec form not shell form
 ENTRYPOINT ["python3", "app.py"]
 ```
 
@@ -19,6 +22,4 @@ docker run -d --name myserver fixed-server:latest
 docker ps | grep myserver
 ```
 
-## Why this works
-
-Shell form (`ENTRYPOINT python3 app.py`) runs via `/bin/sh -c`, which means PID 1 is the shell, not your app. Exec form (`["python3", "app.py"]`) makes your app PID 1, enabling proper signal handling.
+Exec form makes your app PID 1 — shell form wraps it in `/bin/sh -c`.

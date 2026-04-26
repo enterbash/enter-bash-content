@@ -1,27 +1,24 @@
 # Solution: Debug a Crashed Container
 
-## Approach
+## What the validator checks
 
-Inspect the crashed container's logs and exit code to diagnose the issue.
+- webapp-fixed container is not running
+- /app/config.json not found in container
+
+## Solution
 
 ```bash
-# Check container status
+# Check container status and exit code
 docker ps -a | grep webapp
+docker inspect webapp --format '{{.State.ExitCode}}'
 
 # Read the logs
 docker logs webapp
 
-# Check exit code
-docker inspect webapp --format '{{.State.ExitCode}}'
+# Debug interactively with same image
+docker run -it --rm --entrypoint sh \
+  $(docker inspect webapp --format '{{.Config.Image}}')
 
-# Start a new container with the same image to debug interactively
-docker run -it --rm --entrypoint sh $(docker inspect webapp --format '{{.Config.Image}}')
-
-# Fix the issue (e.g., missing file, wrong command)
-# Then restart
+# After fixing, restart
 docker start webapp
 ```
-
-## Why this works
-
-`docker logs` shows stdout/stderr even from stopped containers. The exit code tells you how it failed (1 = general error, 126 = permission denied, 127 = command not found).

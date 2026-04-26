@@ -1,34 +1,22 @@
 # Solution: Fix iptables Rules
 
-## Approach
+## What the validator checks
 
-Configure iptables rules to allow SSH and HTTP while blocking everything else.
+- **Check loopback is allowed**: Loopback traffic is not allowed
+- **Check port 80 is allowed**: HTTP (port 80) is not allowed
+- **Check port 22 is allowed**: SSH (port 22) is not allowed
+- Cannot reach web server on port 80
+
+## Solution
 
 ```bash
-# Flush existing rules
 sudo iptables -F
-
-# Set default policies
 sudo iptables -P INPUT DROP
 sudo iptables -P FORWARD DROP
 sudo iptables -P OUTPUT ACCEPT
-
-# Allow established connections
 sudo iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-
-# Allow loopback
 sudo iptables -A INPUT -i lo -j ACCEPT
-
-# Allow SSH (port 22)
 sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
-
-# Allow HTTP (port 80)
 sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
-
-# Verify
 sudo iptables -L -n
 ```
-
-## Why this works
-
-Starting with DROP policy and explicitly allowing only needed ports is the principle of least privilege. The ESTABLISHED rule allows responses to outbound connections.

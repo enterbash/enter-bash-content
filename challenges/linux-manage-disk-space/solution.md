@@ -1,23 +1,23 @@
 # Solution: Manage Disk Space
 
-## Approach
+## What the validator checks
 
-Remove old log files, clean the build cache, and delete old downloads.
+- Old log files still exist in /var/log/myapp/
+- **Check that build cache is cleaned**: /tmp/build-cache still has significant data
+- Old .deb files still in /home/runner/downloads/
+
+## Solution
 
 ```bash
 # Remove old log files
 find /var/log/myapp -name "*.log.old" -delete
 
-# Clean build cache (keep under 5MB)
+# Clean build cache
 rm -rf /tmp/build-cache/*
 
-# Remove old .deb downloads
+# Remove old downloads
 find /home/runner/downloads -name "*.deb" -delete
 
-# Verify disk usage improved
+# Verify
 df -h
 ```
-
-## Why this works
-
-Each `find -delete` targets exactly what the validation checks for. The build cache check allows up to 5MB, so removing all files satisfies it.

@@ -1,16 +1,20 @@
 # Solution: Ansible set_fact Module
 
-## Approach
+## What the validator checks
 
-Use `set_fact:` to create or transform variables during playbook execution.
+- Playbook had failures
+- deploy_info.txt not created
+- app_id not set correctly
+- deploy_time not set
+- deploy_time is empty
+
+## Solution
+
+Use `set_fact:` to create computed variables during playbook execution.
 
 ```yaml
-- name: Use set_fact
-  hosts: local
-  become: yes
-
   tasks:
-    - name: Get current date
+    - name: Get date
       command: date +%Y-%m-%d
       register: date_output
 
@@ -22,10 +26,10 @@ Use `set_fact:` to create or transform variables during playbook execution.
 
     - name: Write deployment info
       copy:
-        content: "version={{ app_version }}\ndate={{ deploy_date }}\ntag={{ deploy_tag }}\n"
+        content: "version={{ app_version }}\ndate={{ deploy_date }}\n"
         dest: /tmp/deploy_info.txt
 ```
 
-## Why this works
-
-`set_fact:` creates host-scoped variables that persist for the rest of the play. Useful for computed values or transforming registered output.
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

@@ -1,41 +1,22 @@
 # Solution: Ansible Templates
 
-## Approach
+## What the validator checks
 
-Use the `template` module with a `.j2` file and fix the Jinja2 syntax errors.
+- Playbook had failures
+- /tmp/webapp/app.conf not created
+- app_name not rendered
+- app_port not rendered
+- SSL conditional not rendered
 
-First, fix `config.tftpl` → `templates/app.conf.j2`:
-```
-# Application Configuration
-[general]
-name = {{ app_name }}
-port = {{ app_port }}
-environment = {{ app_env }}
+## Solution
 
-[performance]
-max_connections = {{ max_connections }}
+Fix the Jinja2 syntax errors in `app.conf.j2` and use the `template` module.
 
-[security]
-{% if enable_ssl %}
-ssl_enabled = true
-ssl_cert = /etc/ssl/{{ app_name }}.crt
-{% else %}
-ssl_enabled = false
-{% endif %}
-```
+Common errors to fix:
+- `{{ app_name }` → `{{ app_name }}` (missing closing brace)
+- `{% if enable_ssl` → `{% if enable_ssl %}` (missing closing `%}`)
 
-Then the playbook:
 ```yaml
-- name: Deploy with templates
-  hosts: local
-  become: yes
-  vars:
-    app_name: myapp
-    app_port: 8080
-    app_env: production
-    max_connections: 100
-    enable_ssl: false
-
   tasks:
     - name: Deploy config from template
       template:
@@ -44,6 +25,6 @@ Then the playbook:
         mode: "0644"
 ```
 
-## Why this works
-
-The original template had `{{ app_name }` (missing closing brace) and `{% if enable_ssl` (missing closing `%}`). The `template` module processes `.j2` files with Jinja2 and writes the result to the destination.
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

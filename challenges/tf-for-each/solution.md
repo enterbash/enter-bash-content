@@ -1,13 +1,17 @@
 # Solution: Use For Each Meta-Argument
 
+## What the validator checks
+
+- Expected to find: for_each
+- Expected to find: each\.key
+- Expected to find: each\.value
+- Expected to find: var\.services
+
 ## Solution
 
 ```hcl
 variable "services" {
-  type = map(object({
-    port = number
-    env  = string
-  }))
+  type = map(object({ port = number; env = string }))
   default = {
     web    = { port = 80,   env = "production" }
     api    = { port = 8080, env = "production" }
@@ -21,7 +25,3 @@ resource "local_file" "service_config" {
   filename = "${path.module}/${each.key}.conf"
 }
 ```
-
-## Why this works
-
-`for_each` creates one instance per map entry. `each.key` is the map key; `each.value` is the value. Unlike `count`, `for_each` resources are identified by key, not index — safer for additions/removals.

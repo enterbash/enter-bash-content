@@ -1,31 +1,31 @@
 # Solution: Fix Shell Redirections
 
-## Approach
+## What the validator checks
 
-Fix the redirections in `process.sh` — stdout to results file, stderr to errors log, and append (not overwrite) the summary.
+- **Check results.txt exists and has stdout content**: results.txt does not exist
+- results.txt does not contain expected output
+- **Check errors.log exists and has stderr content**: errors.log does not exist
+- errors.log does not contain error messages
+- **Check summary.txt was appended (should have header AND run line)**: summary.txt does not exist
+- summary.txt is missing the original header (was overwritten instead of appended)
+- summary.txt is missing the run summary line
+
+## Solution
 
 ```bash
-# Edit process.sh to fix redirections
+# Fix the redirections in process.sh:
+# > redirects stdout, 2> redirects stderr, >> appends
+
 cat > /home/runner/process.sh << 'SCRIPT'
 #!/bin/bash
-# stdout → results file
-echo "Processing started at $(date)" > ~/output/results.txt
+echo "Processing started" > ~/output/results.txt
 echo "Record 1: OK" >> ~/output/results.txt
 echo "Record 2: OK" >> ~/output/results.txt
-echo "Record 3: OK" >> ~/output/results.txt
-echo "Processing complete: 3 records" >> ~/output/results.txt
-
-# stderr → errors log
-echo "WARN: Record 4 had missing fields" 2>> ~/output/errors.log
-echo "ERROR: Record 5 failed validation" 2>> ~/output/errors.log
-
-# APPEND to summary (not overwrite)
-echo "Run completed: $(date) — 3 success, 1 warn, 1 error" >> ~/output/summary.txt
+echo "WARN: missing field" 2>> ~/output/errors.log
+echo "Run completed" >> ~/output/summary.txt
 SCRIPT
 
 bash /home/runner/process.sh
 ```
 
-## Why this works
-
-`>` redirects stdout, `2>` redirects stderr, `>>` appends instead of overwriting.
+Key: `>` overwrites, `>>` appends, `2>` redirects stderr.

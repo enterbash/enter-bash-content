@@ -1,43 +1,34 @@
 # Solution: Ansible User Module
 
-## Approach
+## What the validator checks
 
-Use the `user` and `group` modules to manage system users.
+- Playbook had failures
+- deploy user not created
+- appuser user not created
+- deploy shell is $SHELL, expected /bin/bash
+- appuser not in deploy group
+- users_created.txt not created
+
+## Solution
+
+Use `name:` (not `username:`) for the user module.
 
 ```yaml
-- name: Manage system users
-  hosts: local
-  become: yes
-
   tasks:
-    - name: Create deploy group
+    - name: Create group
       group:
         name: deploy
         state: present
 
-    - name: Create deploy user
+    - name: Create user
       user:
-        name: deploy        # use "name:", not "username:"
+        name: deploy        # correct param — not "username:"
         shell: /bin/bash
         group: deploy
-        home: /home/deploy
         create_home: yes
         state: present
-
-    - name: Create appuser
-      user:
-        name: appuser
-        shell: /bin/bash
-        groups: deploy
-        append: yes
-        create_home: yes
-
-    - name: Write user info
-      copy:
-        content: "users created\n"
-        dest: /tmp/users.txt
 ```
 
-## Why this works
-
-The correct parameter is `name:`, not `username:`. `groups:` (plural) adds supplementary groups. `append: yes` adds to existing groups rather than replacing them.
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

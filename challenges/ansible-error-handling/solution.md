@@ -1,14 +1,20 @@
 # Solution: Ansible Error Handling
 
-## Approach
+## What the validator checks
+
+- Playbook had failures
+- rescue did not run — error.log missing
+- rescue did not create data.txt
+- always did not run — done.txt missing
+- block continued after failure
+- error.log content wrong
+- done.txt content wrong
+
+## Solution
 
 Use `block`/`rescue`/`always` for structured error handling.
 
 ```yaml
-- name: Error handling demo
-  hosts: local
-  become: yes
-
   tasks:
     - name: Create work directory
       file:
@@ -18,14 +24,12 @@ Use `block`/`rescue`/`always` for structured error handling.
     - block:
         - name: Attempt risky operation
           command: cat /tmp/nonexistent_file_12345.txt
-          register: file_content
 
       rescue:
         - name: Handle the error
           copy:
             content: "Error caught: file not found\n"
             dest: /tmp/errorhandling/error.log
-
         - name: Create fallback data
           copy:
             content: "fallback data\n"
@@ -38,6 +42,8 @@ Use `block`/`rescue`/`always` for structured error handling.
             dest: /tmp/errorhandling/done.txt
 ```
 
-## Why this works
+`rescue` runs if any `block` task fails. `always` runs regardless.
 
-`block` groups tasks. `rescue` runs if any block task fails (like try/catch). `always` runs regardless of success or failure (like finally).
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

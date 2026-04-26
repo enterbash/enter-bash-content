@@ -1,9 +1,18 @@
 # Solution: Fix an Ingress Manifest
 
+## What the validator checks
+
+- ~/ingress.yaml not found
+- ingress.yaml does not pass validation
+- apiVersion should be networking.k8s.io/v1
+- pathType is required in networking.k8s.io/v1
+- backend should use new service format
+- service name should be web-svc
+
 ## Solution
 
 ```yaml
-apiVersion: networking.k8s.io/v1    # not extensions/v1beta1
+apiVersion: networking.k8s.io/v1    # not extensions/v1beta1 (removed in 1.22)
 kind: Ingress
 metadata:
   name: web-ingress
@@ -20,7 +29,3 @@ spec:
             port:
               number: 80
 ```
-
-## Why this works
-
-`extensions/v1beta1` Ingress was removed in Kubernetes 1.22. The new `networking.k8s.io/v1` API requires `pathType` and uses a nested `service:` block instead of flat `serviceName`/`servicePort` fields.

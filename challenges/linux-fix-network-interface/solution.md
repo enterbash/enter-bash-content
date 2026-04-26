@@ -1,26 +1,16 @@
 # Solution: Fix Network Interface
 
-## Approach
+## What the validator checks
 
-Remove the wrong IP and assign the correct one to the dummy interface.
+- **Check dummy0 exists and is UP**: dummy0 interface is not UP
+- **Check correct IP is assigned**: dummy0 does not have IP 10.0.0.10/24
+- **Check wrong IP is removed**: Old IP 192.168.99.99 is still assigned
+
+## Solution
 
 ```bash
-# Check current state
-ip addr show dummy0
-
-# Remove wrong IP
 sudo ip addr del 192.168.99.99/24 dev dummy0
-
-# Add correct IP
 sudo ip addr add 10.0.0.10/24 dev dummy0
-
-# Bring interface up
 sudo ip link set dummy0 up
-
-# Verify
 ip addr show dummy0
 ```
-
-## Why this works
-
-`ip addr del` removes a specific address. `ip addr add` assigns the new one. `ip link set up` ensures the interface is active.

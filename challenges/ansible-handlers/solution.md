@@ -1,8 +1,17 @@
 # Solution: Ansible Handlers
 
-## Approach
+## What the validator checks
 
-Handlers are tasks that only run when notified. Define them in a `handlers:` section and use `notify:` in tasks.
+- Playbook had failures
+- No handlers section found
+- app.conf not created
+- logging.conf not created
+- restart handler did not run
+- reload handler did not run
+
+## Solution
+
+Handlers only run when notified by a task that reports `changed`.
 
 ```yaml
 - name: Deploy application
@@ -13,24 +22,20 @@ Handlers are tasks that only run when notified. Define them in a `handlers:` sec
       copy:
         content: "restarted\n"
         dest: /tmp/myapp/restart.log
-
     - name: reload config
       copy:
         content: "reloaded\n"
         dest: /tmp/myapp/reload.log
-
   tasks:
     - name: Create app directory
       file:
         path: /tmp/myapp
         state: directory
-
     - name: Deploy app config
       copy:
         content: "app_port=8080\n"
         dest: /tmp/myapp/app.conf
       notify: restart myapp
-
     - name: Deploy logging config
       copy:
         content: "log_level=INFO\n"
@@ -38,6 +43,8 @@ Handlers are tasks that only run when notified. Define them in a `handlers:` sec
       notify: reload config
 ```
 
-## Why this works
+The validator checks that `/tmp/myapp/restart.log` and `/tmp/myapp/reload.log` exist — they're created by the handlers.
 
-Handlers run once at the end of a play, even if notified multiple times. They only run if the notifying task reports `changed`.
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

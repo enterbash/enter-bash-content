@@ -1,21 +1,20 @@
 # Solution: Set Up rsync Backup
 
-## Approach
+## What the validator checks
 
-Configure and run an rsync backup from source to destination.
+- **Check backup script exists and is executable**: /home/runner/run-backup.sh does not exist or is not executable
+- **Check script uses rsync**: Backup script does not use rsync
+- **Check backup was run (files exist in backup dir)**: Backup missing src/app.js — run the backup script
+- Backup missing package.json
+- **Check .git is excluded**: .git/ directory should be excluded from backup
+- **Check node_modules is excluded**: node_modules/ should be excluded from backup
+
+## Solution
 
 ```bash
-# Create backup destination
 mkdir -p /home/runner/backup
-
-# Run rsync backup
 rsync -av --delete /home/runner/source/ /home/runner/backup/
-
-# Verify
 ls /home/runner/backup/
-diff -r /home/runner/source/ /home/runner/backup/
 ```
 
-## Why this works
-
-`-a` (archive) preserves permissions, timestamps, symlinks. `-v` verbose. `--delete` removes files in destination that no longer exist in source. The trailing `/` on source is important — it copies contents, not the directory itself.
+`-a` preserves permissions/timestamps, `--delete` removes files no longer in source.

@@ -1,31 +1,29 @@
 # Solution: Ansible Lookup Plugins
 
-## Approach
+## What the validator checks
 
-Use lookup plugins to read data from external sources like files or environment variables.
+- Playbook had failures
+- results.txt not created
+- file lookup not working
+- env lookup not working
+
+## Solution
+
+Use lookup plugins to read data from external sources.
 
 ```yaml
-- name: Use lookup plugins
-  hosts: local
-  become: yes
-
   tasks:
     - name: Read from file
       copy:
         content: "{{ lookup('file', '/etc/hostname') }}"
         dest: /tmp/hostname.txt
 
-    - name: Read environment variable
+    - name: Read env variable
       copy:
         content: "path={{ lookup('env', 'PATH') }}\n"
         dest: /tmp/env_info.txt
-
-    - name: Generate password
-      copy:
-        content: "token={{ lookup('password', '/tmp/token length=16 chars=ascii_letters,digits') }}\n"
-        dest: /tmp/token.txt
 ```
 
-## Why this works
-
-Lookup plugins run on the control node (not the target). `lookup('file', path)` reads a local file. `lookup('env', var)` reads an environment variable.
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

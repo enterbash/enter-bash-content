@@ -1,12 +1,17 @@
 # Solution: Implement Sidecar Pattern
 
+## What the validator checks
+
+- ~/pod.yaml not found
+- pod.yaml does not pass validation
+- sidecar container name should be log-shipper
+- sidecar image should be busybox
+- sidecar should mount log-volume
+- sidecar volume mount should be readOnly: true
+
 ## Solution
 
 ```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: sidecar-pod
 spec:
   containers:
   - name: app
@@ -20,12 +25,8 @@ spec:
     volumeMounts:
     - name: log-volume
       mountPath: /logs
-      readOnly: true        # sidecar only reads logs
+      readOnly: true
   volumes:
   - name: log-volume
     emptyDir: {}
 ```
-
-## Why this works
-
-The sidecar pattern uses a second container to augment the main container. Sharing a volume lets the log-shipper read logs written by nginx. `readOnly: true` prevents accidental writes.

@@ -1,20 +1,27 @@
 # Solution: Fix Broken Crontab
 
-## Approach
+## What the validator checks
 
-Make `backup.sh` executable, add the correct cron entry, and verify the script creates the backup file.
+- **Check that backup script is executable**: backup.sh is not executable
+- Crontab does not have correct daily 2AM backup entry
+- **Check that backup script runs successfully**: backup.sh does not run successfully
+- **Check that backup file was created**: Backup file was not created
+
+## Solution
 
 ```bash
-# Make backup script executable
+# 1. Make the backup script executable
 chmod +x /home/runner/backup.sh
 
-# Add cron job — runs at 2AM daily
+# 2. Add the cron entry — runs at 2:00 AM every day
 (crontab -l 2>/dev/null; echo "0 2 * * * /home/runner/backup.sh") | crontab -
 
-# Verify it was added
+# 3. Verify
 crontab -l
+
+# 4. Run it once to confirm it creates the backup file
+bash /home/runner/backup.sh
+ls /home/runner/backups/
 ```
 
-## Why this works
-
-The cron expression `0 2 * * *` means: minute 0, hour 2, every day, every month, every weekday — i.e. 2:00 AM daily. The validate checks for `^0 2 \* \* \*` at the start of the line.
+The cron expression `0 2 * * *` means: minute=0, hour=2, every day. The validator checks for `^0 2 * * *` at the start of the crontab line.

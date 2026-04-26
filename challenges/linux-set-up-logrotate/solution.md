@@ -1,8 +1,15 @@
 # Solution: Set Up Log Rotation
 
-## Approach
+## What the validator checks
 
-Create a logrotate configuration file for the application logs.
+- **Check logrotate config exists**: /etc/logrotate.d/myapp does not exist
+- Config missing 'daily' directive
+- Config missing 'rotate' directive
+- Config missing 'compress' directive
+- Config does not reference /var/log/myapp
+- Logrotate config has errors:
+
+## Solution
 
 ```bash
 sudo tee /etc/logrotate.d/myapp << 'EOF'
@@ -17,10 +24,5 @@ sudo tee /etc/logrotate.d/myapp << 'EOF'
 }
 EOF
 
-# Test the configuration
-sudo logrotate -d /etc/logrotate.d/myapp
+sudo logrotate -d /etc/logrotate.d/myapp  # dry-run to verify
 ```
-
-## Why this works
-
-`daily` rotates every day, `rotate 7` keeps 7 old logs, `compress` gzips old logs, `missingok` doesn't error if log is missing, `notifempty` skips empty logs.

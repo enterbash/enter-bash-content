@@ -1,8 +1,15 @@
 # Solution: Ansible Variables
 
-## Approach
+## What the validator checks
 
-Define variables in `vars:` and reference them with `{{ var_name }}` syntax.
+- Playbook had failures
+- /tmp/app/config.ini not created
+- app_name variable not used
+- app_port variable not used
+
+## Solution
+
+Define variables in `vars:` and reference them with `{{ var_name }}`.
 
 ```yaml
 - name: Configure application
@@ -13,24 +20,23 @@ Define variables in `vars:` and reference them with `{{ var_name }}` syntax.
     app_port: 8080
     app_env: production
     log_directory: /var/log/myapp
-
   tasks:
-    - name: Create app directory
+    - name: Create log directory
       file:
         path: "{{ log_directory }}"
         state: directory
-
-    - name: Create config file
+    - name: Create config
       copy:
         content: |
-          [application]
+          [app]
           name={{ app_name }}
           port={{ app_port }}
           env={{ app_env }}
-          log_dir={{ log_directory }}
         dest: "{{ log_directory }}/config.ini"
 ```
 
-## Why this works
+Paths containing variables must be quoted.
 
-Variables defined in `vars:` are scoped to the play. Jinja2 `{{ }}` syntax interpolates them. Paths containing variables must be quoted.
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

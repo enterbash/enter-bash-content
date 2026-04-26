@@ -1,5 +1,17 @@
 # Solution: Create a Multi-Container Pod
 
+## What the validator checks
+
+- ~/pod.yaml not found
+- pod.yaml does not pass validation
+- Pod name should be multi-container
+- should have container named web
+- should have container named content
+- web container should use nginx image
+- content container should use busybox image
+- should have shared-data volume
+- should use emptyDir volume
+
 ## Solution
 
 ```yaml
@@ -24,7 +36,3 @@ spec:
   - name: shared-data
     emptyDir: {}
 ```
-
-## Why this works
-
-Containers in the same Pod share the same network namespace (same IP) and can share volumes. The `emptyDir` volume is created when the Pod starts and deleted when it stops.

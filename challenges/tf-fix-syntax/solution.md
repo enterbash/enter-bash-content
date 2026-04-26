@@ -1,35 +1,25 @@
 # Solution: Fix Terraform Syntax Errors
 
-## Approach
+## What the validator checks
 
-Fix the HCL syntax error (missing closing brace) and validate.
+
+## Solution
+
+The broken `main.tf` has a missing closing brace `}`. Find it and fix it:
+
+```bash
+cd ~/terraform-project
+terraform validate 2>&1   # shows the exact line with the error
+```
 
 ```hcl
-# main.tf — fixed
-terraform {
-  required_providers {
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.0"
-    }
-  }
-}
-
+# main.tf — fixed (add the missing closing brace)
 resource "local_file" "config" {
   content  = "app=myapp"
   filename = "${path.module}/config.txt"
-}   # <-- this closing brace was missing
-
-resource "local_file" "readme" {
-  content  = "README"
-  filename = "${path.module}/README.txt"
-}
+}   # ← this was missing
 ```
 
 ```bash
-terraform validate
+terraform validate   # must pass
 ```
-
-## Why this works
-
-HCL requires every opening `{` to have a matching `}`. The `terraform validate` command checks syntax without making API calls.

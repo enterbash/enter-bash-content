@@ -1,21 +1,28 @@
 # Solution: Fix a Broken Dockerfile
 
-## Approach
+## What the validator checks
 
-Fix the errors in the Dockerfile and rebuild.
+- webapp:latest image not found
+
+## Solution
 
 ```bash
-cat ~/webapp/Dockerfile  # read the broken file
+# Read the broken Dockerfile
+cat ~/webapp/Dockerfile
 
-# Common fixes:
-# - Wrong base image name (typo)
-# - Missing COPY before RUN
-# - Wrong EXPOSE port
-# - CMD using wrong syntax
+# Check the build error
+docker build -t webapp:latest ~/webapp/ 2>&1 | head -20
+```
 
+Common Dockerfile errors to fix:
+- Typo in base image name (e.g. `ngix` → `nginx`)
+- Missing `COPY` before `RUN`
+- Wrong `EXPOSE` port
+- `CMD` using wrong syntax
+
+After fixing:
+```bash
 docker build -t webapp:latest ~/webapp/
 ```
 
-## Why this works
-
-Read the build error carefully — Docker reports the exact line that failed. Fix the syntax, rebuild, and verify the image exists.
+The validator checks that `webapp:latest` exists.

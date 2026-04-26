@@ -1,8 +1,13 @@
 # Solution: Execute Commands in Running Containers
 
-## Approach
+## What the validator checks
 
-Use `docker exec` to run commands inside a running container.
+- workbox container is not running
+- /tmp/hello.txt doesn't contain 'Hello from exec'
+- curl is not installed
+- /app/logs directory not found
+
+## Solution
 
 ```bash
 # Run an interactive shell
@@ -11,14 +16,9 @@ docker exec -it workbox sh
 # Run a single command
 docker exec workbox ls /
 
-# Run as a specific user
-docker exec -u root workbox whoami
-
 # Create a file inside the container
 docker exec workbox sh -c "echo 'hello' > /tmp/test.txt"
 docker exec workbox cat /tmp/test.txt
 ```
 
-## Why this works
-
-`docker exec` runs a command in a running container. `-it` allocates a pseudo-TTY and keeps stdin open for interactive use. `-u` specifies the user.
+`-it` allocates a pseudo-TTY for interactive use.

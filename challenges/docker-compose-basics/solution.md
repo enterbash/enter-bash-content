@@ -1,18 +1,26 @@
 # Solution: Fix a Docker Compose File
 
-## Approach
+## What the validator checks
 
-Fix the two errors in `docker-compose.yml`: the image typo and the indentation.
+- web service is not running
+- api service is not running
+
+## Solution
+
+Fix the two errors in `docker-compose.yml`:
+
+1. `ngix` → `nginx` (image name typo)
+2. `api` service was indented under `web` — it must be a sibling
 
 ```yaml
 version: "3"
 services:
   web:
-    image: nginx:alpine      # fix: "ngix" → "nginx"
+    image: nginx:alpine
     ports:
       - "8080:80"
   api:
-    image: python:3-alpine   # fix: indentation (was under "web")
+    image: python:3-alpine
     ports:
       - "5000:5000"
     command: python -m http.server 5000
@@ -22,7 +30,3 @@ services:
 docker compose -f ~/project/docker-compose.yml up -d
 docker compose -f ~/project/docker-compose.yml ps
 ```
-
-## Why this works
-
-The `api` service block was indented under `web`, making it a property of `web` rather than a sibling service. The image name `ngix` was a typo.

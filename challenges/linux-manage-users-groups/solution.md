@@ -1,27 +1,26 @@
 # Solution: Manage Users and Groups
 
-## Approach
+## What the validator checks
 
-Create the required users, groups, and shared directory with correct permissions.
+- **Check devteam group exists**: Group 'devteam' does not exist
+- **Check alice exists and is in devteam**: User 'alice' does not exist
+- User 'alice' is not in group 'devteam'
+- **Check bob exists and is in devteam**: User 'bob' does not exist
+- User 'bob' is not in group 'devteam'
+- **Check /opt/project exists**: /opt/project does not exist
+- /opt/project group should be 'devteam', got '$DIR_GROUP'
+- **Check group write permission**: /opt/project should be group-writable
+- **Check setgid bit**: /opt/project should have setgid bit set
+
+## Solution
 
 ```bash
-# Create group
 sudo groupadd developers
-
-# Create users
 sudo useradd -m -s /bin/bash alice
 sudo useradd -m -s /bin/bash bob
-
-# Add to group
 sudo usermod -aG developers alice
 sudo usermod -aG developers bob
-
-# Create shared directory
 sudo mkdir -p /home/shared
 sudo chown root:developers /home/shared
-sudo chmod 2775 /home/shared  # setgid so new files inherit group
+sudo chmod 2775 /home/shared   # setgid: new files inherit group
 ```
-
-## Why this works
-
-`chmod 2775` sets the setgid bit — new files created in the directory automatically inherit the `developers` group. `775` gives group write access.

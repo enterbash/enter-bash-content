@@ -1,20 +1,20 @@
 # Solution: Debug File Permissions
 
-## Approach
+## What the validator checks
 
-Review the challenge instructions and the validation checks to understand exactly what's required.
+- **Check deploy.sh is executable**: deploy.sh is not executable
+- **Check config.txt is readable**: config.txt is not readable
+- **Check logs dir is writable**: logs/ directory is not writable
+- **Check deploy log exists (script was run)**: deploy.log not found — run the deploy script
+
+## Solution
 
 ```bash
-# Read the instructions carefully
-cat ~/README.md 2>/dev/null || true
+# Check current permissions
+ls -la /home/runner/app/
 
-# Check what validation expects
-# The key checks are:
-
+# Fix ownership and permissions
+chmod 755 /home/runner/app
+chmod 644 /home/runner/app/*.conf 2>/dev/null || true
+chmod +x /home/runner/app/*.sh 2>/dev/null || true
 ```
-
-## Key concepts
-
-- Read the error messages carefully — they tell you exactly what's missing
-- Use `man <command>` to look up command options
-- Test your solution before validating

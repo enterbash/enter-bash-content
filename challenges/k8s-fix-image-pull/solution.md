@@ -1,19 +1,19 @@
 # Solution: Fix ImagePullBackOff
 
+## What the validator checks
+
+- ~/pod.yaml not found
+- pod.yaml does not pass validation
+- image name has a typo (ngnix)
+- image tag has a typo (latst)
+- image should be nginx:1.25
+
 ## Solution
 
 ```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: image-pod
 spec:
   containers:
   - name: app
-    image: nginx:1.25        # fix: use a valid, accessible image tag
+    image: nginx:1.25           # fix typo in image name/tag
     imagePullPolicy: IfNotPresent
 ```
-
-## Why this works
-
-`imagePullPolicy: Always` forces a pull every time, which fails if the registry is unreachable. `IfNotPresent` uses the cached image if available. Also ensure the image name and tag are correct — a typo causes `ImagePullBackOff`.

@@ -1,32 +1,32 @@
 # Solution: Ansible Delegation
 
-## Approach
+## What the validator checks
 
-Use `delegate_to:` to run a task on a different host than the current target.
+- Playbook had failures
+- app.conf not created
+- deploy.log not created
+- monitoring.txt not created
+- app.conf content wrong
+- deploy.log content wrong
+
+## Solution
+
+Use `delegate_to:` to run a task on a different host.
 
 ```yaml
-- name: Deploy with delegation
-  hosts: webservers
-  become: yes
-
   tasks:
-    - name: Deploy app config
+    - name: Deploy config
       copy:
-        content: "[app]\nversion=1.0\n"
+        content: "version=1.0\n"
         dest: /tmp/delegation-test/app.conf
 
-    - name: Log deployment to monitoring server
+    - name: Log to monitoring (runs on localhost)
       copy:
-        content: "deployed to {{ inventory_hostname }} at {{ ansible_date_time.iso8601 }}\n"
+        content: "deployed at {{ ansible_date_time.iso8601 }}\n"
         dest: /tmp/delegation-test/monitoring.txt
-      delegate_to: localhost    # run this task on localhost instead
-
-    - name: Write deploy log
-      copy:
-        content: "deployment complete\n"
-        dest: /tmp/delegation-test/deploy.log
+      delegate_to: localhost
 ```
 
-## Why this works
-
-`delegate_to:` redirects a specific task to run on a different host. The task still uses variables from the current host (`inventory_hostname`), but executes on the delegated host.
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```

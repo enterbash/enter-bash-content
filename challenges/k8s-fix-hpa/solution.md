@@ -1,5 +1,15 @@
 # Solution: Fix HorizontalPodAutoscaler
 
+## What the validator checks
+
+- ~/hpa.yaml not found
+- hpa.yaml does not pass validation
+- kind should be HorizontalPodAutoscaler
+- scaleTargetRef.kind should be Deployment
+- scaleTargetRef.name should be web-app
+- minReplicas should be 2
+- maxReplicas should be 10
+
 ## Solution
 
 ```yaml
@@ -10,7 +20,7 @@ metadata:
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
-    kind: Deployment      # must be "Deployment" not "deployment"
+    kind: Deployment      # case-sensitive: "Deployment" not "deployment"
     name: web-app
   minReplicas: 2
   maxReplicas: 10
@@ -22,7 +32,3 @@ spec:
         type: Utilization
         averageUtilization: 70
 ```
-
-## Why this works
-
-`scaleTargetRef.kind` is case-sensitive — must be `Deployment`. `minReplicas: 2` and `maxReplicas: 10` are the required values. Use `autoscaling/v2` (not the deprecated `v1`).
