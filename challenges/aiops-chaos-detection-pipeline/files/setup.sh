@@ -21,21 +21,15 @@ sleep 2
 node_exporter --web.listen-address=:9100 &
 sleep 1
 
-# Configure Grafana to serve from /browser/ subpath
-sudo sed -i 's|;root_url = .*|root_url = %(protocol)s://%(domain)s:%(http_port)s/browser/|' /etc/grafana/grafana.ini
-sudo sed -i 's|;serve_from_sub_path = .*|serve_from_sub_path = true|' /etc/grafana/grafana.ini
-
-# Start Grafana
+# Start Grafana (no subpath — Caddy routes / to Grafana, /terminal/ to ttyd)
 sudo grafana-server --homepath=/usr/share/grafana --config=/etc/grafana/grafana.ini > /dev/null 2>&1 &
 
-# Wait for Grafana
 for i in $(seq 1 30); do
-  if curl -sf http://localhost:3000/browser/api/health > /dev/null 2>&1; then break; fi
+  if curl -sf http://localhost:3000/api/health > /dev/null 2>&1; then break; fi
   sleep 1
 done
 
-# Add Prometheus datasource
-curl -sf -X POST http://admin:admin@localhost:3000/browser/api/datasources \
+curl -sf -X POST http://admin:admin@localhost:3000/api/datasources \
   -H 'Content-Type: application/json' \
   -d '{"name":"Prometheus","type":"prometheus","url":"http://localhost:9090","access":"proxy","isDefault":true}' > /dev/null 2>&1 || true
 
@@ -48,5 +42,5 @@ echo "Chaos injection complete."
 CHAOS
 chmod +x ~/inject_chaos.sh
 
-echo "Ready: Prometheus (:9090), node_exporter (:9100), Grafana (:3000/browser/) running."
+echo "Ready: Prometheus (:9090), node_exporter (:9100), Grafana (:3000) running."
 echo "Use ~/inject_chaos.sh to inject chaos, then build your detection pipeline."
