@@ -1,0 +1,70 @@
+name: "Automate a Server Setup with Ansible"
+type: project
+category: ansible
+difficulty: hard
+tags: [ansible, roles, handlers, templates, variables, deployment]
+time_estimate: "30m"
+xp_reward: 300
+packages: []
+pre_install: []
+namespace: default
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/inventory.ini
+    dest: ~/server-setup/inventory.ini
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Automate a Server Setup with Ansible
+
+  You need to create an Ansible project that automates setting up a web server with proper configuration, logging, and a health check endpoint.
+
+  ### What you have
+
+  - An inventory file in `~/server-setup/inventory.ini`
+  - Nothing else — you build everything from scratch
+
+  ### Your task
+
+  1. **Create a role** `~/server-setup/roles/webserver/` with:
+     - `tasks/main.yml` — create directories, deploy config, deploy index page, write a health check script
+     - `handlers/main.yml` — a handler that writes a restart marker file
+     - `defaults/main.yml` — default variables: `app_port: 8080`, `app_env: production`, `doc_root: /tmp/webserver`
+     - `templates/config.j2` — a Jinja2 template for the app config
+
+  2. **Create the playbook** `~/server-setup/playbook.yml`:
+     - Use the `webserver` role
+     - Override `app_env` to `staging` in the playbook vars
+     - Target `local` hosts with `become: yes`
+
+  3. **Run the playbook** successfully
+
+  ### What validation checks
+
+  - Role structure exists (tasks, handlers, defaults, templates)
+  - Playbook runs with `failed=0`
+  - `/tmp/webserver/index.html` exists and contains "Enter Bash"
+  - `/tmp/webserver/config.ini` exists and contains `port=8080` and `env=staging`
+  - `/tmp/webserver/health.sh` exists and is executable
+  - Handler ran (restart marker exists)
+
+  ### Useful commands
+
+  ```bash
+  cd ~/server-setup
+  ansible-playbook -i inventory.ini playbook.yml --syntax-check
+  ansible-playbook -i inventory.ini playbook.yml
+  cat /tmp/webserver/config.ini
+  bash /tmp/webserver/health.sh
+  ```
+hints:
+  - "Role structure: mkdir -p roles/webserver/{tasks,handlers,defaults,templates}"
+  - "In tasks/main.yml, use 'template: src=config.j2 dest=/tmp/webserver/config.ini' and 'notify: restart app' to trigger the handler"
+  - "In config.j2: [app]\\nport={{ app_port }}\\nenv={{ app_env }}\\ndoc_root={{ doc_root }}"
+validation:
+  script: validate.sh
+  success_message: "Server setup automated successfully with Ansible!"
+  failure_message: "The Ansible automation is not complete."

@@ -5969,6 +5969,52 @@
     }
   },
   {
+    "dir_name": "project-ansible-deploy",
+    "name": "Automate a Server Setup with Ansible",
+    "type": "project",
+    "category": "ansible",
+    "difficulty": "hard",
+    "tags": [
+      "ansible",
+      "roles",
+      "handlers",
+      "templates",
+      "variables",
+      "deployment"
+    ],
+    "time_estimate": "30m",
+    "xp_reward": 300,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "default",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/inventory.ini",
+        "dest": "~/server-setup/inventory.ini"
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Automate a Server Setup with Ansible\n\nYou need to create an Ansible project that automates setting up a web server with proper configuration, logging, and a health check endpoint.\n\n### What you have\n\n- An inventory file in `~/server-setup/inventory.ini`\n- Nothing else — you build everything from scratch\n\n### Your task\n\n1. **Create a role** `~/server-setup/roles/webserver/` with:\n   - `tasks/main.yml` — create directories, deploy config, deploy index page, write a health check script\n   - `handlers/main.yml` — a handler that writes a restart marker file\n   - `defaults/main.yml` — default variables: `app_port: 8080`, `app_env: production`, `doc_root: /tmp/webserver`\n   - `templates/config.j2` — a Jinja2 template for the app config\n\n2. **Create the playbook** `~/server-setup/playbook.yml`:\n   - Use the `webserver` role\n   - Override `app_env` to `staging` in the playbook vars\n   - Target `local` hosts with `become: yes`\n\n3. **Run the playbook** successfully\n\n### What validation checks\n\n- Role structure exists (tasks, handlers, defaults, templates)\n- Playbook runs with `failed=0`\n- `/tmp/webserver/index.html` exists and contains \"Enter Bash\"\n- `/tmp/webserver/config.ini` exists and contains `port=8080` and `env=staging`\n- `/tmp/webserver/health.sh` exists and is executable\n- Handler ran (restart marker exists)\n\n### Useful commands\n\n```bash\ncd ~/server-setup\nansible-playbook -i inventory.ini playbook.yml --syntax-check\nansible-playbook -i inventory.ini playbook.yml\ncat /tmp/webserver/config.ini\nbash /tmp/webserver/health.sh\n```\n",
+    "hints": [
+      "Role structure: mkdir -p roles/webserver/{tasks,handlers,defaults,templates}",
+      "In tasks/main.yml, use 'template: src=config.j2 dest=/tmp/webserver/config.ini' and 'notify: restart app' to trigger the handler",
+      "In config.j2: [app]\\nport={{ app_port }}\\nenv={{ app_env }}\\ndoc_root={{ doc_root }}"
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Server setup automated successfully with Ansible!",
+      "failure_message": "The Ansible automation is not complete."
+    }
+  },
+  {
     "dir_name": "project-ci-pipeline",
     "name": "Build a CI/CD Pipeline",
     "type": "project",
@@ -6114,6 +6160,48 @@
       "script": "validate.sh",
       "success_message": "Kubernetes microservice deployed successfully!",
       "failure_message": "The microservice deployment is not complete."
+    }
+  },
+  {
+    "dir_name": "project-terraform-infra",
+    "name": "Build a Multi-Environment Infrastructure",
+    "type": "project",
+    "category": "terraform",
+    "difficulty": "hard",
+    "tags": [
+      "terraform",
+      "modules",
+      "workspaces",
+      "variables",
+      "outputs",
+      "state"
+    ],
+    "time_estimate": "30m",
+    "xp_reward": 300,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "default",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Build a Multi-Environment Infrastructure\n\nYou need to create a Terraform project that manages configuration files for multiple environments (dev, staging, production) using modules, workspaces, and variables.\n\n### Your task\n\n1. **Create a reusable module** in `~/infra/modules/app-config/`\n   - `main.tf` — a `local_file` resource that writes a config file\n   - `variables.tf` — input variables: `app_name` (string), `environment` (string), `port` (number), `debug` (bool)\n   - `outputs.tf` — output the file path and a summary string\n\n2. **Create the root configuration** in `~/infra/main.tf`\n   - Use the module with `terraform.workspace` for the environment name\n   - Define variables with sensible defaults\n   - Output the config path and environment name\n\n3. **Create two workspaces** and apply in each:\n   ```bash\n   cd ~/infra\n   terraform workspace new staging\n   terraform apply -auto-approve\n   terraform workspace new production\n   terraform apply -auto-approve\n   ```\n\n4. **Verify** both workspace configs exist\n\n### Expected result\n\n- `~/infra/terraform.tfstate.d/staging/` and `production/` state dirs exist\n- Config files created for each workspace\n- Module outputs accessible via `terraform output`\n\n### Useful commands\n\n```bash\ncd ~/infra\nterraform init\nterraform workspace list\nterraform workspace select staging\nterraform apply -auto-approve\nterraform output\n```\n",
+    "hints": [
+      "Module main.tf: resource \"local_file\" \"config\" { content = \"app=\\${var.app_name}\\nenv=\\${var.environment}\\nport=\\${var.port}\\ndebug=\\${var.debug}\\n\"; filename = \"\\${path.root}/output/\\${var.environment}.conf\" }",
+      "Root main.tf: module \"app\" { source = \"./modules/app-config\"; app_name = var.app_name; environment = terraform.workspace; port = var.port; debug = terraform.workspace != \"production\" }",
+      "Create workspaces with: terraform workspace new staging && terraform apply -auto-approve && terraform workspace new production && terraform apply -auto-approve"
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Multi-environment infrastructure deployed successfully!",
+      "failure_message": "The infrastructure is not complete."
     }
   },
   {

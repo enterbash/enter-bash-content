@@ -1,0 +1,69 @@
+name: "Build a Multi-Environment Infrastructure"
+type: project
+category: terraform
+difficulty: hard
+tags: [terraform, modules, workspaces, variables, outputs, state]
+time_estimate: "30m"
+xp_reward: 300
+packages: []
+pre_install: []
+namespace: default
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Build a Multi-Environment Infrastructure
+
+  You need to create a Terraform project that manages configuration files for multiple environments (dev, staging, production) using modules, workspaces, and variables.
+
+  ### Your task
+
+  1. **Create a reusable module** in `~/infra/modules/app-config/`
+     - `main.tf` — a `local_file` resource that writes a config file
+     - `variables.tf` — input variables: `app_name` (string), `environment` (string), `port` (number), `debug` (bool)
+     - `outputs.tf` — output the file path and a summary string
+
+  2. **Create the root configuration** in `~/infra/main.tf`
+     - Use the module with `terraform.workspace` for the environment name
+     - Define variables with sensible defaults
+     - Output the config path and environment name
+
+  3. **Create two workspaces** and apply in each:
+     ```bash
+     cd ~/infra
+     terraform workspace new staging
+     terraform apply -auto-approve
+     terraform workspace new production
+     terraform apply -auto-approve
+     ```
+
+  4. **Verify** both workspace configs exist
+
+  ### Expected result
+
+  - `~/infra/terraform.tfstate.d/staging/` and `production/` state dirs exist
+  - Config files created for each workspace
+  - Module outputs accessible via `terraform output`
+
+  ### Useful commands
+
+  ```bash
+  cd ~/infra
+  terraform init
+  terraform workspace list
+  terraform workspace select staging
+  terraform apply -auto-approve
+  terraform output
+  ```
+hints:
+  - "Module main.tf: resource \"local_file\" \"config\" { content = \"app=\\${var.app_name}\\nenv=\\${var.environment}\\nport=\\${var.port}\\ndebug=\\${var.debug}\\n\"; filename = \"\\${path.root}/output/\\${var.environment}.conf\" }"
+  - "Root main.tf: module \"app\" { source = \"./modules/app-config\"; app_name = var.app_name; environment = terraform.workspace; port = var.port; debug = terraform.workspace != \"production\" }"
+  - "Create workspaces with: terraform workspace new staging && terraform apply -auto-approve && terraform workspace new production && terraform apply -auto-approve"
+validation:
+  script: validate.sh
+  success_message: "Multi-environment infrastructure deployed successfully!"
+  failure_message: "The infrastructure is not complete."
