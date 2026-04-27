@@ -1,0 +1,71 @@
+name: "Implement Structured Logging"
+type: skill
+category: aiops
+difficulty: easy
+tags: [logging, structured-logging, json, python, observability]
+time_estimate: "15m"
+xp_reward: 75
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/app.py
+    dest: ~/app.py
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Implement Structured Logging
+
+  Unstructured logs are hard to parse and analyze at scale. Structured logging (JSON format)
+  makes logs machine-readable, enabling automated analysis — a core AIOps requirement.
+
+  ### The Problem
+
+  The file `~/app.py` is a Python web service that writes unstructured log messages like:
+  ```
+  2024-01-15 10:23:45 - WARNING - High latency detected: 450ms for /api/users
+  ```
+
+  These are hard to filter, aggregate, and alert on programmatically.
+
+  ### Your Tasks
+
+  1. **Modify `~/app.py`** to output JSON structured logs instead. Each log line must be valid JSON with these fields:
+     - `timestamp` — ISO 8601 format (e.g. `2024-01-15T10:23:45.000Z`)
+     - `level` — log level: `INFO`, `WARNING`, or `ERROR`
+     - `service` — must be `"web-api"`
+     - `message` — the log message text
+
+  2. **Run the app** to generate structured logs:
+     ```
+     python3 ~/app.py > ~/app.log 2>&1
+     ```
+
+  3. **Verify** your logs are valid JSON:
+     ```
+     cat ~/app.log | head -5 | jq .
+     ```
+
+  ### Requirements
+  - Each line in `~/app.log` must be valid JSON
+  - Every line must have all four fields: `timestamp`, `level`, `service`, `message`
+  - The `service` field must be `"web-api"`
+  - At least 5 log lines must be present
+
+  ### Useful Commands
+  - Validate JSON: `cat ~/app.log | jq -c . > /dev/null`
+  - Count log lines: `wc -l ~/app.log`
+  - Extract field: `cat ~/app.log | jq -r '.level' | sort | uniq -c`
+
+hints:
+  - "Use Python's `json` module to write each log entry. `json.dumps({'timestamp': ..., 'level': ..., 'service': 'web-api', 'message': ...})`"
+  - "For ISO 8601 timestamps: `from datetime import datetime, timezone; datetime.now(timezone.utc).isoformat()`"
+  - "Replace each `print()` call with a function that outputs `json.dumps(log_entry)` to stdout."
+validation:
+  script: validate.sh
+  success_message: "Your logs are properly structured! JSON logging makes automated analysis possible."
+  failure_message: "Check that ~/app.log exists, each line is valid JSON, and all required fields are present."

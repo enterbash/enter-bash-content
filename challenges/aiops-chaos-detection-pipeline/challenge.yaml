@@ -1,0 +1,73 @@
+name: "Chaos Detection Pipeline"
+type: skill
+category: aiops
+difficulty: hard
+tags: [chaos-engineering, detection, pipeline, prometheus, grafana]
+time_estimate: "30m"
+xp_reward: 300
+packages: []
+pre_install: [prometheus, prometheus-node-exporter, grafana, stress-ng]
+namespace: ""
+web_port: 3000
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Chaos Detection Pipeline
+
+  Chaos engineering validates your monitoring. In this challenge, a chaos experiment will
+  be injected and you need to build a pipeline that automatically detects what happened.
+
+  ### Setup
+
+  Prometheus, node_exporter, and Grafana are running. A chaos experiment will be injected
+  when you run `~/inject_chaos.sh` — it could be CPU stress, memory pressure, or disk I/O.
+
+  ### Your Tasks
+
+  1. **Write `~/detector.py`** that:
+     - Queries Prometheus for system metrics (CPU, memory, disk I/O, network)
+     - Detects which metric(s) are anomalous using Z-score (threshold > 2.0)
+     - Correlates the anomaly with system events
+     - Outputs to `~/detection_report.json`:
+       ```json
+       {
+         "detection_time": "2024-01-15T10:35:00Z",
+         "anomalies": [
+           {"metric": "node_cpu_seconds_total", "type": "spike", "severity": "high", "z_score": 8.5}
+         ],
+         "probable_cause": "CPU stress test (all cores at 100%)",
+         "detection_latency_seconds": 30,
+         "metrics_checked": ["cpu", "memory", "disk_io", "network"]
+       }
+       ```
+
+  2. **Inject chaos**: `bash ~/inject_chaos.sh`
+
+  3. **Wait 30 seconds**, then run your detector: `python3 ~/detector.py`
+
+  4. **Create a Grafana dashboard** showing the anomaly (import via API).
+
+  ### Prometheus API
+  ```python
+  import requests
+  # Query current value
+  r = requests.get('http://localhost:9090/api/v1/query', params={'query': 'rate(node_cpu_seconds_total{mode="idle"}[1m])'})
+  # Query range
+  r = requests.get('http://localhost:9090/api/v1/query_range', params={
+      'query': '...', 'start': '...', 'end': '...', 'step': '15s'
+  })
+  ```
+
+hints:
+  - "Query multiple metrics from Prometheus API, calculate Z-score for each, and identify which one spiked."
+  - "Use `query_range` to get the last 5 minutes of data, then compare the latest values against the historical mean."
+  - "The chaos injection is one of: `stress-ng --cpu`, `stress-ng --vm`, or `stress-ng --hdd`. Your detector should identify which."
+validation:
+  script: validate.sh
+  success_message: "Chaos detected and identified! Your monitoring pipeline caught the injected failure."
+  failure_message: "Check ~/detection_report.json has anomalies detected and probable_cause identified."

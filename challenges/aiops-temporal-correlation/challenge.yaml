@@ -1,0 +1,70 @@
+name: "Temporal Event Correlation"
+type: skill
+category: aiops
+difficulty: medium
+tags: [event-correlation, temporal, clustering, python]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_events.py
+    dest: ~/generate_events.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Temporal Event Correlation
+
+  When an incident occurs, events from multiple services fire within seconds of each other.
+  Temporal correlation groups events that happen within a time window, revealing which events
+  are part of the same incident.
+
+  ### Setup
+
+  A JSON file at `~/events.json` contains 80+ events from 6 services over 2 hours.
+  Events cluster around 4 distinct incidents, with noise events scattered between.
+
+  ### Your Tasks
+
+  1. **Write `~/correlate_events.py`** that:
+     - Reads `~/events.json` (array of `{timestamp, service, event_type, message}`)
+     - Groups events within a 60-second window into clusters
+     - Identifies distinct incident clusters (groups with 3+ events)
+     - Outputs to `~/correlation_results.json`:
+       ```json
+       {
+         "total_events": 85,
+         "window_seconds": 60,
+         "clusters": [
+           {
+             "cluster_id": 1,
+             "start_time": "2024-01-15T10:15:30",
+             "end_time": "2024-01-15T10:16:20",
+             "event_count": 12,
+             "services_affected": ["api-gateway", "auth-service", "database"],
+             "events": [...]
+           }
+         ],
+         "total_clusters": 4,
+         "noise_events": 15
+       }
+       ```
+
+  2. **Algorithm**: Sort events by timestamp. Walk through them — if the gap between
+     consecutive events is <= 60 seconds, they're in the same cluster. If the gap is > 60s,
+     start a new cluster. Only keep clusters with 3+ events (the rest are noise).
+
+hints:
+  - "Sort events by timestamp first. Then iterate: if `current_time - last_event_time <= 60s`, add to current cluster, else start new cluster."
+  - "Use `datetime.fromisoformat()` to parse timestamps. Calculate gap in seconds with `(t2 - t1).total_seconds()`."
+  - "noise_events = total_events - sum of events in clusters with 3+ events."
+validation:
+  script: validate.sh
+  success_message: "Event correlation working! You identified the distinct incident clusters."
+  failure_message: "Check ~/correlation_results.json has clusters with 3+ events and correct structure."

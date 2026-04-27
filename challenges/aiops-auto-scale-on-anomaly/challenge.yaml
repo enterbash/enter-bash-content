@@ -1,0 +1,72 @@
+name: "Auto-Scale on Anomaly Detection"
+type: skill
+category: aiops
+difficulty: hard
+tags: [automation, scaling, anomaly-detection, kubernetes, python]
+time_estimate: "25m"
+xp_reward: 200
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_latency_stream.py
+    dest: ~/generate_latency_stream.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Auto-Scale on Anomaly Detection
+
+  Combine anomaly detection with automated remediation: detect a latency anomaly from
+  Prometheus metrics and automatically scale up the deployment.
+
+  ### Setup
+
+  A k3s cluster is running with a `web-app` deployment (2 replicas) in the `default` namespace.
+  A simulated latency data stream is available at `~/latency_stream.csv`.
+
+  ### Your Tasks
+
+  1. **Write `~/auto_scaler.py`** that:
+     - Reads `~/latency_stream.csv` (columns: `timestamp`, `p99_latency_ms`)
+     - Detects anomalies using Z-score (threshold > 2.0)
+     - When an anomaly is detected, scales the `web-app` deployment up by 2 replicas
+     - Outputs to `~/scaling_report.json`:
+       ```json
+       {
+         "data_points": 60,
+         "anomalies_detected": 5,
+         "scaling_actions": [
+           {
+             "timestamp": "2024-01-15T10:42",
+             "latency_ms": 850,
+             "z_score": 3.2,
+             "action": "scale_up",
+             "from_replicas": 2,
+             "to_replicas": 4
+           }
+         ],
+         "current_replicas": 4,
+         "scale_command": "kubectl scale deployment web-app --replicas=4"
+       }
+       ```
+
+  2. **Execute the scale command**:
+     ```
+     kubectl scale deployment web-app --replicas=4
+     ```
+
+  3. The script should also write the kubectl command to `~/scale_command.sh`.
+
+hints:
+  - "Calculate Z-score on the latency values. When z > 2.0, that's an anomaly worth scaling for."
+  - "Get current replicas: `kubectl get deployment web-app -o jsonpath='{.spec.replicas}'`"
+  - "Scale: `kubectl scale deployment web-app --replicas=N` or use subprocess in Python."
+validation:
+  script: validate.sh
+  success_message: "Anomaly-driven auto-scaling working! Detection + remediation in one pipeline."
+  failure_message: "Check ~/scaling_report.json and that the deployment was actually scaled."

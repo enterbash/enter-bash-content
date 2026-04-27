@@ -1,0 +1,91 @@
+name: "Cluster Similar Log Messages"
+type: skill
+category: aiops
+difficulty: medium
+tags: [logs, clustering, drain3, pattern-mining, python]
+time_estimate: "25m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_varied_logs.py
+    dest: ~/generate_varied_logs.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Cluster Similar Log Messages
+
+  Production systems generate thousands of log lines per minute. Most are variations of the
+  same message with different parameters (IPs, user IDs, timestamps). Log clustering groups
+  similar messages into templates, dramatically reducing noise.
+
+  For example, these three lines:
+  ```
+  Connection from 10.0.1.5 to port 8080 established
+  Connection from 192.168.1.1 to port 3000 established
+  Connection from 10.0.2.3 to port 443 established
+  ```
+  Become one template: `Connection from <*> to port <*> established` (count: 3)
+
+  ### Setup
+
+  A log file with 1000 lines has been generated at `~/varied.log`. The `drain3` library
+  is pre-installed — it's a streaming log parser that uses a fixed-depth tree to cluster
+  log messages into templates.
+
+  ### Your Tasks
+
+  1. **Write a Python script** at `~/cluster_logs.py` that:
+     - Reads all lines from `~/varied.log`
+     - Uses `drain3` to cluster them into templates
+     - Outputs a JSON report to `~/cluster_report.json`:
+       ```json
+       {
+         "total_lines": 1000,
+         "total_clusters": 15,
+         "top_patterns": [
+           {"template": "Connection from <*> to port <*> established", "count": 120},
+           {"template": "Request <*> completed in <*> ms", "count": 95},
+           ...
+         ]
+       }
+       ```
+
+  2. **Run the script**:
+     ```
+     python3 ~/cluster_logs.py
+     ```
+
+  3. The `top_patterns` array should contain the top 5 clusters sorted by count descending.
+
+  ### Drain3 Quick Start
+  ```python
+  from drain3 import TemplateMiner
+  from drain3.template_miner_config import TemplateMinerConfig
+
+  config = TemplateMinerConfig()
+  config.drain_sim_th = 0.4
+  config.drain_depth = 4
+  miner = TemplateMiner(config=config)
+
+  for line in lines:
+      result = miner.add_log_message(line.strip())
+
+  for cluster in miner.drain.clusters:
+      print(f"Template: {cluster.get_template()}, Count: {cluster.size}")
+  ```
+
+hints:
+  - "Install drain3 if needed: `pip3 install drain3`. Then use `TemplateMiner` to process each line."
+  - "After processing all lines, iterate `miner.drain.clusters` to get templates and counts. Sort by `cluster.size` descending."
+  - "The template string is obtained via `cluster.get_template()` and the count via `cluster.size`."
+validation:
+  script: validate.sh
+  success_message: "Log clustering complete! You reduced 1000 lines to a handful of patterns."
+  failure_message: "Check that ~/cluster_report.json exists with total_lines, total_clusters, and top_patterns."

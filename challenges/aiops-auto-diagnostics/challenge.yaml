@@ -1,0 +1,72 @@
+name: "Automated Incident Diagnostics"
+type: skill
+category: aiops
+difficulty: medium
+tags: [automation, diagnostics, bash, kubernetes, incident-response]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Automated Incident Diagnostics
+
+  When an alert fires, the first step is always gathering context. Automating this saves
+  precious minutes during incidents. In this challenge, you'll write a diagnostic script
+  that collects all relevant information about a failing pod.
+
+  ### Setup
+
+  A k3s cluster is running with several pods. One pod (`web-app` in namespace `production`)
+  is experiencing issues.
+
+  ### Your Tasks
+
+  1. **Write `~/diagnose.sh`** that takes a pod name and namespace as arguments and collects:
+     - Pod description (`kubectl describe pod`)
+     - Pod logs (last 50 lines)
+     - Pod events
+     - Node resource usage (`kubectl top node`, if metrics available)
+     - Recent deployments in the namespace
+     - All into a structured report at `~/diagnostic_report.txt`
+
+  2. The script should:
+     ```bash
+     #!/bin/bash
+     POD_NAME="${1:?Usage: diagnose.sh <pod-name> <namespace>}"
+     NAMESPACE="${2:-default}"
+     REPORT=~/diagnostic_report.txt
+     ```
+
+  3. **Run it**: `bash ~/diagnose.sh web-app production`
+
+  4. The report should have clear sections:
+     ```
+     === DIAGNOSTIC REPORT ===
+     Pod: web-app | Namespace: production | Time: 2024-01-15T10:30:00Z
+
+     === POD STATUS ===
+     ...
+     === POD LOGS (last 50 lines) ===
+     ...
+     === EVENTS ===
+     ...
+     === RECENT DEPLOYMENTS ===
+     ...
+     ```
+
+hints:
+  - "Use `kubectl describe pod $POD_NAME -n $NAMESPACE` for full pod details."
+  - "Logs: `kubectl logs $POD_NAME -n $NAMESPACE --tail=50`. Events: `kubectl get events -n $NAMESPACE --sort-by=.lastTimestamp`."
+  - "Wrap each section with echo headers. Redirect all output: `{ echo '=== SECTION ==='; kubectl ...; } >> $REPORT`."
+validation:
+  script: validate.sh
+  success_message: "Diagnostic script working! This is the foundation of automated incident response."
+  failure_message: "Check ~/diagnose.sh exists, is executable, and ~/diagnostic_report.txt has all sections."

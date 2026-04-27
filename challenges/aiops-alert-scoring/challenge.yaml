@@ -1,0 +1,95 @@
+name: "ML-Based Alert Scoring"
+type: skill
+category: aiops
+difficulty: hard
+tags: [alert-scoring, classification, scikit-learn, ml, noise-reduction]
+time_estimate: "25m"
+xp_reward: 200
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_alert_history.py
+    dest: ~/generate_alert_history.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## ML-Based Alert Scoring
+
+  Not all alerts are equal. Some are actionable (real incidents), others are noise (transient
+  blips). In this challenge, you'll train a classifier to score alerts as actionable vs. noise
+  based on historical patterns.
+
+  ### Setup
+
+  Two CSV files:
+  - `~/alert_history.csv` — 500 historical alerts with labels (1=actionable, 0=noise)
+  - `~/new_alerts.csv` — 50 new alerts to score
+
+  Features in both files:
+  - `hour` — hour of day (0-23)
+  - `service` — service name (encoded as integer)
+  - `alert_type` — alert type (encoded as integer)
+  - `duration_seconds` — how long the alert lasted
+  - `co_occurring_alerts` — number of other alerts in the same 5-min window
+  - `actionable` — label (only in history file)
+
+  ### Your Tasks
+
+  1. **Write `~/alert_scorer.py`** that:
+     - Trains a RandomForestClassifier on `~/alert_history.csv`
+     - Scores `~/new_alerts.csv` with probability of being actionable
+     - Outputs to `~/scoring_results.json`:
+       ```json
+       {
+         "model": "RandomForestClassifier",
+         "training_accuracy": 0.87,
+         "feature_importance": {
+           "duration_seconds": 0.35,
+           "co_occurring_alerts": 0.25,
+           "hour": 0.15,
+           "service": 0.13,
+           "alert_type": 0.12
+         },
+         "scored_alerts": [
+           {"index": 0, "actionable_probability": 0.92, "prediction": "actionable"},
+           {"index": 1, "actionable_probability": 0.15, "prediction": "noise"},
+           ...
+         ],
+         "summary": {
+           "total_scored": 50,
+           "predicted_actionable": 18,
+           "predicted_noise": 32
+         }
+       }
+       ```
+
+  2. Use `prediction`: "actionable" if probability >= 0.5, "noise" otherwise.
+
+  ### scikit-learn Quick Start
+  ```python
+  from sklearn.ensemble import RandomForestClassifier
+  from sklearn.model_selection import train_test_split
+
+  X = df[['hour', 'service', 'alert_type', 'duration_seconds', 'co_occurring_alerts']]
+  y = df['actionable']
+  X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+  model = RandomForestClassifier(n_estimators=100, random_state=42)
+  model.fit(X_train, y_train)
+  accuracy = model.score(X_test, y_test)
+  probabilities = model.predict_proba(new_data)[:, 1]
+  ```
+
+hints:
+  - "Use `train_test_split` with `test_size=0.2` to evaluate accuracy before scoring new alerts."
+  - "Feature importance: `dict(zip(feature_names, model.feature_importances_))` — round values."
+  - "`predict_proba(X)[:, 1]` gives the probability of class 1 (actionable) for each alert."
+validation:
+  script: validate.sh
+  success_message: "Alert scoring model trained! Now you can prioritize which alerts need human attention."
+  failure_message: "Check ~/scoring_results.json has training_accuracy, feature_importance, and scored_alerts."

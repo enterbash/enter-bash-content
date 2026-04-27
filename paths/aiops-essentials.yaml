@@ -1,0 +1,50 @@
+name: AIOps Essentials
+slug: aiops-essentials
+description: >
+  Learn to apply AI and automation to IT operations. Covers observability,
+  anomaly detection, log analysis, event correlation, automated remediation,
+  and LLM-powered ops. Recommended prerequisites: Linux Fundamentals and
+  Kubernetes Core paths.
+icon: "\U0001F916"
+category: aiops
+difficulty: beginner-to-advanced
+estimated_hours: 10
+challenges:
+  # Observability Foundations
+  - aiops-setup-prometheus-monitoring
+  - aiops-structured-logging
+  - aiops-configure-alertmanager
+  - aiops-build-grafana-dashboard
+  - aiops-setup-otel-pipeline
+  # Log Analysis & Pattern Mining
+  - aiops-parse-json-logs
+  - aiops-extract-error-patterns
+  - aiops-cluster-log-messages
+  - aiops-detect-log-anomalies
+  # Metric Analysis & Anomaly Detection
+  - aiops-promql-analysis
+  - aiops-statistical-anomaly-detection
+  - aiops-isolation-forest
+  - aiops-seasonal-decomposition
+  - aiops-forecast-capacity
+  # Alerting & Noise Reduction
+  - aiops-slo-error-budgets
+  - aiops-alert-grouping-dedup
+  - aiops-dynamic-thresholds
+  - aiops-alert-scoring
+  # Event Correlation & RCA
+  - aiops-temporal-correlation
+  - aiops-dependency-graph-rca
+  - aiops-correlate-deploys-incidents
+  # Automated Remediation
+  - aiops-auto-diagnostics
+  - aiops-auto-restart-pods
+  - aiops-auto-scale-on-anomaly
+  - aiops-self-healing-operator
+  # LLM-Powered Ops (mock API)
+  - aiops-llm-log-summarizer
+  - aiops-llm-promql-generator
+  - aiops-llm-incident-copilot
+  # Capstone
+  - aiops-chaos-detection-pipeline
+  - aiops-full-aiops-pipeline

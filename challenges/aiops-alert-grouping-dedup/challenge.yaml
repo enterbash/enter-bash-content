@@ -1,0 +1,69 @@
+name: "Alert Grouping and Deduplication"
+type: skill
+category: aiops
+difficulty: medium
+tags: [alertmanager, alert-grouping, deduplication, noise-reduction]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: [prometheus-alertmanager]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_alerts.py
+    dest: ~/generate_alerts.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Alert Grouping and Deduplication
+
+  A single database outage can trigger 50+ alerts across dependent services. Without
+  grouping, each alert is a separate notification — pure noise. Alertmanager's grouping
+  and inhibition rules solve this.
+
+  ### Setup
+
+  A file at `~/raw_alerts.json` contains 50+ simulated alerts from a cascading failure.
+  Alertmanager is installed but not configured.
+
+  ### Your Tasks
+
+  1. **Analyze the alerts** to understand the pattern:
+     ```
+     cat ~/raw_alerts.json | jq '.[].labels.alertname' | sort | uniq -c | sort -rn
+     ```
+
+  2. **Create `/etc/alertmanager/alertmanager.yml`** with:
+     - `group_by: ['alertname', 'service']` — group related alerts
+     - `group_wait: 10s` — wait before sending first notification
+     - `group_interval: 5m` — wait between group updates
+     - `repeat_interval: 4h` — don't repeat for 4 hours
+     - **Inhibition rule**: when `DatabaseDown` fires, suppress `DatabaseSlow` and `ConnectionPoolExhausted`
+     - Receivers: `default` webhook to `http://localhost:5001/alerts`
+
+  3. **Write `~/dedup_report.json`** showing the reduction:
+     ```json
+     {
+       "raw_alert_count": 52,
+       "unique_alertnames": 8,
+       "groups_after_grouping": 5,
+       "suppressed_by_inhibition": 12,
+       "final_notification_count": 5,
+       "reduction_percent": 90.4
+     }
+     ```
+
+  4. **Validate config**: `amtool check-config /etc/alertmanager/alertmanager.yml`
+
+hints:
+  - "Inhibition rules go under `inhibit_rules:`. Match `source_match: {alertname: DatabaseDown}` and `target_match_re: {alertname: 'DatabaseSlow|ConnectionPoolExhausted'}`."
+  - "Count groups: unique combinations of (alertname, service) in the raw alerts."
+  - "reduction_percent = (1 - final_notification_count / raw_alert_count) * 100"
+validation:
+  script: validate.sh
+  success_message: "Alert noise reduced by >80%! Grouping and inhibition are essential for on-call sanity."
+  failure_message: "Check alertmanager.yml has inhibit_rules and ~/dedup_report.json shows >80% reduction."

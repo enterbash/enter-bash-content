@@ -1,0 +1,72 @@
+name: "Correlate Deployments with Incidents"
+type: skill
+category: aiops
+difficulty: medium
+tags: [correlation, deployments, incidents, change-tracking, python]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_deploy_data.py
+    dest: ~/generate_deploy_data.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Correlate Deployments with Incidents
+
+  Most incidents are caused by changes. By correlating deployment timestamps with incident
+  start times, you can quickly identify which deployment likely caused each incident.
+
+  ### Setup
+
+  Two JSON files:
+  - `~/deployments.json` — list of deployments with `{timestamp, service, version, deployer}`
+  - `~/incidents.json` — list of incidents with `{timestamp, service, severity, description}`
+
+  ### Your Tasks
+
+  1. **Write `~/deploy_correlator.py`** that:
+     - For each incident, finds the most recent deployment to the same service that happened
+       within 60 minutes before the incident
+     - If no same-service deployment, check deployments to any service within 30 minutes
+     - Outputs to `~/correlation_results.json`:
+       ```json
+       {
+         "total_incidents": 8,
+         "total_deployments": 15,
+         "correlations": [
+           {
+             "incident_time": "2024-01-15T14:30",
+             "incident_service": "api-gateway",
+             "incident_severity": "critical",
+             "probable_cause": {
+               "deployment_time": "2024-01-15T14:15",
+               "service": "api-gateway",
+               "version": "v2.3.1",
+               "deployer": "alice",
+               "minutes_before_incident": 15
+             }
+           }
+         ],
+         "uncorrelated_incidents": 2,
+         "correlation_rate": 0.75
+       }
+       ```
+
+  2. `correlation_rate` = correlated incidents / total incidents.
+
+hints:
+  - "Parse timestamps with `datetime.fromisoformat()`. For each incident, filter deployments where `0 < (incident_time - deploy_time).total_seconds() <= 3600`."
+  - "Prefer same-service deployments. If none found within 60min, expand to any service within 30min."
+  - "Sort matching deployments by time (most recent first) — the closest deployment is the most likely cause."
+validation:
+  script: validate.sh
+  success_message: "Deployment correlation working! 'What changed?' is always the first question in an incident."
+  failure_message: "Check ~/correlation_results.json has correlations with probable_cause and correlation_rate."

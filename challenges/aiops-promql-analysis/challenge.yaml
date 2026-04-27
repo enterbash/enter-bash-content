@@ -1,0 +1,74 @@
+name: "Advanced PromQL for Analysis"
+type: skill
+category: aiops
+difficulty: medium
+tags: [prometheus, promql, metrics, analysis, observability]
+time_estimate: "20m"
+xp_reward: 100
+packages: []
+pre_install: [prometheus, prometheus-node-exporter]
+namespace: ""
+web_port: 9090
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_metrics.py
+    dest: ~/generate_metrics.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Advanced PromQL for Analysis
+
+  PromQL is the query language for Prometheus. Beyond basic queries, PromQL has powerful
+  functions for rate calculation, histogram analysis, prediction, and aggregation — all
+  essential for AIOps metric analysis.
+
+  ### Setup
+
+  Prometheus is running with pre-loaded sample metrics simulating a web service:
+  - `http_requests_total` — counter with labels: method, status, service
+  - `http_request_duration_seconds` — histogram with labels: method, service
+  - `node_cpu_seconds_total` — from node_exporter
+
+  ### Your Tasks
+
+  Write PromQL queries and save each to the specified file:
+
+  1. **Error rate percentage** — percentage of HTTP 5xx responses over the last 5 minutes:
+     ```
+     Save to ~/query_error_rate.txt
+     ```
+
+  2. **P99 latency** — 99th percentile request duration from the histogram:
+     ```
+     Save to ~/query_p99.txt
+     ```
+
+  3. **Rate of change** — use `deriv()` to find the rate of change of CPU usage:
+     ```
+     Save to ~/query_deriv.txt
+     ```
+
+  4. **Capacity prediction** — use `predict_linear()` to predict disk usage 24 hours ahead:
+     ```
+     Save to ~/query_predict.txt
+     ```
+
+  ### PromQL Reference
+  - `rate(counter[5m])` — per-second rate over 5 minutes
+  - `histogram_quantile(0.99, rate(histogram_bucket[5m]))` — quantile from histogram
+  - `deriv(gauge[5m])` — per-second derivative of a gauge
+  - `predict_linear(gauge[1h], 86400)` — linear prediction 24h ahead
+  - Use the Browser tab to test queries in the Prometheus UI
+
+hints:
+  - "Error rate: `sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100`"
+  - "P99: `histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))`"
+  - "Deriv: `deriv(node_cpu_seconds_total{mode=\"idle\"}[5m])` — predict_linear: `predict_linear(node_filesystem_avail_bytes{mountpoint=\"/\"}[1h], 86400)`"
+validation:
+  script: validate.sh
+  success_message: "Your PromQL skills are solid! These queries are the foundation of metric-based AIOps."
+  failure_message: "Check that all four query files exist and contain valid PromQL expressions."

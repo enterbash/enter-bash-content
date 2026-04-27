@@ -1,0 +1,76 @@
+name: "LLM-Powered PromQL Generator"
+type: skill
+category: aiops
+difficulty: hard
+tags: [llm, promql, natural-language, python, aiops]
+time_estimate: "25m"
+xp_reward: 200
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/mock_llm_server.py
+    dest: ~/mock_llm_server.py
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## LLM-Powered PromQL Generator
+
+  Natural language to PromQL — let users ask questions in plain English and get valid
+  Prometheus queries. This is the pattern behind every "AI assistant" in observability tools.
+
+  ### Setup
+
+  A mock LLM server is running on `http://localhost:8080`.
+
+  ### Your Tasks
+
+  1. **Write `~/promql_generator.py`** that:
+     - Takes a natural language query as input (from a file `~/queries.txt`, one per line)
+     - Sends each to the LLM with a system prompt that includes available metrics
+     - Extracts the PromQL from the response
+     - Validates the PromQL syntax (basic check: balanced brackets, valid function names)
+     - Outputs to `~/generated_queries.json`:
+       ```json
+       {
+         "queries": [
+           {
+             "natural_language": "Show me the error rate for the payment service",
+             "generated_promql": "sum(rate(http_requests_total{service=\"payment\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{service=\"payment\"}[5m])) * 100",
+             "valid_syntax": true
+           }
+         ],
+         "total_queries": 5,
+         "valid_count": 5,
+         "system_prompt": "You are a PromQL expert..."
+       }
+       ```
+
+  2. **Create `~/queries.txt`** with at least 5 natural language queries:
+     ```
+     Show me the error rate for the payment service
+     What is the p99 latency over the last hour
+     Which services have the highest CPU usage
+     How much memory is each pod using
+     Predict disk usage for the next 24 hours
+     ```
+
+  3. The `system_prompt` field should contain your actual system prompt.
+
+  ### Key Design Decisions
+  - System prompt should list available metrics and their labels
+  - Response parsing: extract PromQL from markdown code blocks or raw text
+  - Validation: check for balanced `{}`, `[]`, `()` and known PromQL functions
+
+hints:
+  - "Include available metrics in the system prompt: `http_requests_total{service, method, status}`, `node_cpu_seconds_total{mode}`, etc."
+  - "Extract PromQL from response: look for text between backticks or after 'PromQL:' prefix."
+  - "Basic syntax validation: check balanced brackets and that functions like `rate`, `sum`, `histogram_quantile` are valid PromQL."
+validation:
+  script: validate.sh
+  success_message: "PromQL generator working! Natural language to queries is the future of observability."
+  failure_message: "Check ~/generated_queries.json has 5+ queries with generated_promql and valid_syntax."

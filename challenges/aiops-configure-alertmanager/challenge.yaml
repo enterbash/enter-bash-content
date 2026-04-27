@@ -1,0 +1,84 @@
+name: "Configure Alertmanager Routing"
+type: skill
+category: aiops
+difficulty: easy
+tags: [alertmanager, alerting, prometheus, routing, observability]
+time_estimate: "15m"
+xp_reward: 100
+packages: []
+pre_install: [prometheus-alertmanager]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Configure Alertmanager Routing
+
+  Alertmanager handles alert routing, grouping, and silencing for Prometheus. Proper routing
+  ensures critical alerts reach the right team immediately while warnings are batched.
+
+  ### Your Tasks
+
+  1. **Create an Alertmanager config** at `/etc/alertmanager/alertmanager.yml` with:
+
+     - A **route** tree that:
+       - Groups alerts by `alertname` and `service`
+       - Sets `group_wait: 10s` and `group_interval: 5m`
+       - Routes `severity: critical` alerts to a receiver named `critical-alerts`
+       - Routes `severity: warning` alerts to a receiver named `warning-alerts`
+       - Default receiver: `default`
+
+     - Three **receivers**:
+       - `default` — a webhook receiver pointing to `http://localhost:5001/default`
+       - `critical-alerts` — a webhook receiver pointing to `http://localhost:5001/critical`
+       - `warning-alerts` — a webhook receiver pointing to `http://localhost:5001/warning`
+
+  2. **Validate the config**:
+     ```
+     amtool check-config /etc/alertmanager/alertmanager.yml
+     ```
+
+  3. **Start Alertmanager**:
+     ```
+     alertmanager --config.file=/etc/alertmanager/alertmanager.yml \
+       --storage.path=/tmp/alertmanager &
+     ```
+
+  4. **Verify** Alertmanager is running:
+     ```
+     curl -s http://localhost:9093/-/healthy
+     ```
+
+  ### Useful Commands
+  - Check config syntax: `amtool check-config /etc/alertmanager/alertmanager.yml`
+  - View current routes: `amtool config routes --config.file=/etc/alertmanager/alertmanager.yml`
+
+hints:
+  - "The route tree uses `match` to filter by labels. Use `match: {severity: critical}` under `routes:` to match critical alerts."
+  - "Receivers are defined at the top level under `receivers:`. Each has a `name` and `webhook_configs` with a `url`."
+  - |
+    Example structure:
+    ```yaml
+    route:
+      receiver: default
+      group_by: ['alertname', 'service']
+      group_wait: 10s
+      group_interval: 5m
+      routes:
+        - match: {severity: critical}
+          receiver: critical-alerts
+        - match: {severity: warning}
+          receiver: warning-alerts
+    receivers:
+      - name: default
+        webhook_configs:
+          - url: 'http://localhost:5001/default'
+    ```
+validation:
+  script: validate.sh
+  success_message: "Alertmanager is configured with proper routing rules!"
+  failure_message: "Check your alertmanager.yml syntax and ensure Alertmanager is running on port 9093."

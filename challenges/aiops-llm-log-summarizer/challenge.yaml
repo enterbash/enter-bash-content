@@ -1,0 +1,85 @@
+name: "LLM Log Summarizer"
+type: skill
+category: aiops
+difficulty: hard
+tags: [llm, log-analysis, prompt-engineering, python, aiops]
+time_estimate: "25m"
+xp_reward: 200
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/mock_llm_server.py
+    dest: ~/mock_llm_server.py
+  - source: files/sample_logs.txt
+    dest: ~/sample_logs.txt
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## LLM Log Summarizer
+
+  LLMs can analyze thousands of log lines and produce structured summaries — something
+  that would take a human engineer 30+ minutes. In this challenge, you'll build a log
+  summarizer using the OpenAI-compatible API.
+
+  ### Setup
+
+  A mock LLM server is running on `http://localhost:8080` (OpenAI-compatible API).
+  A sample log file is at `~/sample_logs.txt` (500 lines from a failing web service).
+
+  ### Your Tasks
+
+  1. **Write `~/log_summarizer.py`** that:
+     - Reads `~/sample_logs.txt`
+     - Chunks the logs into windows of 100 lines
+     - For each chunk, sends a prompt to the LLM API asking for analysis
+     - Combines chunk analyses into a final summary
+     - Outputs to `~/log_summary.json`:
+       ```json
+       {
+         "total_lines": 500,
+         "chunks_analyzed": 5,
+         "error_count": 45,
+         "key_events": [
+           "Database connection pool exhausted at 10:15",
+           "Cascading timeouts started at 10:16",
+           "Service recovered at 10:45"
+         ],
+         "likely_root_cause": "Database connection pool exhaustion caused cascading failures",
+         "severity": "critical",
+         "prompt_template": "Analyze these application logs..."
+       }
+       ```
+
+  2. The `prompt_template` field should contain the actual prompt you used.
+
+  ### API Usage
+  ```python
+  import requests
+  response = requests.post("http://localhost:8080/v1/chat/completions", json={
+      "model": "mock-llm",
+      "messages": [
+          {"role": "system", "content": "You are an SRE analyzing application logs."},
+          {"role": "user", "content": f"Analyze these logs and identify errors, key events, and root cause:\n\n{log_chunk}"}
+      ]
+  })
+  result = response.json()["choices"][0]["message"]["content"]
+  ```
+
+  ### Focus Areas
+  - Prompt engineering: how you frame the analysis request matters
+  - Output parsing: extract structured data from the LLM response
+  - Chunking strategy: logs are too long for a single prompt
+
+hints:
+  - "The mock server responds to any prompt. Focus on writing a good prompt that asks for: error count, key events, timeline, and root cause."
+  - "Parse the LLM response to extract structured fields. Use regex or string matching on the response text."
+  - "For chunking: `chunks = [lines[i:i+100] for i in range(0, len(lines), 100)]`"
+validation:
+  script: validate.sh
+  success_message: "LLM log summarizer working! Prompt engineering is the key skill for LLM-powered ops."
+  failure_message: "Check ~/log_summarizer.py exists and ~/log_summary.json has all required fields."

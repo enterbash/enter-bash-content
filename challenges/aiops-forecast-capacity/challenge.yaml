@@ -1,0 +1,89 @@
+name: "Forecast Resource Capacity"
+type: skill
+category: aiops
+difficulty: hard
+tags: [forecasting, prophet, capacity-planning, time-series, python]
+time_estimate: "30m"
+xp_reward: 200
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_disk_data.py
+    dest: ~/generate_disk_data.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Forecast Resource Capacity
+
+  Capacity planning prevents outages before they happen. In this challenge, you'll use
+  Facebook Prophet to forecast disk usage and predict when it will hit a critical threshold.
+
+  ### Setup
+
+  A CSV at `~/disk_usage.csv` has daily disk usage percentage for 30 days:
+  ```
+  ds,y
+  2024-01-01,62.1
+  2024-01-02,62.5
+  ...
+  ```
+
+  Disk usage is growing steadily with some daily variation. You need to predict when it
+  will reach 90%.
+
+  ### Your Tasks
+
+  1. **Write `~/forecast.py`** that:
+     - Reads `~/disk_usage.csv` (columns: `ds`, `y` — Prophet's expected format)
+     - Fits a Prophet model
+     - Forecasts 30 days ahead
+     - Finds the first date where the forecast (`yhat`) exceeds 90%
+     - Outputs to `~/forecast_result.json`:
+       ```json
+       {
+         "current_usage": 75.3,
+         "current_date": "2024-01-30",
+         "forecast_days": 30,
+         "predicted_90_date": "2024-02-15",
+         "days_until_90": 16,
+         "forecast_summary": [
+           {"date": "2024-01-31", "predicted": 75.8, "lower": 73.1, "upper": 78.5},
+           {"date": "2024-02-01", "predicted": 76.3, "lower": 73.2, "upper": 79.4},
+           ...
+         ]
+       }
+       ```
+
+  2. **Run it**: `python3 ~/forecast.py`
+
+  3. `forecast_summary` should include at least the next 7 days of predictions with
+     `predicted` (yhat), `lower` (yhat_lower), and `upper` (yhat_upper) bounds.
+
+  ### Prophet Quick Start
+  ```python
+  from prophet import Prophet
+  import pandas as pd
+
+  df = pd.read_csv('disk_usage.csv')
+  model = Prophet(daily_seasonality=False, weekly_seasonality=True)
+  model.fit(df)
+
+  future = model.make_future_dataframe(periods=30)
+  forecast = model.predict(future)
+  # forecast has columns: ds, yhat, yhat_lower, yhat_upper
+  ```
+
+hints:
+  - "Prophet expects columns named `ds` (date) and `y` (value). The CSV is already in this format."
+  - "To find when yhat > 90: `threshold_rows = forecast[forecast['yhat'] > 90]`, then take the first date."
+  - "Suppress Prophet's verbose output: `model = Prophet(daily_seasonality=False); import logging; logging.getLogger('prophet').setLevel(logging.WARNING)`"
+validation:
+  script: validate.sh
+  success_message: "Capacity forecast complete! You predicted when disk will hit 90% — time to plan that expansion."
+  failure_message: "Check that ~/forecast_result.json exists with predicted_90_date and forecast_summary."

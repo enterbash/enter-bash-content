@@ -1,0 +1,61 @@
+name: "Set Up Prometheus Monitoring"
+type: skill
+category: aiops
+difficulty: easy
+tags: [prometheus, monitoring, metrics, observability]
+time_estimate: "15m"
+xp_reward: 75
+packages: []
+pre_install: [prometheus, prometheus-node-exporter]
+namespace: ""
+web_port: 9090
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Set Up Prometheus Monitoring
+
+  Prometheus is the foundation of modern observability. In this challenge, you'll configure
+  Prometheus to scrape system metrics from node_exporter and write your first PromQL query.
+
+  ### Your Tasks
+
+  1. **Configure Prometheus** to scrape node_exporter metrics:
+     - Edit `/etc/prometheus/prometheus.yml`
+     - Add a scrape job named `node` targeting `localhost:9100`
+     - Set the scrape interval to `15s`
+
+  2. **Start the services**:
+     - Start node_exporter: `node_exporter &`
+     - Start Prometheus with your config: `prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/tmp/prometheus &`
+
+  3. **Verify metrics are being collected**:
+     - Wait ~15 seconds for the first scrape
+     - Query Prometheus to confirm `node_cpu_seconds_total` metric exists:
+       ```
+       curl -s 'http://localhost:9090/api/v1/query?query=node_cpu_seconds_total' | jq '.data.result | length'
+       ```
+     - The result should be greater than 0
+
+  4. **Write a PromQL query** that calculates the current CPU idle percentage and save it:
+     ```
+     echo 'avg(rate(node_cpu_seconds_total{mode="idle"}[1m])) * 100' > ~/cpu_idle_query.txt
+     ```
+
+  ### Useful Commands
+  - Check Prometheus config: `promtool check config /etc/prometheus/prometheus.yml`
+  - Query Prometheus API: `curl -s 'http://localhost:9090/api/v1/query?query=up'`
+  - Use the Browser tab to access the Prometheus web UI
+
+hints:
+  - "The scrape config goes under `scrape_configs` in prometheus.yml. Each job needs `job_name` and `static_configs` with `targets`."
+  - "Make sure both node_exporter (port 9100) and Prometheus (port 9090) are running before querying. Use `ss -tlnp` to check."
+  - "The PromQL for CPU idle: avg(rate(node_cpu_seconds_total{mode=\"idle\"}[1m])) * 100"
+validation:
+  script: validate.sh
+  success_message: "Prometheus is scraping metrics and your PromQL query is correct!"
+  failure_message: "Check that Prometheus and node_exporter are running, and your config has the 'node' scrape job."

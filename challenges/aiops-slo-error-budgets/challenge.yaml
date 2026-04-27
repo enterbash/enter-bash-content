@@ -1,0 +1,85 @@
+name: "SLO-Based Error Budgets"
+type: skill
+category: aiops
+difficulty: medium
+tags: [slo, error-budget, burn-rate, prometheus, alerting]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [prometheus]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_slo_data.py
+    dest: ~/generate_slo_data.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## SLO-Based Error Budgets
+
+  Instead of alerting on every error, SLO-based alerting fires only when your error budget
+  is burning too fast. This dramatically reduces alert noise while catching real problems.
+
+  ### Concepts
+
+  - **SLO**: "99.9% of requests succeed over 30 days"
+  - **Error budget**: 0.1% of requests can fail = 43.2 minutes of downtime per 30 days
+  - **Burn rate**: how fast you're consuming the budget. 1x = on track, 10x = will exhaust in 3 days
+
+  ### Setup
+
+  A CSV at `~/request_data.csv` has per-minute request counts (total and errors) for 24 hours.
+
+  ### Your Tasks
+
+  1. **Write `~/slo_calculator.py`** that:
+     - Reads `~/request_data.csv` (columns: `minute`, `total_requests`, `error_requests`)
+     - Defines SLO: 99.9% success rate over 30 days
+     - Calculates:
+       - Current error rate (errors / total)
+       - Error budget (total allowed errors in 30 days)
+       - Budget consumed so far (based on 24h of data, extrapolated)
+       - Burn rate (actual error rate / allowed error rate)
+     - Writes a Prometheus alerting rule to `~/slo_alert.yml` that fires when burn rate > 10x
+     - Outputs to `~/slo_report.json`:
+       ```json
+       {
+         "slo_target": 0.999,
+         "window_days": 30,
+         "current_error_rate": 0.0025,
+         "error_budget_total": 0.001,
+         "budget_consumed_percent": 62.5,
+         "burn_rate": 2.5,
+         "alert_threshold": 10,
+         "would_alert": false
+       }
+       ```
+
+  2. **Create `~/slo_alert.yml`** — a Prometheus alerting rule:
+     ```yaml
+     groups:
+       - name: slo-alerts
+         rules:
+           - alert: HighErrorBudgetBurn
+             expr: |
+               (sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])))
+               / (1 - 0.999) > 10
+             for: 5m
+             labels:
+               severity: critical
+             annotations:
+               summary: "Error budget burn rate exceeds 10x"
+     ```
+
+hints:
+  - "Error budget = 1 - SLO target = 0.001 (0.1%). Burn rate = actual_error_rate / error_budget."
+  - "If burn rate is 10x, you'll exhaust your 30-day budget in 3 days (30/10)."
+  - "The alert expr divides the current error rate by the error budget (1 - 0.999 = 0.001) and checks if > 10."
+validation:
+  script: validate.sh
+  success_message: "SLO error budget calculations correct! This is how modern SRE teams alert."
+  failure_message: "Check ~/slo_report.json and ~/slo_alert.yml exist with correct structure."

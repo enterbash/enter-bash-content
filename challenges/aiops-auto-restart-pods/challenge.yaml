@@ -1,0 +1,74 @@
+name: "Auto-Restart Failing Pods"
+type: skill
+category: aiops
+difficulty: medium
+tags: [automation, kubernetes, self-healing, cronjob, remediation]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Auto-Restart Failing Pods
+
+  Pods stuck in CrashLoopBackOff with high restart counts often need a fresh start.
+  In this challenge, you'll write a remediation script and deploy it as a Kubernetes CronJob.
+
+  ### Setup
+
+  A k3s cluster is running with several pods. Some are in CrashLoopBackOff.
+
+  ### Your Tasks
+
+  1. **Write `~/auto_restart.sh`** that:
+     - Finds all pods in CrashLoopBackOff across all namespaces
+     - For each, checks if restart count > 5
+     - Deletes the pod (Kubernetes will recreate it via the Deployment)
+     - Logs each action to `~/restart_log.txt` with timestamp, pod name, namespace, restart count
+
+  2. **Create a CronJob manifest** at `~/restart-cronjob.yaml`:
+     ```yaml
+     apiVersion: batch/v1
+     kind: CronJob
+     metadata:
+       name: pod-restarter
+       namespace: kube-system
+     spec:
+       schedule: "*/5 * * * *"
+       jobTemplate:
+         spec:
+           template:
+             spec:
+               serviceAccountName: pod-restarter
+               containers:
+               - name: restarter
+                 image: bitnami/kubectl:latest
+                 command: ["/bin/bash", "-c"]
+                 args:
+                 - |
+                   # Your restart logic here
+               restartPolicy: OnFailure
+     ```
+
+  3. **Run the script manually**: `bash ~/auto_restart.sh`
+
+  4. The restart log should look like:
+     ```
+     2024-01-15T10:30:00Z | RESTART | pod: crash-app-xyz | ns: default | restarts: 8
+     ```
+
+hints:
+  - "Find CrashLoopBackOff pods: `kubectl get pods -A --field-selector=status.phase!=Succeeded -o json | jq ...` or parse `kubectl get pods -A` output."
+  - "Get restart count: `kubectl get pod $POD -n $NS -o jsonpath='{.status.containerStatuses[0].restartCount}'`"
+  - "Delete pod: `kubectl delete pod $POD -n $NS`. The Deployment controller will create a new one."
+validation:
+  script: validate.sh
+  success_message: "Auto-restart script working! This is Level 1 automated remediation."
+  failure_message: "Check ~/auto_restart.sh exists and ~/restart-cronjob.yaml is valid."

@@ -1,0 +1,95 @@
+name: "ML Anomaly Detection with Isolation Forest"
+type: skill
+category: aiops
+difficulty: hard
+tags: [anomaly-detection, isolation-forest, scikit-learn, ml, python]
+time_estimate: "25m"
+xp_reward: 200
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_multi_metrics.py
+    dest: ~/generate_multi_metrics.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## ML Anomaly Detection with Isolation Forest
+
+  Isolation Forest is an unsupervised ML algorithm ideal for anomaly detection. Unlike
+  statistical methods, it works well on multi-dimensional data — detecting anomalies that
+  only appear when you look at multiple metrics together.
+
+  ### How Isolation Forest Works
+
+  The algorithm isolates observations by randomly selecting a feature and a split value.
+  Anomalies are easier to isolate (fewer splits needed), so they have shorter path lengths
+  in the isolation trees.
+
+  ### Setup
+
+  A CSV at `~/server_metrics.csv` has 4 dimensions sampled every minute for 24 hours (1440 rows):
+  ```
+  timestamp,cpu_percent,memory_percent,network_bytes_sec,disk_io_ms
+  ```
+
+  Normal behavior has correlated patterns (high CPU → high memory). Anomalies break these
+  correlations (e.g., high disk I/O with low CPU — indicating a stuck process).
+
+  ### Your Tasks
+
+  1. **Write `~/isolation_forest.py`** that:
+     - Reads `~/server_metrics.csv`
+     - Trains an Isolation Forest on the 4 metric columns
+     - Uses `contamination=0.05` (expect ~5% anomalies)
+     - Outputs results to `~/if_results.json`:
+       ```json
+       {
+         "model": "IsolationForest",
+         "contamination": 0.05,
+         "total_points": 1440,
+         "anomalies_detected": 72,
+         "anomaly_rate": 0.05,
+         "anomalies": [
+           {
+             "timestamp": "2024-01-15T03:42",
+             "cpu_percent": 12.3,
+             "memory_percent": 89.5,
+             "network_bytes_sec": 1500000,
+             "disk_io_ms": 450,
+             "anomaly_score": -0.62
+           }
+         ]
+       }
+       ```
+
+  2. **Run it**: `python3 ~/isolation_forest.py`
+
+  3. The `anomaly_score` is from `model.decision_function()` — negative scores are more anomalous.
+
+  ### scikit-learn Quick Start
+  ```python
+  from sklearn.ensemble import IsolationForest
+  import pandas as pd
+
+  df = pd.read_csv('server_metrics.csv')
+  features = df[['cpu_percent', 'memory_percent', 'network_bytes_sec', 'disk_io_ms']]
+
+  model = IsolationForest(contamination=0.05, random_state=42)
+  df['prediction'] = model.fit_predict(features)  # -1 = anomaly, 1 = normal
+  df['score'] = model.decision_function(features)
+  ```
+
+hints:
+  - "Use `IsolationForest(contamination=0.05, random_state=42)` for reproducible results."
+  - "`fit_predict()` returns -1 for anomalies, 1 for normal. `decision_function()` returns the anomaly score."
+  - "Filter anomalies: `anomalies = df[df['prediction'] == -1]`. Convert to list of dicts with `.to_dict('records')`."
+validation:
+  script: validate.sh
+  success_message: "Isolation Forest detected multi-dimensional anomalies that statistical methods would miss!"
+  failure_message: "Check that ~/if_results.json exists with the correct structure and anomalies detected."

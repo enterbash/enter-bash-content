@@ -1,0 +1,80 @@
+name: "Dependency Graph Root Cause Analysis"
+type: skill
+category: aiops
+difficulty: hard
+tags: [rca, dependency-graph, networkx, graph-analysis, python]
+time_estimate: "25m"
+xp_reward: 200
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_graph.py
+    dest: ~/generate_graph.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Dependency Graph Root Cause Analysis
+
+  When multiple services fail, the root cause is usually upstream. By walking a service
+  dependency graph from failing services toward their dependencies, you can identify the
+  root cause — the deepest failing node in the dependency chain.
+
+  ### Setup
+
+  Two JSON files:
+  - `~/service_graph.json` — service dependency graph (adjacency list: service → [dependencies])
+  - `~/failing_services.json` — list of currently failing services
+
+  ### Your Tasks
+
+  1. **Write `~/rca_analyzer.py`** that:
+     - Loads the dependency graph and builds a directed graph (using networkx)
+     - Loads the failing services list
+     - For each failing service, walks upstream (to its dependencies) to find the root cause:
+       - A root cause is a failing service that has no failing dependencies
+     - Outputs to `~/rca_results.json`:
+       ```json
+       {
+         "total_services": 12,
+         "failing_services": ["api-gateway", "auth-service", "user-service", "database-primary"],
+         "root_causes": [
+           {
+             "service": "database-primary",
+             "impact": ["user-service", "auth-service", "api-gateway"],
+             "depth": 3
+           }
+         ],
+         "impact_summary": {
+           "database-primary": 4
+         }
+       }
+       ```
+
+  2. `depth` = longest path from root cause to a leaf failing service.
+  3. `impact` = all services transitively affected by this root cause.
+
+  ### networkx Quick Start
+  ```python
+  import networkx as nx
+  G = nx.DiGraph()
+  for service, deps in graph.items():
+      for dep in deps:
+          G.add_edge(service, dep)  # service depends on dep
+  # Find ancestors (upstream): nx.ancestors(G, node)
+  # Find descendants (downstream): nx.descendants(G, node)
+  ```
+
+hints:
+  - "Build edges as service → dependency (service depends on dep). Root cause = failing node with no failing successors (dependencies)."
+  - "For each failing service, check if any of its dependencies (successors in the graph) are also failing. If none are, it's a root cause."
+  - "Impact: use `nx.ancestors(G, root_cause)` to find all services that transitively depend on the root cause, then intersect with failing services."
+validation:
+  script: validate.sh
+  success_message: "Root cause identified! Graph-based RCA is how production incident tools work."
+  failure_message: "Check ~/rca_results.json has root_causes with service, impact, and depth."

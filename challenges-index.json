@@ -1,5 +1,1392 @@
 [
   {
+    "dir_name": "aiops-alert-grouping-dedup",
+    "name": "Alert Grouping and Deduplication",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "medium",
+    "tags": [
+      "alertmanager",
+      "alert-grouping",
+      "deduplication",
+      "noise-reduction"
+    ],
+    "time_estimate": "15m",
+    "xp_reward": 100,
+    "packages": [],
+    "pre_install": [
+      "prometheus-alertmanager"
+    ],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_alerts.py",
+        "dest": "~/generate_alerts.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Alert Grouping and Deduplication\n\nA single database outage can trigger 50+ alerts across dependent services. Without\ngrouping, each alert is a separate notification — pure noise. Alertmanager's grouping\nand inhibition rules solve this.\n\n### Setup\n\nA file at `~/raw_alerts.json` contains 50+ simulated alerts from a cascading failure.\nAlertmanager is installed but not configured.\n\n### Your Tasks\n\n1. **Analyze the alerts** to understand the pattern:\n   ```\n   cat ~/raw_alerts.json | jq '.[].labels.alertname' | sort | uniq -c | sort -rn\n   ```\n\n2. **Create `/etc/alertmanager/alertmanager.yml`** with:\n   - `group_by: ['alertname', 'service']` — group related alerts\n   - `group_wait: 10s` — wait before sending first notification\n   - `group_interval: 5m` — wait between group updates\n   - `repeat_interval: 4h` — don't repeat for 4 hours\n   - **Inhibition rule**: when `DatabaseDown` fires, suppress `DatabaseSlow` and `ConnectionPoolExhausted`\n   - Receivers: `default` webhook to `http://localhost:5001/alerts`\n\n3. **Write `~/dedup_report.json`** showing the reduction:\n   ```json\n   {\n     \"raw_alert_count\": 52,\n     \"unique_alertnames\": 8,\n     \"groups_after_grouping\": 5,\n     \"suppressed_by_inhibition\": 12,\n     \"final_notification_count\": 5,\n     \"reduction_percent\": 90.4\n   }\n   ```\n\n4. **Validate config**: `amtool check-config /etc/alertmanager/alertmanager.yml`\n",
+    "hints": [
+      "Inhibition rules go under `inhibit_rules:`. Match `source_match: {alertname: DatabaseDown}` and `target_match_re: {alertname: 'DatabaseSlow|ConnectionPoolExhausted'}`.",
+      "Count groups: unique combinations of (alertname, service) in the raw alerts.",
+      "reduction_percent = (1 - final_notification_count / raw_alert_count) * 100"
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Alert noise reduced by >80%! Grouping and inhibition are essential for on-call sanity.",
+      "failure_message": "Check alertmanager.yml has inhibit_rules and ~/dedup_report.json shows >80% reduction."
+    }
+  },
+  {
+    "dir_name": "aiops-alert-scoring",
+    "name": "ML-Based Alert Scoring",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "hard",
+    "tags": [
+      "alert-scoring",
+      "classification",
+      "scikit-learn",
+      "ml",
+      "noise-reduction"
+    ],
+    "time_estimate": "25m",
+    "xp_reward": 200,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_alert_history.py",
+        "dest": "~/generate_alert_history.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## ML-Based Alert Scoring\n\nNot all alerts are equal. Some are actionable (real incidents), others are noise (transient\nblips). In this challenge, you'll train a classifier to score alerts as actionable vs. noise\nbased on historical patterns.\n\n### Setup\n\nTwo CSV files:\n- `~/alert_history.csv` — 500 historical alerts with labels (1=actionable, 0=noise)\n- `~/new_alerts.csv` — 50 new alerts to score\n\nFeatures in both files:\n- `hour` — hour of day (0-23)\n- `service` — service name (encoded as integer)\n- `alert_type` — alert type (encoded as integer)\n- `duration_seconds` — how long the alert lasted\n- `co_occurring_alerts` — number of other alerts in the same 5-min window\n- `actionable` — label (only in history file)\n\n### Your Tasks\n\n1. **Write `~/alert_scorer.py`** that:\n   - Trains a RandomForestClassifier on `~/alert_history.csv`\n   - Scores `~/new_alerts.csv` with probability of being actionable\n   - Outputs to `~/scoring_results.json`:\n     ```json\n     {\n       \"model\": \"RandomForestClassifier\",\n       \"training_accuracy\": 0.87,\n       \"feature_importance\": {\n         \"duration_seconds\": 0.35,\n         \"co_occurring_alerts\": 0.25,\n         \"hour\": 0.15,\n         \"service\": 0.13,\n         \"alert_type\": 0.12\n       },\n       \"scored_alerts\": [\n         {\"index\": 0, \"actionable_probability\": 0.92, \"prediction\": \"actionable\"},\n         {\"index\": 1, \"actionable_probability\": 0.15, \"prediction\": \"noise\"},\n         ...\n       ],\n       \"summary\": {\n         \"total_scored\": 50,\n         \"predicted_actionable\": 18,\n         \"predicted_noise\": 32\n       }\n     }\n     ```\n\n2. Use `prediction`: \"actionable\" if probability >= 0.5, \"noise\" otherwise.\n\n### scikit-learn Quick Start\n```python\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.model_selection import train_test_split\n\nX = df[['hour', 'service', 'alert_type', 'duration_seconds', 'co_occurring_alerts']]\ny = df['actionable']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\nmodel = RandomForestClassifier(n_estimators=100, random_state=42)\nmodel.fit(X_train, y_train)\naccuracy = model.score(X_test, y_test)\nprobabilities = model.predict_proba(new_data)[:, 1]\n```\n",
+    "hints": [
+      "Use `train_test_split` with `test_size=0.2` to evaluate accuracy before scoring new alerts.",
+      "Feature importance: `dict(zip(feature_names, model.feature_importances_))` — round values.",
+      "`predict_proba(X)[:, 1]` gives the probability of class 1 (actionable) for each alert."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Alert scoring model trained! Now you can prioritize which alerts need human attention.",
+      "failure_message": "Check ~/scoring_results.json has training_accuracy, feature_importance, and scored_alerts."
+    }
+  },
+  {
+    "dir_name": "aiops-auto-diagnostics",
+    "name": "Automated Incident Diagnostics",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "medium",
+    "tags": [
+      "automation",
+      "diagnostics",
+      "bash",
+      "kubernetes",
+      "incident-response"
+    ],
+    "time_estimate": "20m",
+    "xp_reward": 150,
+    "packages": [],
+    "pre_install": [
+      "kubectl"
+    ],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Automated Incident Diagnostics\n\nWhen an alert fires, the first step is always gathering context. Automating this saves\nprecious minutes during incidents. In this challenge, you'll write a diagnostic script\nthat collects all relevant information about a failing pod.\n\n### Setup\n\nA k3s cluster is running with several pods. One pod (`web-app` in namespace `production`)\nis experiencing issues.\n\n### Your Tasks\n\n1. **Write `~/diagnose.sh`** that takes a pod name and namespace as arguments and collects:\n   - Pod description (`kubectl describe pod`)\n   - Pod logs (last 50 lines)\n   - Pod events\n   - Node resource usage (`kubectl top node`, if metrics available)\n   - Recent deployments in the namespace\n   - All into a structured report at `~/diagnostic_report.txt`\n\n2. The script should:\n   ```bash\n   #!/bin/bash\n   POD_NAME=\"${1:?Usage: diagnose.sh <pod-name> <namespace>}\"\n   NAMESPACE=\"${2:-default}\"\n   REPORT=~/diagnostic_report.txt\n   ```\n\n3. **Run it**: `bash ~/diagnose.sh web-app production`\n\n4. The report should have clear sections:\n   ```\n   === DIAGNOSTIC REPORT ===\n   Pod: web-app | Namespace: production | Time: 2024-01-15T10:30:00Z\n\n   === POD STATUS ===\n   ...\n   === POD LOGS (last 50 lines) ===\n   ...\n   === EVENTS ===\n   ...\n   === RECENT DEPLOYMENTS ===\n   ...\n   ```\n",
+    "hints": [
+      "Use `kubectl describe pod $POD_NAME -n $NAMESPACE` for full pod details.",
+      "Logs: `kubectl logs $POD_NAME -n $NAMESPACE --tail=50`. Events: `kubectl get events -n $NAMESPACE --sort-by=.lastTimestamp`.",
+      "Wrap each section with echo headers. Redirect all output: `{ echo '=== SECTION ==='; kubectl ...; } >> $REPORT`."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Diagnostic script working! This is the foundation of automated incident response.",
+      "failure_message": "Check ~/diagnose.sh exists, is executable, and ~/diagnostic_report.txt has all sections."
+    }
+  },
+  {
+    "dir_name": "aiops-auto-restart-pods",
+    "name": "Auto-Restart Failing Pods",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "medium",
+    "tags": [
+      "automation",
+      "kubernetes",
+      "self-healing",
+      "cronjob",
+      "remediation"
+    ],
+    "time_estimate": "20m",
+    "xp_reward": 150,
+    "packages": [],
+    "pre_install": [
+      "kubectl"
+    ],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Auto-Restart Failing Pods\n\nPods stuck in CrashLoopBackOff with high restart counts often need a fresh start.\nIn this challenge, you'll write a remediation script and deploy it as a Kubernetes CronJob.\n\n### Setup\n\nA k3s cluster is running with several pods. Some are in CrashLoopBackOff.\n\n### Your Tasks\n\n1. **Write `~/auto_restart.sh`** that:\n   - Finds all pods in CrashLoopBackOff across all namespaces\n   - For each, checks if restart count > 5\n   - Deletes the pod (Kubernetes will recreate it via the Deployment)\n   - Logs each action to `~/restart_log.txt` with timestamp, pod name, namespace, restart count\n\n2. **Create a CronJob manifest** at `~/restart-cronjob.yaml`:\n   ```yaml\n   apiVersion: batch/v1\n   kind: CronJob\n   metadata:\n     name: pod-restarter\n     namespace: kube-system\n   spec:\n     schedule: \"*/5 * * * *\"\n     jobTemplate:\n       spec:\n         template:\n           spec:\n             serviceAccountName: pod-restarter\n             containers:\n             - name: restarter\n               image: bitnami/kubectl:latest\n               command: [\"/bin/bash\", \"-c\"]\n               args:\n               - |\n                 # Your restart logic here\n             restartPolicy: OnFailure\n   ```\n\n3. **Run the script manually**: `bash ~/auto_restart.sh`\n\n4. The restart log should look like:\n   ```\n   2024-01-15T10:30:00Z | RESTART | pod: crash-app-xyz | ns: default | restarts: 8\n   ```\n",
+    "hints": [
+      "Find CrashLoopBackOff pods: `kubectl get pods -A --field-selector=status.phase!=Succeeded -o json | jq ...` or parse `kubectl get pods -A` output.",
+      "Get restart count: `kubectl get pod $POD -n $NS -o jsonpath='{.status.containerStatuses[0].restartCount}'`",
+      "Delete pod: `kubectl delete pod $POD -n $NS`. The Deployment controller will create a new one."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Auto-restart script working! This is Level 1 automated remediation.",
+      "failure_message": "Check ~/auto_restart.sh exists and ~/restart-cronjob.yaml is valid."
+    }
+  },
+  {
+    "dir_name": "aiops-auto-scale-on-anomaly",
+    "name": "Auto-Scale on Anomaly Detection",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "hard",
+    "tags": [
+      "automation",
+      "scaling",
+      "anomaly-detection",
+      "kubernetes",
+      "python"
+    ],
+    "time_estimate": "25m",
+    "xp_reward": 200,
+    "packages": [],
+    "pre_install": [
+      "kubectl"
+    ],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_latency_stream.py",
+        "dest": "~/generate_latency_stream.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Auto-Scale on Anomaly Detection\n\nCombine anomaly detection with automated remediation: detect a latency anomaly from\nPrometheus metrics and automatically scale up the deployment.\n\n### Setup\n\nA k3s cluster is running with a `web-app` deployment (2 replicas) in the `default` namespace.\nA simulated latency data stream is available at `~/latency_stream.csv`.\n\n### Your Tasks\n\n1. **Write `~/auto_scaler.py`** that:\n   - Reads `~/latency_stream.csv` (columns: `timestamp`, `p99_latency_ms`)\n   - Detects anomalies using Z-score (threshold > 2.0)\n   - When an anomaly is detected, scales the `web-app` deployment up by 2 replicas\n   - Outputs to `~/scaling_report.json`:\n     ```json\n     {\n       \"data_points\": 60,\n       \"anomalies_detected\": 5,\n       \"scaling_actions\": [\n         {\n           \"timestamp\": \"2024-01-15T10:42\",\n           \"latency_ms\": 850,\n           \"z_score\": 3.2,\n           \"action\": \"scale_up\",\n           \"from_replicas\": 2,\n           \"to_replicas\": 4\n         }\n       ],\n       \"current_replicas\": 4,\n       \"scale_command\": \"kubectl scale deployment web-app --replicas=4\"\n     }\n     ```\n\n2. **Execute the scale command**:\n   ```\n   kubectl scale deployment web-app --replicas=4\n   ```\n\n3. The script should also write the kubectl command to `~/scale_command.sh`.\n",
+    "hints": [
+      "Calculate Z-score on the latency values. When z > 2.0, that's an anomaly worth scaling for.",
+      "Get current replicas: `kubectl get deployment web-app -o jsonpath='{.spec.replicas}'`",
+      "Scale: `kubectl scale deployment web-app --replicas=N` or use subprocess in Python."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Anomaly-driven auto-scaling working! Detection + remediation in one pipeline.",
+      "failure_message": "Check ~/scaling_report.json and that the deployment was actually scaled."
+    }
+  },
+  {
+    "dir_name": "aiops-build-grafana-dashboard",
+    "name": "Build a Grafana Dashboard",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "easy",
+    "tags": [
+      "grafana",
+      "dashboard",
+      "prometheus",
+      "visualization",
+      "observability"
+    ],
+    "time_estimate": "20m",
+    "xp_reward": 100,
+    "packages": [],
+    "pre_install": [
+      "prometheus",
+      "prometheus-node-exporter",
+      "grafana"
+    ],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Build a Grafana Dashboard\n\nGrafana dashboards turn raw metrics into actionable visualizations. In this challenge,\nyou'll create a system monitoring dashboard with panels for CPU, memory, disk, and network.\n\n### Pre-configured\n\nPrometheus and node_exporter are already running and scraping metrics. Grafana is running\non port 3000 (use the Browser tab to access it). A Prometheus data source is pre-configured.\n\n- Grafana login: `admin` / `admin`\n\n### Your Tasks\n\n1. **Create a dashboard JSON file** at `~/dashboard.json` with four panels:\n\n   - **CPU Usage** — PromQL: `100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)`\n   - **Memory Usage** — PromQL: `(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100`\n   - **Disk Usage** — PromQL: `(1 - node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}) * 100`\n   - **Network Received** — PromQL: `rate(node_network_receive_bytes_total{device!=\"lo\"}[5m])`\n\n2. **Import the dashboard** into Grafana using the API:\n   ```\n   curl -s -X POST http://admin:admin@localhost:3000/api/dashboards/db \\\n     -H 'Content-Type: application/json' \\\n     -d \"{\\\"dashboard\\\": $(cat ~/dashboard.json), \\\"overwrite\\\": true}\"\n   ```\n\n3. **Verify** the dashboard was imported:\n   ```\n   curl -s http://admin:admin@localhost:3000/api/search?type=dash-db | jq '.[].title'\n   ```\n\n### Dashboard JSON Structure\n\nYour `~/dashboard.json` needs at minimum:\n```json\n{\n  \"title\": \"System Monitoring\",\n  \"panels\": [\n    {\n      \"title\": \"CPU Usage\",\n      \"type\": \"timeseries\",\n      \"targets\": [{\"expr\": \"YOUR_PROMQL_HERE\", \"refId\": \"A\"}],\n      \"gridPos\": {\"h\": 8, \"w\": 12, \"x\": 0, \"y\": 0}\n    }\n  ]\n}\n```\n\n### Useful Commands\n- List dashboards: `curl -s http://admin:admin@localhost:3000/api/search | jq .`\n- Check Prometheus targets: `curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets[].health'`\n",
+    "hints": [
+      "Each panel needs `title`, `type` (use `timeseries`), `targets` array with `expr` (the PromQL) and `refId`, and `gridPos` for layout.",
+      "Use `gridPos` to arrange panels in a 2x2 grid: (x:0,y:0), (x:12,y:0), (x:0,y:8), (x:12,y:8) with h:8, w:12 each.",
+      "Make sure the dashboard JSON has `\"title\": \"System Monitoring\"` at the top level. The import API wraps it in `{\"dashboard\": ..., \"overwrite\": true}`."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Your Grafana dashboard is live with all four monitoring panels!",
+      "failure_message": "Check that ~/dashboard.json exists with 4 panels and was imported into Grafana successfully."
+    },
+    "web_port": 3000
+  },
+  {
+    "dir_name": "aiops-chaos-detection-pipeline",
+    "name": "Chaos Detection Pipeline",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "hard",
+    "tags": [
+      "chaos-engineering",
+      "detection",
+      "pipeline",
+      "prometheus",
+      "grafana"
+    ],
+    "time_estimate": "30m",
+    "xp_reward": 300,
+    "packages": [],
+    "pre_install": [
+      "prometheus",
+      "prometheus-node-exporter",
+      "grafana",
+      "stress-ng"
+    ],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Chaos Detection Pipeline\n\nChaos engineering validates your monitoring. In this challenge, a chaos experiment will\nbe injected and you need to build a pipeline that automatically detects what happened.\n\n### Setup\n\nPrometheus, node_exporter, and Grafana are running. A chaos experiment will be injected\nwhen you run `~/inject_chaos.sh` — it could be CPU stress, memory pressure, or disk I/O.\n\n### Your Tasks\n\n1. **Write `~/detector.py`** that:\n   - Queries Prometheus for system metrics (CPU, memory, disk I/O, network)\n   - Detects which metric(s) are anomalous using Z-score (threshold > 2.0)\n   - Correlates the anomaly with system events\n   - Outputs to `~/detection_report.json`:\n     ```json\n     {\n       \"detection_time\": \"2024-01-15T10:35:00Z\",\n       \"anomalies\": [\n         {\"metric\": \"node_cpu_seconds_total\", \"type\": \"spike\", \"severity\": \"high\", \"z_score\": 8.5}\n       ],\n       \"probable_cause\": \"CPU stress test (all cores at 100%)\",\n       \"detection_latency_seconds\": 30,\n       \"metrics_checked\": [\"cpu\", \"memory\", \"disk_io\", \"network\"]\n     }\n     ```\n\n2. **Inject chaos**: `bash ~/inject_chaos.sh`\n\n3. **Wait 30 seconds**, then run your detector: `python3 ~/detector.py`\n\n4. **Create a Grafana dashboard** showing the anomaly (import via API).\n\n### Prometheus API\n```python\nimport requests\n# Query current value\nr = requests.get('http://localhost:9090/api/v1/query', params={'query': 'rate(node_cpu_seconds_total{mode=\"idle\"}[1m])'})\n# Query range\nr = requests.get('http://localhost:9090/api/v1/query_range', params={\n    'query': '...', 'start': '...', 'end': '...', 'step': '15s'\n})\n```\n",
+    "hints": [
+      "Query multiple metrics from Prometheus API, calculate Z-score for each, and identify which one spiked.",
+      "Use `query_range` to get the last 5 minutes of data, then compare the latest values against the historical mean.",
+      "The chaos injection is one of: `stress-ng --cpu`, `stress-ng --vm`, or `stress-ng --hdd`. Your detector should identify which."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Chaos detected and identified! Your monitoring pipeline caught the injected failure.",
+      "failure_message": "Check ~/detection_report.json has anomalies detected and probable_cause identified."
+    },
+    "web_port": 3000
+  },
+  {
+    "dir_name": "aiops-cluster-log-messages",
+    "name": "Cluster Similar Log Messages",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "medium",
+    "tags": [
+      "logs",
+      "clustering",
+      "drain3",
+      "pattern-mining",
+      "python"
+    ],
+    "time_estimate": "25m",
+    "xp_reward": 150,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_varied_logs.py",
+        "dest": "~/generate_varied_logs.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Cluster Similar Log Messages\n\nProduction systems generate thousands of log lines per minute. Most are variations of the\nsame message with different parameters (IPs, user IDs, timestamps). Log clustering groups\nsimilar messages into templates, dramatically reducing noise.\n\nFor example, these three lines:\n```\nConnection from 10.0.1.5 to port 8080 established\nConnection from 192.168.1.1 to port 3000 established\nConnection from 10.0.2.3 to port 443 established\n```\nBecome one template: `Connection from <*> to port <*> established` (count: 3)\n\n### Setup\n\nA log file with 1000 lines has been generated at `~/varied.log`. The `drain3` library\nis pre-installed — it's a streaming log parser that uses a fixed-depth tree to cluster\nlog messages into templates.\n\n### Your Tasks\n\n1. **Write a Python script** at `~/cluster_logs.py` that:\n   - Reads all lines from `~/varied.log`\n   - Uses `drain3` to cluster them into templates\n   - Outputs a JSON report to `~/cluster_report.json`:\n     ```json\n     {\n       \"total_lines\": 1000,\n       \"total_clusters\": 15,\n       \"top_patterns\": [\n         {\"template\": \"Connection from <*> to port <*> established\", \"count\": 120},\n         {\"template\": \"Request <*> completed in <*> ms\", \"count\": 95},\n         ...\n       ]\n     }\n     ```\n\n2. **Run the script**:\n   ```\n   python3 ~/cluster_logs.py\n   ```\n\n3. The `top_patterns` array should contain the top 5 clusters sorted by count descending.\n\n### Drain3 Quick Start\n```python\nfrom drain3 import TemplateMiner\nfrom drain3.template_miner_config import TemplateMinerConfig\n\nconfig = TemplateMinerConfig()\nconfig.drain_sim_th = 0.4\nconfig.drain_depth = 4\nminer = TemplateMiner(config=config)\n\nfor line in lines:\n    result = miner.add_log_message(line.strip())\n\nfor cluster in miner.drain.clusters:\n    print(f\"Template: {cluster.get_template()}, Count: {cluster.size}\")\n```\n",
+    "hints": [
+      "Install drain3 if needed: `pip3 install drain3`. Then use `TemplateMiner` to process each line.",
+      "After processing all lines, iterate `miner.drain.clusters` to get templates and counts. Sort by `cluster.size` descending.",
+      "The template string is obtained via `cluster.get_template()` and the count via `cluster.size`."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Log clustering complete! You reduced 1000 lines to a handful of patterns.",
+      "failure_message": "Check that ~/cluster_report.json exists with total_lines, total_clusters, and top_patterns."
+    }
+  },
+  {
+    "dir_name": "aiops-configure-alertmanager",
+    "name": "Configure Alertmanager Routing",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "easy",
+    "tags": [
+      "alertmanager",
+      "alerting",
+      "prometheus",
+      "routing",
+      "observability"
+    ],
+    "time_estimate": "15m",
+    "xp_reward": 100,
+    "packages": [],
+    "pre_install": [
+      "prometheus-alertmanager"
+    ],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Configure Alertmanager Routing\n\nAlertmanager handles alert routing, grouping, and silencing for Prometheus. Proper routing\nensures critical alerts reach the right team immediately while warnings are batched.\n\n### Your Tasks\n\n1. **Create an Alertmanager config** at `/etc/alertmanager/alertmanager.yml` with:\n\n   - A **route** tree that:\n     - Groups alerts by `alertname` and `service`\n     - Sets `group_wait: 10s` and `group_interval: 5m`\n     - Routes `severity: critical` alerts to a receiver named `critical-alerts`\n     - Routes `severity: warning` alerts to a receiver named `warning-alerts`\n     - Default receiver: `default`\n\n   - Three **receivers**:\n     - `default` — a webhook receiver pointing to `http://localhost:5001/default`\n     - `critical-alerts` — a webhook receiver pointing to `http://localhost:5001/critical`\n     - `warning-alerts` — a webhook receiver pointing to `http://localhost:5001/warning`\n\n2. **Validate the config**:\n   ```\n   amtool check-config /etc/alertmanager/alertmanager.yml\n   ```\n\n3. **Start Alertmanager**:\n   ```\n   alertmanager --config.file=/etc/alertmanager/alertmanager.yml \\\n     --storage.path=/tmp/alertmanager &\n   ```\n\n4. **Verify** Alertmanager is running:\n   ```\n   curl -s http://localhost:9093/-/healthy\n   ```\n\n### Useful Commands\n- Check config syntax: `amtool check-config /etc/alertmanager/alertmanager.yml`\n- View current routes: `amtool config routes --config.file=/etc/alertmanager/alertmanager.yml`\n",
+    "hints": [
+      "The route tree uses `match` to filter by labels. Use `match: {severity: critical}` under `routes:` to match critical alerts.",
+      "Receivers are defined at the top level under `receivers:`. Each has a `name` and `webhook_configs` with a `url`.",
+      "Example structure:\n```yaml\nroute:\n  receiver: default\n  group_by: ['alertname', 'service']\n  group_wait: 10s\n  group_interval: 5m\n  routes:\n    - match: {severity: critical}\n      receiver: critical-alerts\n    - match: {severity: warning}\n      receiver: warning-alerts\nreceivers:\n  - name: default\n    webhook_configs:\n      - url: 'http://localhost:5001/default'\n```\n"
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Alertmanager is configured with proper routing rules!",
+      "failure_message": "Check your alertmanager.yml syntax and ensure Alertmanager is running on port 9093."
+    }
+  },
+  {
+    "dir_name": "aiops-correlate-deploys-incidents",
+    "name": "Correlate Deployments with Incidents",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "medium",
+    "tags": [
+      "correlation",
+      "deployments",
+      "incidents",
+      "change-tracking",
+      "python"
+    ],
+    "time_estimate": "20m",
+    "xp_reward": 150,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_deploy_data.py",
+        "dest": "~/generate_deploy_data.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Correlate Deployments with Incidents\n\nMost incidents are caused by changes. By correlating deployment timestamps with incident\nstart times, you can quickly identify which deployment likely caused each incident.\n\n### Setup\n\nTwo JSON files:\n- `~/deployments.json` — list of deployments with `{timestamp, service, version, deployer}`\n- `~/incidents.json` — list of incidents with `{timestamp, service, severity, description}`\n\n### Your Tasks\n\n1. **Write `~/deploy_correlator.py`** that:\n   - For each incident, finds the most recent deployment to the same service that happened\n     within 60 minutes before the incident\n   - If no same-service deployment, check deployments to any service within 30 minutes\n   - Outputs to `~/correlation_results.json`:\n     ```json\n     {\n       \"total_incidents\": 8,\n       \"total_deployments\": 15,\n       \"correlations\": [\n         {\n           \"incident_time\": \"2024-01-15T14:30\",\n           \"incident_service\": \"api-gateway\",\n           \"incident_severity\": \"critical\",\n           \"probable_cause\": {\n             \"deployment_time\": \"2024-01-15T14:15\",\n             \"service\": \"api-gateway\",\n             \"version\": \"v2.3.1\",\n             \"deployer\": \"alice\",\n             \"minutes_before_incident\": 15\n           }\n         }\n       ],\n       \"uncorrelated_incidents\": 2,\n       \"correlation_rate\": 0.75\n     }\n     ```\n\n2. `correlation_rate` = correlated incidents / total incidents.\n",
+    "hints": [
+      "Parse timestamps with `datetime.fromisoformat()`. For each incident, filter deployments where `0 < (incident_time - deploy_time).total_seconds() <= 3600`.",
+      "Prefer same-service deployments. If none found within 60min, expand to any service within 30min.",
+      "Sort matching deployments by time (most recent first) — the closest deployment is the most likely cause."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Deployment correlation working! 'What changed?' is always the first question in an incident.",
+      "failure_message": "Check ~/correlation_results.json has correlations with probable_cause and correlation_rate."
+    }
+  },
+  {
+    "dir_name": "aiops-dependency-graph-rca",
+    "name": "Dependency Graph Root Cause Analysis",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "hard",
+    "tags": [
+      "rca",
+      "dependency-graph",
+      "networkx",
+      "graph-analysis",
+      "python"
+    ],
+    "time_estimate": "25m",
+    "xp_reward": 200,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_graph.py",
+        "dest": "~/generate_graph.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Dependency Graph Root Cause Analysis\n\nWhen multiple services fail, the root cause is usually upstream. By walking a service\ndependency graph from failing services toward their dependencies, you can identify the\nroot cause — the deepest failing node in the dependency chain.\n\n### Setup\n\nTwo JSON files:\n- `~/service_graph.json` — service dependency graph (adjacency list: service → [dependencies])\n- `~/failing_services.json` — list of currently failing services\n\n### Your Tasks\n\n1. **Write `~/rca_analyzer.py`** that:\n   - Loads the dependency graph and builds a directed graph (using networkx)\n   - Loads the failing services list\n   - For each failing service, walks upstream (to its dependencies) to find the root cause:\n     - A root cause is a failing service that has no failing dependencies\n   - Outputs to `~/rca_results.json`:\n     ```json\n     {\n       \"total_services\": 12,\n       \"failing_services\": [\"api-gateway\", \"auth-service\", \"user-service\", \"database-primary\"],\n       \"root_causes\": [\n         {\n           \"service\": \"database-primary\",\n           \"impact\": [\"user-service\", \"auth-service\", \"api-gateway\"],\n           \"depth\": 3\n         }\n       ],\n       \"impact_summary\": {\n         \"database-primary\": 4\n       }\n     }\n     ```\n\n2. `depth` = longest path from root cause to a leaf failing service.\n3. `impact` = all services transitively affected by this root cause.\n\n### networkx Quick Start\n```python\nimport networkx as nx\nG = nx.DiGraph()\nfor service, deps in graph.items():\n    for dep in deps:\n        G.add_edge(service, dep)  # service depends on dep\n# Find ancestors (upstream): nx.ancestors(G, node)\n# Find descendants (downstream): nx.descendants(G, node)\n```\n",
+    "hints": [
+      "Build edges as service → dependency (service depends on dep). Root cause = failing node with no failing successors (dependencies).",
+      "For each failing service, check if any of its dependencies (successors in the graph) are also failing. If none are, it's a root cause.",
+      "Impact: use `nx.ancestors(G, root_cause)` to find all services that transitively depend on the root cause, then intersect with failing services."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Root cause identified! Graph-based RCA is how production incident tools work.",
+      "failure_message": "Check ~/rca_results.json has root_causes with service, impact, and depth."
+    }
+  },
+  {
+    "dir_name": "aiops-detect-log-anomalies",
+    "name": "Detect Log Volume Anomalies",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "medium",
+    "tags": [
+      "logs",
+      "anomaly-detection",
+      "z-score",
+      "python",
+      "statistics"
+    ],
+    "time_estimate": "20m",
+    "xp_reward": 150,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_log_timeseries.py",
+        "dest": "~/generate_log_timeseries.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Detect Log Volume Anomalies\n\nA sudden spike or drop in log volume often signals an incident. In this challenge,\nyou'll use Z-score analysis to detect anomalous minutes in a log volume time series.\n\n### What is Z-score?\n\nZ-score measures how many standard deviations a data point is from the mean:\n```\nz = (x - mean) / std_dev\n```\nA Z-score > 2 or < -2 typically indicates an anomaly (the value is unusually high or low).\n\n### Setup\n\nA CSV file at `~/log_counts.csv` contains per-minute log counts for 24 hours (1440 rows):\n```\nminute,count\n2024-01-15T00:00,145\n2024-01-15T00:01,152\n...\n```\n\nSeveral anomalous minutes have been injected — sudden spikes and drops.\n\n### Your Tasks\n\n1. **Write a Python script** at `~/detect_anomalies.py` that:\n   - Reads `~/log_counts.csv`\n   - Calculates the mean and standard deviation of the `count` column\n   - Computes the Z-score for each minute\n   - Flags minutes where `abs(z_score) > 2.0` as anomalies\n   - Outputs results to `~/anomalies.json`:\n     ```json\n     {\n       \"mean\": 150.5,\n       \"std_dev\": 25.3,\n       \"threshold\": 2.0,\n       \"total_anomalies\": 8,\n       \"anomalies\": [\n         {\"minute\": \"2024-01-15T03:42\", \"count\": 450, \"z_score\": 11.8, \"type\": \"spike\"},\n         {\"minute\": \"2024-01-15T07:15\", \"count\": 5, \"z_score\": -5.7, \"type\": \"drop\"},\n         ...\n       ]\n     }\n     ```\n\n2. **Run the script**:\n   ```\n   python3 ~/detect_anomalies.py\n   ```\n\n3. Each anomaly should have:\n   - `type`: `\"spike\"` if z_score > 0, `\"drop\"` if z_score < 0\n   - `z_score` rounded to 1 decimal place\n\n### Useful Python\n```python\nimport csv, json, statistics\ndata = list(csv.DictReader(open('log_counts.csv')))\ncounts = [int(row['count']) for row in data]\nmean = statistics.mean(counts)\nstd = statistics.stdev(counts)\n```\n",
+    "hints": [
+      "Use Python's `statistics` module for mean and stdev, or `numpy`. Then z = (count - mean) / std for each row.",
+      "Flag as anomaly when abs(z_score) > 2.0. Set type to 'spike' when z > 0, 'drop' when z < 0.",
+      "Round z_score with `round(z, 1)`. The injected anomalies have counts 3-5x above or below normal."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Anomaly detection working! You found the injected log volume spikes and drops.",
+      "failure_message": "Check that ~/anomalies.json exists with the correct structure and that anomalies are detected with Z-score > 2."
+    }
+  },
+  {
+    "dir_name": "aiops-dynamic-thresholds",
+    "name": "Dynamic Thresholds from Baselines",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "hard",
+    "tags": [
+      "dynamic-thresholds",
+      "baseline",
+      "anomaly-detection",
+      "python"
+    ],
+    "time_estimate": "25m",
+    "xp_reward": 200,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_baseline_data.py",
+        "dest": "~/generate_baseline_data.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Dynamic Thresholds from Baselines\n\nStatic thresholds (\"alert when CPU > 80%\") cause false positives during peak hours and\nmiss anomalies during quiet hours. Dynamic thresholds learn what's \"normal\" for each\nhour of the day and alert on deviations from that baseline.\n\n### Setup\n\nTwo CSV files:\n- `~/baseline_data.csv` — 7 days of hourly latency data (168 rows) for learning\n- `~/new_data.csv` — 24 hours of new data to evaluate against the baseline\n\n### Your Tasks\n\n1. **Write `~/dynamic_threshold.py`** that:\n   - Reads `~/baseline_data.csv` and learns a per-hour baseline:\n     - For each hour (0-23), calculate mean and standard deviation from the 7 days\n   - Reads `~/new_data.csv` and evaluates each point:\n     - Flag as anomaly if value deviates more than 2 standard deviations from the hour's mean\n   - Outputs to `~/threshold_results.json`:\n     ```json\n     {\n       \"baseline\": {\n         \"0\": {\"mean\": 45.2, \"std\": 5.1, \"upper\": 55.4, \"lower\": 35.0},\n         \"1\": {\"mean\": 42.1, \"std\": 4.8, \"upper\": 51.7, \"lower\": 32.5},\n         ...\n       },\n       \"anomalies\": [\n         {\"timestamp\": \"2024-01-22T14:00\", \"value\": 120.5, \"expected_mean\": 85.3, \"expected_std\": 8.2, \"deviation_sigmas\": 4.3}\n       ],\n       \"total_evaluated\": 24,\n       \"total_anomalies\": 3\n     }\n     ```\n\n2. The `baseline` object should have entries for hours 0-23, each with `mean`, `std`, `upper` (mean + 2*std), `lower` (mean - 2*std).\n",
+    "hints": [
+      "Group baseline data by hour: `df['hour'] = pd.to_datetime(df['timestamp']).dt.hour`, then `df.groupby('hour')['latency_ms'].agg(['mean', 'std'])`.",
+      "For each new data point, look up the baseline for that hour and check if `abs(value - mean) > 2 * std`.",
+      "deviation_sigmas = abs(value - mean) / std — how many standard deviations away."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Dynamic thresholds working! No more false positives during peak hours.",
+      "failure_message": "Check ~/threshold_results.json has baseline for all 24 hours and anomalies detected."
+    }
+  },
+  {
+    "dir_name": "aiops-extract-error-patterns",
+    "name": "Extract Error Patterns from Logs",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "medium",
+    "tags": [
+      "logs",
+      "regex",
+      "python",
+      "error-analysis",
+      "pattern-mining"
+    ],
+    "time_estimate": "20m",
+    "xp_reward": 100,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_messy_logs.py",
+        "dest": "~/generate_messy_logs.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Extract Error Patterns from Logs\n\nReal-world logs are messy — mixed formats, inconsistent error messages, and noise.\nIn this challenge, you'll write a Python script to extract and categorize error patterns\nfrom a realistic application log.\n\n### Setup\n\nA messy log file has been generated at `~/application.log`. It contains a mix of:\n- Standard INFO/WARNING/ERROR log lines\n- Stack traces\n- Connection errors with varying hostnames/ports\n- Timeout errors with varying durations\n- Database errors with varying query details\n\n### Your Tasks\n\n1. **Write a Python script** at `~/extract_errors.py` that:\n   - Reads `~/application.log`\n   - Extracts all ERROR-level log lines\n   - Categorizes errors into types using regex patterns:\n     - `ConnectionError` — lines containing \"connection refused\", \"connection reset\", or \"connection timeout\"\n     - `TimeoutError` — lines containing \"timed out\" or \"timeout exceeded\"\n     - `DatabaseError` — lines containing \"database\", \"SQL\", or \"query failed\"\n     - `AuthError` — lines containing \"authentication failed\", \"unauthorized\", or \"permission denied\"\n     - `Other` — any ERROR line not matching above categories\n   - Outputs a JSON report to `~/error_report.json` with this structure:\n     ```json\n     {\n       \"total_errors\": 42,\n       \"categories\": {\n         \"ConnectionError\": {\"count\": 15, \"percentage\": 35.7},\n         \"TimeoutError\": {\"count\": 10, \"percentage\": 23.8},\n         ...\n       },\n       \"top_messages\": [\"most common error message\", ...]\n     }\n     ```\n\n2. **Run the script**:\n   ```\n   python3 ~/extract_errors.py\n   ```\n\n3. **Verify** the output:\n   ```\n   cat ~/error_report.json | jq .\n   ```\n\n### Requirements\n- `total_errors` must match the actual count of ERROR lines\n- Each category must have `count` and `percentage` (percentage of total errors)\n- `top_messages` must list the 5 most common error message patterns\n- Percentages should sum to approximately 100%\n",
+    "hints": [
+      "Use `re.search(r'pattern', line, re.IGNORECASE)` for case-insensitive matching.",
+      "Read the file line by line, check if 'ERROR' is in the line, then categorize with regex. Use a dict to count each category.",
+      "For top_messages, use `collections.Counter` on the error messages (strip timestamps first) and get `.most_common(5)`."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Error patterns extracted and categorized correctly!",
+      "failure_message": "Check that ~/error_report.json exists with correct structure and accurate counts."
+    }
+  },
+  {
+    "dir_name": "aiops-forecast-capacity",
+    "name": "Forecast Resource Capacity",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "hard",
+    "tags": [
+      "forecasting",
+      "prophet",
+      "capacity-planning",
+      "time-series",
+      "python"
+    ],
+    "time_estimate": "30m",
+    "xp_reward": 200,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_disk_data.py",
+        "dest": "~/generate_disk_data.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Forecast Resource Capacity\n\nCapacity planning prevents outages before they happen. In this challenge, you'll use\nFacebook Prophet to forecast disk usage and predict when it will hit a critical threshold.\n\n### Setup\n\nA CSV at `~/disk_usage.csv` has daily disk usage percentage for 30 days:\n```\nds,y\n2024-01-01,62.1\n2024-01-02,62.5\n...\n```\n\nDisk usage is growing steadily with some daily variation. You need to predict when it\nwill reach 90%.\n\n### Your Tasks\n\n1. **Write `~/forecast.py`** that:\n   - Reads `~/disk_usage.csv` (columns: `ds`, `y` — Prophet's expected format)\n   - Fits a Prophet model\n   - Forecasts 30 days ahead\n   - Finds the first date where the forecast (`yhat`) exceeds 90%\n   - Outputs to `~/forecast_result.json`:\n     ```json\n     {\n       \"current_usage\": 75.3,\n       \"current_date\": \"2024-01-30\",\n       \"forecast_days\": 30,\n       \"predicted_90_date\": \"2024-02-15\",\n       \"days_until_90\": 16,\n       \"forecast_summary\": [\n         {\"date\": \"2024-01-31\", \"predicted\": 75.8, \"lower\": 73.1, \"upper\": 78.5},\n         {\"date\": \"2024-02-01\", \"predicted\": 76.3, \"lower\": 73.2, \"upper\": 79.4},\n         ...\n       ]\n     }\n     ```\n\n2. **Run it**: `python3 ~/forecast.py`\n\n3. `forecast_summary` should include at least the next 7 days of predictions with\n   `predicted` (yhat), `lower` (yhat_lower), and `upper` (yhat_upper) bounds.\n\n### Prophet Quick Start\n```python\nfrom prophet import Prophet\nimport pandas as pd\n\ndf = pd.read_csv('disk_usage.csv')\nmodel = Prophet(daily_seasonality=False, weekly_seasonality=True)\nmodel.fit(df)\n\nfuture = model.make_future_dataframe(periods=30)\nforecast = model.predict(future)\n# forecast has columns: ds, yhat, yhat_lower, yhat_upper\n```\n",
+    "hints": [
+      "Prophet expects columns named `ds` (date) and `y` (value). The CSV is already in this format.",
+      "To find when yhat > 90: `threshold_rows = forecast[forecast['yhat'] > 90]`, then take the first date.",
+      "Suppress Prophet's verbose output: `model = Prophet(daily_seasonality=False); import logging; logging.getLogger('prophet').setLevel(logging.WARNING)`"
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Capacity forecast complete! You predicted when disk will hit 90% — time to plan that expansion.",
+      "failure_message": "Check that ~/forecast_result.json exists with predicted_90_date and forecast_summary."
+    }
+  },
+  {
+    "dir_name": "aiops-full-aiops-pipeline",
+    "name": "Full AIOps Pipeline",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "hard",
+    "tags": [
+      "aiops",
+      "pipeline",
+      "end-to-end",
+      "capstone",
+      "integration"
+    ],
+    "time_estimate": "30m",
+    "xp_reward": 300,
+    "packages": [],
+    "pre_install": [
+      "prometheus",
+      "prometheus-node-exporter",
+      "grafana"
+    ],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/mock_llm_server.py",
+        "dest": "~/mock_llm_server.py"
+      },
+      {
+        "source": "files/inject_failure.py",
+        "dest": "~/inject_failure.py"
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Full AIOps Pipeline\n\nThis is the capstone challenge. Build an end-to-end AIOps pipeline that:\nmonitoring -> anomaly detection -> event correlation -> diagnostics -> LLM summary\n\n### Setup\n\nPrometheus, node_exporter, Grafana, and the mock LLM server are running.\nA multi-component failure will be injected when you run `~/inject_failure.py`.\n\n### Your Tasks\n\n1. **Build `~/aiops_pipeline.py`** — a single script that orchestrates the full pipeline:\n\n   **Stage 1: Monitor** — Query Prometheus for CPU, memory, disk, network metrics\n\n   **Stage 2: Detect** — Apply Z-score anomaly detection on all metrics\n\n   **Stage 3: Correlate** — Group detected anomalies by time window (60s)\n\n   **Stage 4: Diagnose** — Collect diagnostic info (which metrics, what changed)\n\n   **Stage 5: Summarize** — Send findings to the LLM for a human-readable summary\n\n2. **Inject the failure**: `python3 ~/inject_failure.py`\n\n3. **Wait 30 seconds**, then run: `python3 ~/aiops_pipeline.py`\n\n4. **Output** to `~/pipeline_report.json`:\n   ```json\n   {\n     \"pipeline_stages\": [\"monitor\", \"detect\", \"correlate\", \"diagnose\", \"summarize\"],\n     \"execution_time_seconds\": 5.2,\n     \"monitoring\": {\n       \"metrics_queried\": 4,\n       \"data_points\": 120\n     },\n     \"detection\": {\n       \"method\": \"z_score\",\n       \"anomalies_found\": 3\n     },\n     \"correlation\": {\n       \"incident_clusters\": 1,\n       \"correlated_events\": 3\n     },\n     \"diagnosis\": {\n       \"affected_metrics\": [\"cpu\", \"memory\"],\n       \"probable_cause\": \"Resource exhaustion\"\n     },\n     \"summary\": \"LLM-generated human-readable incident summary...\",\n     \"recommended_actions\": [\"Scale up resources\", \"Investigate memory leak\"]\n   }\n   ```\n",
+    "hints": [
+      "Build each stage as a function, then chain them: `metrics = monitor()`, `anomalies = detect(metrics)`, etc.",
+      "Reuse patterns from earlier challenges: Z-score detection, temporal correlation, Prometheus API queries.",
+      "For the LLM summary, send the diagnosis as context and ask for a human-readable incident report."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Full AIOps pipeline complete! You've built monitoring -> detection -> correlation -> diagnosis -> summary.",
+      "failure_message": "Check ~/pipeline_report.json has all 5 pipeline stages with results."
+    },
+    "web_port": 3000
+  },
+  {
+    "dir_name": "aiops-isolation-forest",
+    "name": "ML Anomaly Detection with Isolation Forest",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "hard",
+    "tags": [
+      "anomaly-detection",
+      "isolation-forest",
+      "scikit-learn",
+      "ml",
+      "python"
+    ],
+    "time_estimate": "25m",
+    "xp_reward": 200,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_multi_metrics.py",
+        "dest": "~/generate_multi_metrics.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## ML Anomaly Detection with Isolation Forest\n\nIsolation Forest is an unsupervised ML algorithm ideal for anomaly detection. Unlike\nstatistical methods, it works well on multi-dimensional data — detecting anomalies that\nonly appear when you look at multiple metrics together.\n\n### How Isolation Forest Works\n\nThe algorithm isolates observations by randomly selecting a feature and a split value.\nAnomalies are easier to isolate (fewer splits needed), so they have shorter path lengths\nin the isolation trees.\n\n### Setup\n\nA CSV at `~/server_metrics.csv` has 4 dimensions sampled every minute for 24 hours (1440 rows):\n```\ntimestamp,cpu_percent,memory_percent,network_bytes_sec,disk_io_ms\n```\n\nNormal behavior has correlated patterns (high CPU → high memory). Anomalies break these\ncorrelations (e.g., high disk I/O with low CPU — indicating a stuck process).\n\n### Your Tasks\n\n1. **Write `~/isolation_forest.py`** that:\n   - Reads `~/server_metrics.csv`\n   - Trains an Isolation Forest on the 4 metric columns\n   - Uses `contamination=0.05` (expect ~5% anomalies)\n   - Outputs results to `~/if_results.json`:\n     ```json\n     {\n       \"model\": \"IsolationForest\",\n       \"contamination\": 0.05,\n       \"total_points\": 1440,\n       \"anomalies_detected\": 72,\n       \"anomaly_rate\": 0.05,\n       \"anomalies\": [\n         {\n           \"timestamp\": \"2024-01-15T03:42\",\n           \"cpu_percent\": 12.3,\n           \"memory_percent\": 89.5,\n           \"network_bytes_sec\": 1500000,\n           \"disk_io_ms\": 450,\n           \"anomaly_score\": -0.62\n         }\n       ]\n     }\n     ```\n\n2. **Run it**: `python3 ~/isolation_forest.py`\n\n3. The `anomaly_score` is from `model.decision_function()` — negative scores are more anomalous.\n\n### scikit-learn Quick Start\n```python\nfrom sklearn.ensemble import IsolationForest\nimport pandas as pd\n\ndf = pd.read_csv('server_metrics.csv')\nfeatures = df[['cpu_percent', 'memory_percent', 'network_bytes_sec', 'disk_io_ms']]\n\nmodel = IsolationForest(contamination=0.05, random_state=42)\ndf['prediction'] = model.fit_predict(features)  # -1 = anomaly, 1 = normal\ndf['score'] = model.decision_function(features)\n```\n",
+    "hints": [
+      "Use `IsolationForest(contamination=0.05, random_state=42)` for reproducible results.",
+      "`fit_predict()` returns -1 for anomalies, 1 for normal. `decision_function()` returns the anomaly score.",
+      "Filter anomalies: `anomalies = df[df['prediction'] == -1]`. Convert to list of dicts with `.to_dict('records')`."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Isolation Forest detected multi-dimensional anomalies that statistical methods would miss!",
+      "failure_message": "Check that ~/if_results.json exists with the correct structure and anomalies detected."
+    }
+  },
+  {
+    "dir_name": "aiops-llm-incident-copilot",
+    "name": "LLM Incident Copilot",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "hard",
+    "tags": [
+      "llm",
+      "incident-response",
+      "tool-use",
+      "function-calling",
+      "python"
+    ],
+    "time_estimate": "30m",
+    "xp_reward": 300,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/mock_llm_server.py",
+        "dest": "~/mock_llm_server.py"
+      },
+      {
+        "source": "files/mock_tools.py",
+        "dest": "~/mock_tools.py"
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## LLM Incident Copilot\n\nBuild an incident analysis agent that uses the LLM tool-use pattern: given an incident\ndescription, the agent decides which tools to call (query metrics, search logs), analyzes\nthe results, and produces a diagnosis.\n\n### Setup\n\n- Mock LLM server on `http://localhost:8080`\n- Mock tool functions in `~/mock_tools.py`:\n  - `query_prometheus(query)` — returns mock metric data\n  - `search_logs(service, timerange)` — returns mock log snippets\n  - `get_deployments(service)` — returns recent deployments\n\n### Your Tasks\n\n1. **Write `~/incident_copilot.py`** that implements a tool-use loop:\n   - Takes an incident description from `~/incident.txt`\n   - Sends it to the LLM with available tool descriptions\n   - Parses the LLM response for tool calls\n   - Executes the requested tools (from mock_tools.py)\n   - Feeds tool results back to the LLM\n   - Repeats until the LLM produces a final diagnosis\n   - Outputs to `~/diagnosis.json`:\n     ```json\n     {\n       \"incident_description\": \"High latency on payment service since 14:00\",\n       \"tools_called\": [\n         {\"tool\": \"query_prometheus\", \"args\": {\"query\": \"rate(http_requests_total{service='payment',status=~'5..'}[5m])\"}, \"result_summary\": \"Error rate: 15%\"},\n         {\"tool\": \"search_logs\", \"args\": {\"service\": \"payment\", \"timerange\": \"14:00-14:30\"}, \"result_summary\": \"Found 45 connection timeout errors\"}\n       ],\n       \"diagnosis\": \"Payment service experiencing high latency due to database connection timeouts...\",\n       \"evidence\": [\"15% error rate\", \"45 connection timeouts\", \"DB deployment at 13:55\"],\n       \"recommended_actions\": [\"Rollback database deployment v2.3.1\", \"Scale payment service to 5 replicas\"],\n       \"confidence\": \"high\"\n     }\n     ```\n\n2. The agent should call at least 2 different tools before producing a diagnosis.\n\n### Tool-Use Pattern\n```python\ntools = [\n    {\"name\": \"query_prometheus\", \"description\": \"Query Prometheus metrics\", \"parameters\": {\"query\": \"PromQL string\"}},\n    {\"name\": \"search_logs\", \"description\": \"Search service logs\", \"parameters\": {\"service\": \"string\", \"timerange\": \"string\"}},\n    {\"name\": \"get_deployments\", \"description\": \"Get recent deployments\", \"parameters\": {\"service\": \"string\"}}\n]\n# Send tools in the API call, parse response for tool_calls, execute, feed back\n```\n",
+    "hints": [
+      "The tool-use loop: 1) Send message + tools to LLM, 2) If response has tool_calls, execute them, 3) Add tool results to messages, 4) Send again, 5) Repeat until no more tool_calls.",
+      "The mock LLM will return tool_calls in its response. Parse `response['choices'][0]['message']['tool_calls']`.",
+      "After all tools are called, the LLM's final response is the diagnosis. Extract it and structure into the output format."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Incident copilot built! This is the architecture behind AI-powered incident response tools.",
+      "failure_message": "Check ~/diagnosis.json has tools_called (2+), diagnosis, evidence, and recommended_actions."
+    }
+  },
+  {
+    "dir_name": "aiops-llm-log-summarizer",
+    "name": "LLM Log Summarizer",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "hard",
+    "tags": [
+      "llm",
+      "log-analysis",
+      "prompt-engineering",
+      "python",
+      "aiops"
+    ],
+    "time_estimate": "25m",
+    "xp_reward": 200,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/mock_llm_server.py",
+        "dest": "~/mock_llm_server.py"
+      },
+      {
+        "source": "files/sample_logs.txt",
+        "dest": "~/sample_logs.txt"
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## LLM Log Summarizer\n\nLLMs can analyze thousands of log lines and produce structured summaries — something\nthat would take a human engineer 30+ minutes. In this challenge, you'll build a log\nsummarizer using the OpenAI-compatible API.\n\n### Setup\n\nA mock LLM server is running on `http://localhost:8080` (OpenAI-compatible API).\nA sample log file is at `~/sample_logs.txt` (500 lines from a failing web service).\n\n### Your Tasks\n\n1. **Write `~/log_summarizer.py`** that:\n   - Reads `~/sample_logs.txt`\n   - Chunks the logs into windows of 100 lines\n   - For each chunk, sends a prompt to the LLM API asking for analysis\n   - Combines chunk analyses into a final summary\n   - Outputs to `~/log_summary.json`:\n     ```json\n     {\n       \"total_lines\": 500,\n       \"chunks_analyzed\": 5,\n       \"error_count\": 45,\n       \"key_events\": [\n         \"Database connection pool exhausted at 10:15\",\n         \"Cascading timeouts started at 10:16\",\n         \"Service recovered at 10:45\"\n       ],\n       \"likely_root_cause\": \"Database connection pool exhaustion caused cascading failures\",\n       \"severity\": \"critical\",\n       \"prompt_template\": \"Analyze these application logs...\"\n     }\n     ```\n\n2. The `prompt_template` field should contain the actual prompt you used.\n\n### API Usage\n```python\nimport requests\nresponse = requests.post(\"http://localhost:8080/v1/chat/completions\", json={\n    \"model\": \"mock-llm\",\n    \"messages\": [\n        {\"role\": \"system\", \"content\": \"You are an SRE analyzing application logs.\"},\n        {\"role\": \"user\", \"content\": f\"Analyze these logs and identify errors, key events, and root cause:\\n\\n{log_chunk}\"}\n    ]\n})\nresult = response.json()[\"choices\"][0][\"message\"][\"content\"]\n```\n\n### Focus Areas\n- Prompt engineering: how you frame the analysis request matters\n- Output parsing: extract structured data from the LLM response\n- Chunking strategy: logs are too long for a single prompt\n",
+    "hints": [
+      "The mock server responds to any prompt. Focus on writing a good prompt that asks for: error count, key events, timeline, and root cause.",
+      "Parse the LLM response to extract structured fields. Use regex or string matching on the response text.",
+      "For chunking: `chunks = [lines[i:i+100] for i in range(0, len(lines), 100)]`"
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "LLM log summarizer working! Prompt engineering is the key skill for LLM-powered ops.",
+      "failure_message": "Check ~/log_summarizer.py exists and ~/log_summary.json has all required fields."
+    }
+  },
+  {
+    "dir_name": "aiops-llm-promql-generator",
+    "name": "LLM-Powered PromQL Generator",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "hard",
+    "tags": [
+      "llm",
+      "promql",
+      "natural-language",
+      "python",
+      "aiops"
+    ],
+    "time_estimate": "25m",
+    "xp_reward": 200,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/mock_llm_server.py",
+        "dest": "~/mock_llm_server.py"
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## LLM-Powered PromQL Generator\n\nNatural language to PromQL — let users ask questions in plain English and get valid\nPrometheus queries. This is the pattern behind every \"AI assistant\" in observability tools.\n\n### Setup\n\nA mock LLM server is running on `http://localhost:8080`.\n\n### Your Tasks\n\n1. **Write `~/promql_generator.py`** that:\n   - Takes a natural language query as input (from a file `~/queries.txt`, one per line)\n   - Sends each to the LLM with a system prompt that includes available metrics\n   - Extracts the PromQL from the response\n   - Validates the PromQL syntax (basic check: balanced brackets, valid function names)\n   - Outputs to `~/generated_queries.json`:\n     ```json\n     {\n       \"queries\": [\n         {\n           \"natural_language\": \"Show me the error rate for the payment service\",\n           \"generated_promql\": \"sum(rate(http_requests_total{service=\\\"payment\\\",status=~\\\"5..\\\"}[5m])) / sum(rate(http_requests_total{service=\\\"payment\\\"}[5m])) * 100\",\n           \"valid_syntax\": true\n         }\n       ],\n       \"total_queries\": 5,\n       \"valid_count\": 5,\n       \"system_prompt\": \"You are a PromQL expert...\"\n     }\n     ```\n\n2. **Create `~/queries.txt`** with at least 5 natural language queries:\n   ```\n   Show me the error rate for the payment service\n   What is the p99 latency over the last hour\n   Which services have the highest CPU usage\n   How much memory is each pod using\n   Predict disk usage for the next 24 hours\n   ```\n\n3. The `system_prompt` field should contain your actual system prompt.\n\n### Key Design Decisions\n- System prompt should list available metrics and their labels\n- Response parsing: extract PromQL from markdown code blocks or raw text\n- Validation: check for balanced `{}`, `[]`, `()` and known PromQL functions\n",
+    "hints": [
+      "Include available metrics in the system prompt: `http_requests_total{service, method, status}`, `node_cpu_seconds_total{mode}`, etc.",
+      "Extract PromQL from response: look for text between backticks or after 'PromQL:' prefix.",
+      "Basic syntax validation: check balanced brackets and that functions like `rate`, `sum`, `histogram_quantile` are valid PromQL."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "PromQL generator working! Natural language to queries is the future of observability.",
+      "failure_message": "Check ~/generated_queries.json has 5+ queries with generated_promql and valid_syntax."
+    }
+  },
+  {
+    "dir_name": "aiops-parse-json-logs",
+    "name": "Parse and Query JSON Logs",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "easy",
+    "tags": [
+      "logs",
+      "json",
+      "jq",
+      "analysis",
+      "observability"
+    ],
+    "time_estimate": "15m",
+    "xp_reward": 75,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_logs.py",
+        "dest": "~/generate_logs.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Parse and Query JSON Logs\n\nJSON logs are the standard in modern systems. Being able to slice and dice them with `jq`\nis a fundamental AIOps skill. In this challenge, you'll analyze a web service log file.\n\n### Setup\n\nA JSON log file has been generated at `~/webservice.log`. Each line is a JSON object with:\n- `timestamp` — ISO 8601\n- `method` — HTTP method (GET, POST, PUT, DELETE)\n- `path` — request path\n- `status` — HTTP status code\n- `latency_ms` — response time in milliseconds\n- `user_id` — requesting user\n\n### Your Tasks\n\nSave each answer to the specified file:\n\n1. **Count errors by status code** — count how many requests returned each 5xx status code.\n   Save as JSON to `~/errors_by_status.json`:\n   ```\n   cat ~/webservice.log | jq -s '[.[] | select(.status >= 500)] | group_by(.status) | map({status: .[0].status, count: length})' > ~/errors_by_status.json\n   ```\n\n2. **Find the top 5 slowest requests** — sorted by latency descending.\n   Save to `~/slowest_requests.json`:\n   ```\n   cat ~/webservice.log | jq -s 'sort_by(-.latency_ms) | .[0:5] | map({path, latency_ms, status})' > ~/slowest_requests.json\n   ```\n\n3. **Find the 1-minute window with the most errors** — group by minute, count errors (status >= 400).\n   Save the minute with the highest error count to `~/worst_minute.txt`:\n   ```\n   cat ~/webservice.log | jq -r 'select(.status >= 400) | .timestamp[0:16]' | sort | uniq -c | sort -rn | head -1 | awk '{print $2}' > ~/worst_minute.txt\n   ```\n\n### Useful jq Patterns\n- Select by field: `jq 'select(.status >= 500)'`\n- Slurp into array: `jq -s '.'`\n- Group and count: `jq -s 'group_by(.field) | map({key: .[0].field, count: length})'`\n- Sort: `jq -s 'sort_by(.field)'`\n",
+    "hints": [
+      "Use `jq -s` (slurp) to read all lines into a single array, then you can sort, group, and slice.",
+      "For errors by status: `select(.status >= 500)` filters to server errors, then `group_by(.status)` groups them.",
+      "For worst minute: extract the minute portion of timestamp with `.[0:16]` (YYYY-MM-DDTHH:MM), then count with `uniq -c`."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Great log analysis! You can slice JSON logs like a pro.",
+      "failure_message": "Check that all three output files exist and contain the correct data."
+    }
+  },
+  {
+    "dir_name": "aiops-promql-analysis",
+    "name": "Advanced PromQL for Analysis",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "medium",
+    "tags": [
+      "prometheus",
+      "promql",
+      "metrics",
+      "analysis",
+      "observability"
+    ],
+    "time_estimate": "20m",
+    "xp_reward": 100,
+    "packages": [],
+    "pre_install": [
+      "prometheus",
+      "prometheus-node-exporter"
+    ],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_metrics.py",
+        "dest": "~/generate_metrics.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Advanced PromQL for Analysis\n\nPromQL is the query language for Prometheus. Beyond basic queries, PromQL has powerful\nfunctions for rate calculation, histogram analysis, prediction, and aggregation — all\nessential for AIOps metric analysis.\n\n### Setup\n\nPrometheus is running with pre-loaded sample metrics simulating a web service:\n- `http_requests_total` — counter with labels: method, status, service\n- `http_request_duration_seconds` — histogram with labels: method, service\n- `node_cpu_seconds_total` — from node_exporter\n\n### Your Tasks\n\nWrite PromQL queries and save each to the specified file:\n\n1. **Error rate percentage** — percentage of HTTP 5xx responses over the last 5 minutes:\n   ```\n   Save to ~/query_error_rate.txt\n   ```\n\n2. **P99 latency** — 99th percentile request duration from the histogram:\n   ```\n   Save to ~/query_p99.txt\n   ```\n\n3. **Rate of change** — use `deriv()` to find the rate of change of CPU usage:\n   ```\n   Save to ~/query_deriv.txt\n   ```\n\n4. **Capacity prediction** — use `predict_linear()` to predict disk usage 24 hours ahead:\n   ```\n   Save to ~/query_predict.txt\n   ```\n\n### PromQL Reference\n- `rate(counter[5m])` — per-second rate over 5 minutes\n- `histogram_quantile(0.99, rate(histogram_bucket[5m]))` — quantile from histogram\n- `deriv(gauge[5m])` — per-second derivative of a gauge\n- `predict_linear(gauge[1h], 86400)` — linear prediction 24h ahead\n- Use the Browser tab to test queries in the Prometheus UI\n",
+    "hints": [
+      "Error rate: `sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100`",
+      "P99: `histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))`",
+      "Deriv: `deriv(node_cpu_seconds_total{mode=\"idle\"}[5m])` — predict_linear: `predict_linear(node_filesystem_avail_bytes{mountpoint=\"/\"}[1h], 86400)`"
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Your PromQL skills are solid! These queries are the foundation of metric-based AIOps.",
+      "failure_message": "Check that all four query files exist and contain valid PromQL expressions."
+    },
+    "web_port": 9090
+  },
+  {
+    "dir_name": "aiops-seasonal-decomposition",
+    "name": "Seasonal Decomposition of Metrics",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "hard",
+    "tags": [
+      "time-series",
+      "seasonal-decomposition",
+      "stl",
+      "statsmodels",
+      "python"
+    ],
+    "time_estimate": "25m",
+    "xp_reward": 200,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_seasonal_data.py",
+        "dest": "~/generate_seasonal_data.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Seasonal Decomposition of Metrics\n\nReal metrics have patterns: daily cycles (traffic peaks at noon), weekly cycles (less\ntraffic on weekends), and long-term trends. STL decomposition separates a time series\ninto trend, seasonal, and residual components. Anomalies hide in the residual.\n\n### Setup\n\nA CSV at `~/request_rate.csv` has hourly request counts for 7 days (168 data points):\n```\ntimestamp,requests\n2024-01-15T00:00,1200\n...\n```\n\nThe data has a clear daily pattern (peak at 14:00, trough at 04:00) plus injected anomalies.\n\n### Your Tasks\n\n1. **Write `~/decompose.py`** that:\n   - Reads `~/request_rate.csv`\n   - Performs STL decomposition with `period=24` (daily cycle in hourly data)\n   - Detects anomalies in the residual component (where `abs(residual) > 2 * std(residual)`)\n   - Outputs to `~/decomposition.json`:\n     ```json\n     {\n       \"period\": 24,\n       \"trend_range\": {\"min\": 1100, \"max\": 1500},\n       \"seasonal_amplitude\": 350,\n       \"residual_std\": 45.2,\n       \"anomalies\": [\n         {\"timestamp\": \"2024-01-16T03:00\", \"requests\": 3500, \"residual\": 2100, \"z_score\": 46.5}\n       ],\n       \"total_anomalies\": 5\n     }\n     ```\n\n2. **Run it**: `python3 ~/decompose.py`\n\n### statsmodels STL\n```python\nfrom statsmodels.tsa.seasonal import STL\nimport pandas as pd\n\ndf = pd.read_csv('request_rate.csv', parse_dates=['timestamp'], index_col='timestamp')\nstl = STL(df['requests'], period=24)\nresult = stl.fit()\n\ntrend = result.trend\nseasonal = result.seasonal\nresidual = result.resid\n```\n\n### Key Insight\nA value of 3500 requests at 3am looks anomalous. But is it? STL tells you:\n- Trend says baseline is 1300\n- Seasonal says 3am is normally -200 from baseline (= 1100 expected)\n- Residual = 3500 - 1300 - (-200) = 2400 → that's the actual anomaly magnitude\n",
+    "hints": [
+      "Use `STL(series, period=24).fit()` — period=24 because data is hourly with daily seasonality.",
+      "Anomalies are in the residual: `std = result.resid.std()`, flag where `abs(resid) > 2 * std`.",
+      "seasonal_amplitude = `result.seasonal.max() - result.seasonal.min()`. trend_range = min/max of `result.trend`."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Seasonal decomposition complete! You can now separate real anomalies from normal daily patterns.",
+      "failure_message": "Check that ~/decomposition.json has period, trend_range, seasonal_amplitude, residual_std, and anomalies."
+    }
+  },
+  {
+    "dir_name": "aiops-self-healing-operator",
+    "name": "Build a Self-Healing Operator",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "hard",
+    "tags": [
+      "kubernetes",
+      "operator",
+      "self-healing",
+      "python",
+      "automation"
+    ],
+    "time_estimate": "30m",
+    "xp_reward": 300,
+    "packages": [],
+    "pre_install": [
+      "kubectl"
+    ],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Build a Self-Healing Operator\n\nA Kubernetes operator watches for specific conditions and takes remediation actions\nautomatically. In this challenge, you'll build a simple self-healing controller in Python.\n\n### Setup\n\nA k3s cluster is running with several pods. Some will experience OOMKilled events and\nCrashLoopBackOff states.\n\n### Your Tasks\n\n1. **Write `~/healer.py`** — a Python script that:\n   - Connects to the Kubernetes API using the `kubernetes` Python client\n   - Watches for pods with these conditions:\n     - `OOMKilled` — restart the pod and log a recommendation to increase memory limits\n     - `CrashLoopBackOff` with restarts > 5 — delete the pod\n     - `ImagePullBackOff` — log the error (can't auto-fix)\n   - Logs all actions to `~/healer_log.json` (append one JSON object per line):\n     ```json\n     {\"timestamp\": \"...\", \"action\": \"restart\", \"pod\": \"app-xyz\", \"namespace\": \"default\", \"reason\": \"OOMKilled\", \"recommendation\": \"Increase memory limit from 128Mi to 256Mi\"}\n     ```\n\n2. **Write the operator manifest** at `~/healer-deployment.yaml`:\n   - A Deployment running your healer script\n   - ServiceAccount with permissions to get/list/delete pods\n   - ClusterRole and ClusterRoleBinding\n\n3. **Run the healer once** (not as a loop, just scan current state):\n   ```\n   python3 ~/healer.py --once\n   ```\n\n### kubernetes Python Client\n```python\nfrom kubernetes import client, config\nconfig.load_kube_config()\nv1 = client.CoreV1Api()\npods = v1.list_pod_for_all_namespaces()\nfor pod in pods.items:\n    for cs in (pod.status.container_statuses or []):\n        if cs.state.waiting and cs.state.waiting.reason == 'CrashLoopBackOff':\n            # Take action\n            pass\n```\n",
+    "hints": [
+      "Use `config.load_kube_config()` for local access. Check `container_statuses[].state.waiting.reason` and `last_state.terminated.reason`.",
+      "Delete pod: `v1.delete_namespaced_pod(name=pod_name, namespace=ns)`. This triggers recreation by the Deployment.",
+      "For OOMKilled, check `last_state.terminated.reason == 'OOMKilled'`. The current memory limit is in `pod.spec.containers[0].resources.limits`."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Self-healing operator built! This is the pattern behind production Kubernetes operators.",
+      "failure_message": "Check ~/healer.py exists, ~/healer_log.json has entries, and ~/healer-deployment.yaml is valid."
+    }
+  },
+  {
+    "dir_name": "aiops-setup-otel-pipeline",
+    "name": "Set Up an OpenTelemetry Pipeline",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "medium",
+    "tags": [
+      "opentelemetry",
+      "otel",
+      "collector",
+      "observability",
+      "telemetry"
+    ],
+    "time_estimate": "20m",
+    "xp_reward": 150,
+    "packages": [],
+    "pre_install": [
+      "otelcol-contrib"
+    ],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_telemetry.py",
+        "dest": "~/generate_telemetry.py"
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Set Up an OpenTelemetry Pipeline\n\nOpenTelemetry (OTel) is the CNCF standard for collecting metrics, logs, and traces.\nThe OTel Collector receives, processes, and exports telemetry data through a pipeline\narchitecture: receivers -> processors -> exporters.\n\n### Your Tasks\n\n1. **Create an OTel Collector config** at `~/otel-config.yaml` with:\n\n   - **Receivers**:\n     - `otlp` — listening on gRPC port `4317` and HTTP port `4318`\n\n   - **Processors**:\n     - `batch` — with `timeout: 5s` and `send_batch_size: 100`\n\n   - **Exporters**:\n     - `logging` — with `verbosity: detailed`\n     - `prometheus` — exposing metrics on port `8889` at endpoint `0.0.0.0:8889`\n\n   - **Service pipelines**:\n     - `metrics` pipeline: receivers `[otlp]`, processors `[batch]`, exporters `[prometheus, logging]`\n     - `traces` pipeline: receivers `[otlp]`, processors `[batch]`, exporters `[logging]`\n\n2. **Start the OTel Collector**:\n   ```\n   otelcol-contrib --config ~/otel-config.yaml > ~/otel.log 2>&1 &\n   ```\n\n3. **Send test telemetry** using the provided script:\n   ```\n   python3 ~/generate_telemetry.py\n   ```\n\n4. **Verify** the pipeline is working:\n   - Check the collector is running: `curl -s http://localhost:13133/`\n   - Check exported metrics: `curl -s http://localhost:8889/metrics | head -20`\n\n### OTel Config Structure\n```yaml\nreceivers:\n  otlp:\n    protocols:\n      grpc:\n        endpoint: 0.0.0.0:4317\n      http:\n        endpoint: 0.0.0.0:4318\nprocessors:\n  batch:\n    timeout: 5s\nexporters:\n  logging:\n    verbosity: detailed\nservice:\n  pipelines:\n    metrics:\n      receivers: [otlp]\n      processors: [batch]\n      exporters: [logging]\n```\n\n### Useful Commands\n- Validate config: `otelcol-contrib validate --config ~/otel-config.yaml`\n- Check collector health: `curl -s http://localhost:13133/`\n- View Prometheus metrics: `curl -s http://localhost:8889/metrics | grep -v '^#' | head`\n",
+    "hints": [
+      "The config has four top-level sections: `receivers`, `processors`, `exporters`, and `service`. The `service.pipelines` section wires them together.",
+      "For the prometheus exporter, use: `prometheus: {endpoint: '0.0.0.0:8889'}`. This exposes collected metrics in Prometheus format.",
+      "Make sure both gRPC (4317) and HTTP (4318) protocols are configured under `receivers.otlp.protocols`."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Your OpenTelemetry pipeline is running and processing telemetry!",
+      "failure_message": "Check your otel-config.yaml syntax and ensure the collector is running. Use `otelcol-contrib validate` to check."
+    }
+  },
+  {
+    "dir_name": "aiops-setup-prometheus-monitoring",
+    "name": "Set Up Prometheus Monitoring",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "easy",
+    "tags": [
+      "prometheus",
+      "monitoring",
+      "metrics",
+      "observability"
+    ],
+    "time_estimate": "15m",
+    "xp_reward": 75,
+    "packages": [],
+    "pre_install": [
+      "prometheus",
+      "prometheus-node-exporter"
+    ],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Set Up Prometheus Monitoring\n\nPrometheus is the foundation of modern observability. In this challenge, you'll configure\nPrometheus to scrape system metrics from node_exporter and write your first PromQL query.\n\n### Your Tasks\n\n1. **Configure Prometheus** to scrape node_exporter metrics:\n   - Edit `/etc/prometheus/prometheus.yml`\n   - Add a scrape job named `node` targeting `localhost:9100`\n   - Set the scrape interval to `15s`\n\n2. **Start the services**:\n   - Start node_exporter: `node_exporter &`\n   - Start Prometheus with your config: `prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/tmp/prometheus &`\n\n3. **Verify metrics are being collected**:\n   - Wait ~15 seconds for the first scrape\n   - Query Prometheus to confirm `node_cpu_seconds_total` metric exists:\n     ```\n     curl -s 'http://localhost:9090/api/v1/query?query=node_cpu_seconds_total' | jq '.data.result | length'\n     ```\n   - The result should be greater than 0\n\n4. **Write a PromQL query** that calculates the current CPU idle percentage and save it:\n   ```\n   echo 'avg(rate(node_cpu_seconds_total{mode=\"idle\"}[1m])) * 100' > ~/cpu_idle_query.txt\n   ```\n\n### Useful Commands\n- Check Prometheus config: `promtool check config /etc/prometheus/prometheus.yml`\n- Query Prometheus API: `curl -s 'http://localhost:9090/api/v1/query?query=up'`\n- Use the Browser tab to access the Prometheus web UI\n",
+    "hints": [
+      "The scrape config goes under `scrape_configs` in prometheus.yml. Each job needs `job_name` and `static_configs` with `targets`.",
+      "Make sure both node_exporter (port 9100) and Prometheus (port 9090) are running before querying. Use `ss -tlnp` to check.",
+      "The PromQL for CPU idle: avg(rate(node_cpu_seconds_total{mode=\"idle\"}[1m])) * 100"
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Prometheus is scraping metrics and your PromQL query is correct!",
+      "failure_message": "Check that Prometheus and node_exporter are running, and your config has the 'node' scrape job."
+    },
+    "web_port": 9090
+  },
+  {
+    "dir_name": "aiops-slo-error-budgets",
+    "name": "SLO-Based Error Budgets",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "medium",
+    "tags": [
+      "slo",
+      "error-budget",
+      "burn-rate",
+      "prometheus",
+      "alerting"
+    ],
+    "time_estimate": "20m",
+    "xp_reward": 150,
+    "packages": [],
+    "pre_install": [
+      "prometheus"
+    ],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_slo_data.py",
+        "dest": "~/generate_slo_data.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## SLO-Based Error Budgets\n\nInstead of alerting on every error, SLO-based alerting fires only when your error budget\nis burning too fast. This dramatically reduces alert noise while catching real problems.\n\n### Concepts\n\n- **SLO**: \"99.9% of requests succeed over 30 days\"\n- **Error budget**: 0.1% of requests can fail = 43.2 minutes of downtime per 30 days\n- **Burn rate**: how fast you're consuming the budget. 1x = on track, 10x = will exhaust in 3 days\n\n### Setup\n\nA CSV at `~/request_data.csv` has per-minute request counts (total and errors) for 24 hours.\n\n### Your Tasks\n\n1. **Write `~/slo_calculator.py`** that:\n   - Reads `~/request_data.csv` (columns: `minute`, `total_requests`, `error_requests`)\n   - Defines SLO: 99.9% success rate over 30 days\n   - Calculates:\n     - Current error rate (errors / total)\n     - Error budget (total allowed errors in 30 days)\n     - Budget consumed so far (based on 24h of data, extrapolated)\n     - Burn rate (actual error rate / allowed error rate)\n   - Writes a Prometheus alerting rule to `~/slo_alert.yml` that fires when burn rate > 10x\n   - Outputs to `~/slo_report.json`:\n     ```json\n     {\n       \"slo_target\": 0.999,\n       \"window_days\": 30,\n       \"current_error_rate\": 0.0025,\n       \"error_budget_total\": 0.001,\n       \"budget_consumed_percent\": 62.5,\n       \"burn_rate\": 2.5,\n       \"alert_threshold\": 10,\n       \"would_alert\": false\n     }\n     ```\n\n2. **Create `~/slo_alert.yml`** — a Prometheus alerting rule:\n   ```yaml\n   groups:\n     - name: slo-alerts\n       rules:\n         - alert: HighErrorBudgetBurn\n           expr: |\n             (sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])))\n             / (1 - 0.999) > 10\n           for: 5m\n           labels:\n             severity: critical\n           annotations:\n             summary: \"Error budget burn rate exceeds 10x\"\n   ```\n",
+    "hints": [
+      "Error budget = 1 - SLO target = 0.001 (0.1%). Burn rate = actual_error_rate / error_budget.",
+      "If burn rate is 10x, you'll exhaust your 30-day budget in 3 days (30/10).",
+      "The alert expr divides the current error rate by the error budget (1 - 0.999 = 0.001) and checks if > 10."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "SLO error budget calculations correct! This is how modern SRE teams alert.",
+      "failure_message": "Check ~/slo_report.json and ~/slo_alert.yml exist with correct structure."
+    }
+  },
+  {
+    "dir_name": "aiops-statistical-anomaly-detection",
+    "name": "Statistical Anomaly Detection",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "medium",
+    "tags": [
+      "anomaly-detection",
+      "z-score",
+      "moving-average",
+      "python",
+      "statistics"
+    ],
+    "time_estimate": "25m",
+    "xp_reward": 150,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_cpu_data.py",
+        "dest": "~/generate_cpu_data.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Statistical Anomaly Detection\n\nBefore reaching for ML, statistical methods are often sufficient for anomaly detection.\nIn this challenge, you'll implement two classic approaches: Z-score and moving average,\nthen compare their effectiveness.\n\n### Setup\n\nA CSV file at `~/cpu_metrics.csv` contains 5-minute CPU utilization samples over 7 days\n(2016 data points). Several anomalies have been injected — both sudden spikes and gradual drifts.\n\n```\ntimestamp,cpu_percent\n2024-01-15T00:00:00,45.2\n2024-01-15T00:05:00,47.1\n...\n```\n\n### Your Tasks\n\n1. **Write `~/anomaly_detector.py`** that implements both methods:\n\n   **Z-score method:**\n   - Calculate global mean and standard deviation\n   - Flag points where `abs(z_score) > 3.0`\n\n   **Moving average method:**\n   - Calculate a rolling mean with window size 12 (1 hour of 5-min samples)\n   - Calculate rolling standard deviation with the same window\n   - Flag points where the value deviates more than 2 standard deviations from the rolling mean\n\n2. **Output results** to `~/detection_results.json`:\n   ```json\n   {\n     \"total_points\": 2016,\n     \"zscore\": {\n       \"anomalies_found\": 15,\n       \"anomaly_timestamps\": [\"2024-01-15T03:20:00\", ...]\n     },\n     \"moving_avg\": {\n       \"window_size\": 12,\n       \"anomalies_found\": 22,\n       \"anomaly_timestamps\": [\"2024-01-15T03:20:00\", ...]\n     },\n     \"both_methods\": {\n       \"count\": 12,\n       \"timestamps\": [\"2024-01-15T03:20:00\", ...]\n     }\n   }\n   ```\n\n3. The `both_methods` section should list anomalies detected by BOTH methods (intersection).\n\n### Useful Python\n```python\nimport pandas as pd\ndf = pd.read_csv('cpu_metrics.csv')\ndf['rolling_mean'] = df['cpu_percent'].rolling(window=12).mean()\ndf['rolling_std'] = df['cpu_percent'].rolling(window=12).std()\n```\n",
+    "hints": [
+      "Z-score: `z = (value - mean) / std`. Use `statistics.mean()` and `statistics.stdev()` or pandas.",
+      "Moving average: `df['rolling_mean'] = df['cpu_percent'].rolling(12).mean()`. Anomaly when `abs(value - rolling_mean) > 2 * rolling_std`.",
+      "For `both_methods`, use Python set intersection: `set(zscore_timestamps) & set(moving_avg_timestamps)`."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Both detection methods working! Moving average catches more anomalies because it adapts to local patterns.",
+      "failure_message": "Check that ~/detection_results.json has all three sections with valid anomaly timestamps."
+    }
+  },
+  {
+    "dir_name": "aiops-structured-logging",
+    "name": "Implement Structured Logging",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "easy",
+    "tags": [
+      "logging",
+      "structured-logging",
+      "json",
+      "python",
+      "observability"
+    ],
+    "time_estimate": "15m",
+    "xp_reward": 75,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/app.py",
+        "dest": "~/app.py"
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Implement Structured Logging\n\nUnstructured logs are hard to parse and analyze at scale. Structured logging (JSON format)\nmakes logs machine-readable, enabling automated analysis — a core AIOps requirement.\n\n### The Problem\n\nThe file `~/app.py` is a Python web service that writes unstructured log messages like:\n```\n2024-01-15 10:23:45 - WARNING - High latency detected: 450ms for /api/users\n```\n\nThese are hard to filter, aggregate, and alert on programmatically.\n\n### Your Tasks\n\n1. **Modify `~/app.py`** to output JSON structured logs instead. Each log line must be valid JSON with these fields:\n   - `timestamp` — ISO 8601 format (e.g. `2024-01-15T10:23:45.000Z`)\n   - `level` — log level: `INFO`, `WARNING`, or `ERROR`\n   - `service` — must be `\"web-api\"`\n   - `message` — the log message text\n\n2. **Run the app** to generate structured logs:\n   ```\n   python3 ~/app.py > ~/app.log 2>&1\n   ```\n\n3. **Verify** your logs are valid JSON:\n   ```\n   cat ~/app.log | head -5 | jq .\n   ```\n\n### Requirements\n- Each line in `~/app.log` must be valid JSON\n- Every line must have all four fields: `timestamp`, `level`, `service`, `message`\n- The `service` field must be `\"web-api\"`\n- At least 5 log lines must be present\n\n### Useful Commands\n- Validate JSON: `cat ~/app.log | jq -c . > /dev/null`\n- Count log lines: `wc -l ~/app.log`\n- Extract field: `cat ~/app.log | jq -r '.level' | sort | uniq -c`\n",
+    "hints": [
+      "Use Python's `json` module to write each log entry. `json.dumps({'timestamp': ..., 'level': ..., 'service': 'web-api', 'message': ...})`",
+      "For ISO 8601 timestamps: `from datetime import datetime, timezone; datetime.now(timezone.utc).isoformat()`",
+      "Replace each `print()` call with a function that outputs `json.dumps(log_entry)` to stdout."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Your logs are properly structured! JSON logging makes automated analysis possible.",
+      "failure_message": "Check that ~/app.log exists, each line is valid JSON, and all required fields are present."
+    }
+  },
+  {
+    "dir_name": "aiops-temporal-correlation",
+    "name": "Temporal Event Correlation",
+    "type": "skill",
+    "category": "aiops",
+    "difficulty": "medium",
+    "tags": [
+      "event-correlation",
+      "temporal",
+      "clustering",
+      "python"
+    ],
+    "time_estimate": "20m",
+    "xp_reward": 150,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/generate_events.py",
+        "dest": "~/generate_events.py",
+        "cleanup": true
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Temporal Event Correlation\n\nWhen an incident occurs, events from multiple services fire within seconds of each other.\nTemporal correlation groups events that happen within a time window, revealing which events\nare part of the same incident.\n\n### Setup\n\nA JSON file at `~/events.json` contains 80+ events from 6 services over 2 hours.\nEvents cluster around 4 distinct incidents, with noise events scattered between.\n\n### Your Tasks\n\n1. **Write `~/correlate_events.py`** that:\n   - Reads `~/events.json` (array of `{timestamp, service, event_type, message}`)\n   - Groups events within a 60-second window into clusters\n   - Identifies distinct incident clusters (groups with 3+ events)\n   - Outputs to `~/correlation_results.json`:\n     ```json\n     {\n       \"total_events\": 85,\n       \"window_seconds\": 60,\n       \"clusters\": [\n         {\n           \"cluster_id\": 1,\n           \"start_time\": \"2024-01-15T10:15:30\",\n           \"end_time\": \"2024-01-15T10:16:20\",\n           \"event_count\": 12,\n           \"services_affected\": [\"api-gateway\", \"auth-service\", \"database\"],\n           \"events\": [...]\n         }\n       ],\n       \"total_clusters\": 4,\n       \"noise_events\": 15\n     }\n     ```\n\n2. **Algorithm**: Sort events by timestamp. Walk through them — if the gap between\n   consecutive events is <= 60 seconds, they're in the same cluster. If the gap is > 60s,\n   start a new cluster. Only keep clusters with 3+ events (the rest are noise).\n",
+    "hints": [
+      "Sort events by timestamp first. Then iterate: if `current_time - last_event_time <= 60s`, add to current cluster, else start new cluster.",
+      "Use `datetime.fromisoformat()` to parse timestamps. Calculate gap in seconds with `(t2 - t1).total_seconds()`.",
+      "noise_events = total_events - sum of events in clusters with 3+ events."
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Event correlation working! You identified the distinct incident clusters.",
+      "failure_message": "Check ~/correlation_results.json has clusters with 3+ events and correct structure."
+    }
+  },
+  {
     "dir_name": "ansible-assert",
     "name": "Ansible Assert Module",
     "type": "skill",

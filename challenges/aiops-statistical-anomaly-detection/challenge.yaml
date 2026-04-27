@@ -1,0 +1,90 @@
+name: "Statistical Anomaly Detection"
+type: skill
+category: aiops
+difficulty: medium
+tags: [anomaly-detection, z-score, moving-average, python, statistics]
+time_estimate: "25m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_cpu_data.py
+    dest: ~/generate_cpu_data.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Statistical Anomaly Detection
+
+  Before reaching for ML, statistical methods are often sufficient for anomaly detection.
+  In this challenge, you'll implement two classic approaches: Z-score and moving average,
+  then compare their effectiveness.
+
+  ### Setup
+
+  A CSV file at `~/cpu_metrics.csv` contains 5-minute CPU utilization samples over 7 days
+  (2016 data points). Several anomalies have been injected — both sudden spikes and gradual drifts.
+
+  ```
+  timestamp,cpu_percent
+  2024-01-15T00:00:00,45.2
+  2024-01-15T00:05:00,47.1
+  ...
+  ```
+
+  ### Your Tasks
+
+  1. **Write `~/anomaly_detector.py`** that implements both methods:
+
+     **Z-score method:**
+     - Calculate global mean and standard deviation
+     - Flag points where `abs(z_score) > 3.0`
+
+     **Moving average method:**
+     - Calculate a rolling mean with window size 12 (1 hour of 5-min samples)
+     - Calculate rolling standard deviation with the same window
+     - Flag points where the value deviates more than 2 standard deviations from the rolling mean
+
+  2. **Output results** to `~/detection_results.json`:
+     ```json
+     {
+       "total_points": 2016,
+       "zscore": {
+         "anomalies_found": 15,
+         "anomaly_timestamps": ["2024-01-15T03:20:00", ...]
+       },
+       "moving_avg": {
+         "window_size": 12,
+         "anomalies_found": 22,
+         "anomaly_timestamps": ["2024-01-15T03:20:00", ...]
+       },
+       "both_methods": {
+         "count": 12,
+         "timestamps": ["2024-01-15T03:20:00", ...]
+       }
+     }
+     ```
+
+  3. The `both_methods` section should list anomalies detected by BOTH methods (intersection).
+
+  ### Useful Python
+  ```python
+  import pandas as pd
+  df = pd.read_csv('cpu_metrics.csv')
+  df['rolling_mean'] = df['cpu_percent'].rolling(window=12).mean()
+  df['rolling_std'] = df['cpu_percent'].rolling(window=12).std()
+  ```
+
+hints:
+  - "Z-score: `z = (value - mean) / std`. Use `statistics.mean()` and `statistics.stdev()` or pandas."
+  - "Moving average: `df['rolling_mean'] = df['cpu_percent'].rolling(12).mean()`. Anomaly when `abs(value - rolling_mean) > 2 * rolling_std`."
+  - "For `both_methods`, use Python set intersection: `set(zscore_timestamps) & set(moving_avg_timestamps)`."
+validation:
+  script: validate.sh
+  success_message: "Both detection methods working! Moving average catches more anomalies because it adapts to local patterns."
+  failure_message: "Check that ~/detection_results.json has all three sections with valid anomaly timestamps."

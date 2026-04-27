@@ -1,0 +1,207 @@
+2024-03-15T14:30:01Z INFO  [api-gateway] Request GET /api/v1/orders completed in 45ms status=200
+2024-03-15T14:30:02Z INFO  [auth-service] Token validated for user=u-4821 session=s-9912
+2024-03-15T14:30:03Z INFO  [order-service] Processing order ord-28471 for user u-4821
+2024-03-15T14:30:04Z DEBUG [database] Query SELECT * FROM orders WHERE id=$1 executed in 12ms
+2024-03-15T14:30:05Z INFO  [api-gateway] Request POST /api/v1/auth completed in 23ms status=200
+2024-03-15T14:30:06Z INFO  [cache] Cache hit for key=session:u-4821 ttl=1800s
+2024-03-15T14:30:07Z INFO  [order-service] Order ord-28471 status updated to PROCESSING
+2024-03-15T14:30:08Z DEBUG [database] Connection pool stats: active=12 idle=38 max=50
+2024-03-15T14:30:09Z INFO  [payment-service] Payment initiated for order ord-28471 amount=149.99
+2024-03-15T14:30:10Z INFO  [api-gateway] Request GET /api/v1/products completed in 31ms status=200
+2024-03-15T14:30:15Z INFO  [notification-service] Email queued for user u-4821 template=order_confirmation
+2024-03-15T14:30:20Z DEBUG [database] Connection pool stats: active=15 idle=35 max=50
+2024-03-15T14:30:25Z INFO  [api-gateway] Request GET /api/v1/users/profile completed in 28ms status=200
+2024-03-15T14:30:30Z INFO  [auth-service] Token validated for user=u-7733 session=s-1124
+2024-03-15T14:30:35Z DEBUG [database] Connection pool stats: active=18 idle=32 max=50
+2024-03-15T14:30:40Z INFO  [order-service] Processing order ord-28472 for user u-7733
+2024-03-15T14:30:45Z INFO  [api-gateway] Request GET /api/v1/orders completed in 52ms status=200
+2024-03-15T14:30:50Z DEBUG [database] Connection pool stats: active=22 idle=28 max=50
+2024-03-15T14:30:55Z INFO  [cache] Cache miss for key=product:p-9921 fetching from database
+2024-03-15T14:31:00Z DEBUG [database] Connection pool stats: active=28 idle=22 max=50
+2024-03-15T14:31:05Z WARN  [database] Connection pool utilization above 50%: active=28/50
+2024-03-15T14:31:10Z INFO  [reporting-service] Starting daily aggregation query batch_id=rpt-441
+2024-03-15T14:31:12Z DEBUG [database] Long-running query detected: reporting batch rpt-441 running for 2100ms
+2024-03-15T14:31:15Z DEBUG [database] Connection pool stats: active=33 idle=17 max=50
+2024-03-15T14:31:20Z WARN  [database] Connection pool utilization above 60%: active=33/50
+2024-03-15T14:31:25Z INFO  [api-gateway] Request POST /api/v1/orders completed in 89ms status=200
+2024-03-15T14:31:30Z DEBUG [database] Connection pool stats: active=37 idle=13 max=50
+2024-03-15T14:31:32Z WARN  [database] Connection pool utilization above 70%: active=37/50
+2024-03-15T14:31:35Z DEBUG [database] Long-running query detected: reporting batch rpt-441 running for 25100ms
+2024-03-15T14:31:40Z WARN  [order-service] Database query took 1250ms (threshold: 500ms)
+2024-03-15T14:31:45Z DEBUG [database] Connection pool stats: active=41 idle=9 max=50
+2024-03-15T14:31:48Z WARN  [database] Connection pool utilization above 80%: active=41/50
+2024-03-15T14:31:50Z WARN  [auth-service] Database query took 890ms (threshold: 200ms)
+2024-03-15T14:31:55Z ERROR [database] Connection pool utilization CRITICAL: active=45/50
+2024-03-15T14:32:00Z DEBUG [database] Connection pool stats: active=47 idle=3 max=50
+2024-03-15T14:32:02Z ERROR [database] Connection pool utilization CRITICAL: active=47/50
+2024-03-15T14:32:05Z WARN  [api-gateway] Request GET /api/v1/orders completed in 2340ms status=200
+2024-03-15T14:32:08Z ERROR [order-service] Database connection timeout after 5000ms
+2024-03-15T14:32:10Z ERROR [database] Connection pool EXHAUSTED: active=50/50 waiting=3
+2024-03-15T14:32:11Z ERROR [auth-service] Database connection timeout after 5000ms
+2024-03-15T14:32:12Z ERROR [payment-service] Database connection timeout after 5000ms
+2024-03-15T14:32:13Z ERROR [database] Connection pool EXHAUSTED: active=50/50 waiting=7
+2024-03-15T14:32:15Z ERROR [database] Connection pool reached max capacity — all connections in use
+2024-03-15T14:32:16Z ERROR [order-service] Failed to process order ord-28473: connection pool exhausted
+2024-03-15T14:32:17Z ERROR [auth-service] Token validation failed: database unavailable
+2024-03-15T14:32:18Z ERROR [api-gateway] Request POST /api/v1/orders completed in 5012ms status=503
+2024-03-15T14:32:19Z ERROR [api-gateway] Request GET /api/v1/auth/validate completed in 5008ms status=503
+2024-03-15T14:32:20Z ERROR [database] Connection pool EXHAUSTED: active=50/50 waiting=12
+2024-03-15T14:32:21Z ERROR [order-service] Failed to process order ord-28474: connection pool exhausted
+2024-03-15T14:32:22Z ERROR [payment-service] Payment processing failed for ord-28471: database unavailable
+2024-03-15T14:32:23Z ERROR [auth-service] Token validation failed: database unavailable
+2024-03-15T14:32:24Z ERROR [api-gateway] Request GET /api/v1/users/profile completed in 5003ms status=503
+2024-03-15T14:32:25Z ERROR [database] Connection pool EXHAUSTED: active=50/50 waiting=18
+2024-03-15T14:32:26Z ERROR [order-service] Circuit breaker OPEN for database connections
+2024-03-15T14:32:27Z ERROR [auth-service] Circuit breaker OPEN for database connections
+2024-03-15T14:32:28Z ERROR [api-gateway] Request POST /api/v1/auth completed in 102ms status=503
+2024-03-15T14:32:29Z ERROR [api-gateway] Upstream auth-service returning 503 — circuit breaker open
+2024-03-15T14:32:30Z ERROR [api-gateway] Upstream order-service returning 503 — circuit breaker open
+2024-03-15T14:32:31Z ERROR [notification-service] Failed to send email: order-service unavailable
+2024-03-15T14:32:32Z ERROR [api-gateway] Request GET /api/v1/orders completed in 55ms status=503
+2024-03-15T14:32:33Z ERROR [payment-service] Circuit breaker OPEN for database connections
+2024-03-15T14:32:34Z ERROR [api-gateway] Request POST /api/v1/payments completed in 48ms status=503
+2024-03-15T14:32:35Z ERROR [database] Connection pool EXHAUSTED: active=50/50 waiting=24
+2024-03-15T14:32:36Z ERROR [order-service] Failed to process order ord-28475: circuit breaker open
+2024-03-15T14:32:37Z ERROR [auth-service] Token validation failed: circuit breaker open
+2024-03-15T14:32:38Z ERROR [api-gateway] Health check FAILED: 3/5 upstream services unhealthy
+2024-03-15T14:32:39Z WARN  [load-balancer] Removing api-gateway-2 from pool: health check failed
+2024-03-15T14:32:40Z ERROR [api-gateway] Request GET /api/v1/health completed in 12ms status=503
+2024-03-15T14:32:45Z ERROR [database] Connection pool EXHAUSTED: active=50/50 waiting=31
+2024-03-15T14:32:50Z ERROR [order-service] Failed to process order ord-28476: circuit breaker open
+2024-03-15T14:32:55Z ERROR [api-gateway] Request POST /api/v1/orders completed in 41ms status=503
+2024-03-15T14:33:00Z ERROR [api-gateway] Health check FAILED: 4/5 upstream services unhealthy
+2024-03-15T14:33:05Z WARN  [reporting-service] Batch rpt-441 still running after 115s — possible deadlock
+2024-03-15T14:33:10Z ERROR [database] Deadlock detected: reporting query blocking transaction pool
+2024-03-15T14:33:15Z ERROR [database] Connection pool EXHAUSTED: active=50/50 waiting=38
+2024-03-15T14:33:20Z ERROR [order-service] 47 orders failed in last 60 seconds
+2024-03-15T14:33:25Z ERROR [auth-service] 89 auth requests failed in last 60 seconds
+2024-03-15T14:33:30Z ERROR [api-gateway] Error rate at 94% — all upstream services degraded
+2024-03-15T14:33:35Z WARN  [alertmanager] FIRING: DatabaseConnectionPoolExhausted severity=critical
+2024-03-15T14:33:36Z WARN  [alertmanager] FIRING: HighErrorRate service=api-gateway severity=critical
+2024-03-15T14:33:37Z WARN  [alertmanager] FIRING: HighErrorRate service=order-service severity=critical
+2024-03-15T14:33:38Z WARN  [alertmanager] FIRING: HighErrorRate service=auth-service severity=critical
+2024-03-15T14:33:39Z WARN  [alertmanager] FIRING: UpstreamServiceDown service=payment-service severity=warning
+2024-03-15T14:33:40Z INFO  [oncall] Page sent to oncall engineer: incident INC-2847
+2024-03-15T14:33:45Z ERROR [database] Connection pool EXHAUSTED: active=50/50 waiting=42
+2024-03-15T14:33:50Z ERROR [api-gateway] Request POST /api/v1/orders completed in 38ms status=503
+2024-03-15T14:33:55Z ERROR [order-service] Failed to process order ord-28477: circuit breaker open
+2024-03-15T14:34:00Z INFO  [oncall] Engineer acknowledged incident INC-2847
+2024-03-15T14:34:05Z ERROR [database] Connection pool EXHAUSTED: active=50/50 waiting=45
+2024-03-15T14:34:10Z ERROR [api-gateway] Error rate at 97% — near total service outage
+2024-03-15T14:34:15Z ERROR [order-service] 142 orders failed in last 120 seconds
+2024-03-15T14:34:20Z ERROR [auth-service] 231 auth requests failed in last 120 seconds
+2024-03-15T14:34:25Z INFO  [oncall] Running diagnostic: checking database connection pool
+2024-03-15T14:34:30Z INFO  [oncall] Identified: reporting batch rpt-441 holding 23 connections for 195s
+2024-03-15T14:34:35Z INFO  [oncall] Action: killing reporting batch rpt-441
+2024-03-15T14:34:36Z INFO  [database] Terminated long-running query: reporting batch rpt-441
+2024-03-15T14:34:37Z INFO  [database] Released 23 connections from terminated query
+2024-03-15T14:34:38Z DEBUG [database] Connection pool stats: active=27 idle=23 max=50
+2024-03-15T14:34:40Z INFO  [database] Connection pool recovering: active=27/50
+2024-03-15T14:34:45Z INFO  [order-service] Circuit breaker HALF-OPEN: testing database connection
+2024-03-15T14:34:46Z INFO  [auth-service] Circuit breaker HALF-OPEN: testing database connection
+2024-03-15T14:34:47Z INFO  [payment-service] Circuit breaker HALF-OPEN: testing database connection
+2024-03-15T14:34:50Z DEBUG [database] Connection pool stats: active=18 idle=32 max=50
+2024-03-15T14:34:55Z INFO  [order-service] Circuit breaker CLOSED: database connection restored
+2024-03-15T14:34:56Z INFO  [auth-service] Circuit breaker CLOSED: database connection restored
+2024-03-15T14:34:57Z INFO  [payment-service] Circuit breaker CLOSED: database connection restored
+2024-03-15T14:35:00Z INFO  [api-gateway] Request GET /api/v1/orders completed in 67ms status=200
+2024-03-15T14:35:05Z INFO  [api-gateway] Request POST /api/v1/auth completed in 34ms status=200
+2024-03-15T14:35:10Z INFO  [api-gateway] Health check PASSED: 5/5 upstream services healthy
+2024-03-15T14:35:15Z INFO  [load-balancer] Adding api-gateway-2 back to pool: health check passed
+2024-03-15T14:35:20Z DEBUG [database] Connection pool stats: active=14 idle=36 max=50
+2024-03-15T14:35:25Z INFO  [api-gateway] Error rate dropped to 2% — services recovering
+2024-03-15T14:35:30Z INFO  [order-service] Processing backlog: 142 queued orders
+2024-03-15T14:35:35Z INFO  [api-gateway] Request GET /api/v1/orders completed in 41ms status=200
+2024-03-15T14:35:40Z INFO  [order-service] Backlog processing: 50/142 orders completed
+2024-03-15T14:35:45Z INFO  [api-gateway] Request POST /api/v1/orders completed in 55ms status=200
+2024-03-15T14:35:50Z DEBUG [database] Connection pool stats: active=16 idle=34 max=50
+2024-03-15T14:35:55Z INFO  [order-service] Backlog processing: 100/142 orders completed
+2024-03-15T14:36:00Z INFO  [api-gateway] Error rate at 0.5% — normal operations resumed
+2024-03-15T14:36:05Z INFO  [order-service] Backlog processing complete: 142/142 orders processed
+2024-03-15T14:36:10Z INFO  [alertmanager] RESOLVED: DatabaseConnectionPoolExhausted
+2024-03-15T14:36:11Z INFO  [alertmanager] RESOLVED: HighErrorRate service=api-gateway
+2024-03-15T14:36:12Z INFO  [alertmanager] RESOLVED: HighErrorRate service=order-service
+2024-03-15T14:36:13Z INFO  [alertmanager] RESOLVED: HighErrorRate service=auth-service
+2024-03-15T14:36:14Z INFO  [alertmanager] RESOLVED: UpstreamServiceDown service=payment-service
+2024-03-15T14:36:15Z INFO  [oncall] Incident INC-2847 resolved — duration: 5m35s
+2024-03-15T14:36:20Z INFO  [api-gateway] Request GET /api/v1/products completed in 29ms status=200
+2024-03-15T14:36:25Z DEBUG [database] Connection pool stats: active=11 idle=39 max=50
+2024-03-15T14:36:30Z INFO  [api-gateway] Request POST /api/v1/orders completed in 48ms status=200
+2024-03-15T14:36:35Z INFO  [auth-service] Token validated for user=u-9182 session=s-3347
+2024-03-15T14:36:40Z INFO  [cache] Cache hit for key=session:u-9182 ttl=1800s
+2024-03-15T14:36:45Z INFO  [order-service] Processing order ord-28478 for user u-9182
+2024-03-15T14:36:50Z DEBUG [database] Query SELECT * FROM orders WHERE id=$1 executed in 8ms
+2024-03-15T14:36:55Z INFO  [api-gateway] Request GET /api/v1/orders completed in 38ms status=200
+2024-03-15T14:37:00Z INFO  [payment-service] Payment completed for order ord-28478 amount=89.50
+2024-03-15T14:37:05Z INFO  [notification-service] Email queued for user u-9182 template=order_confirmation
+2024-03-15T14:37:10Z DEBUG [database] Connection pool stats: active=10 idle=40 max=50
+2024-03-15T14:37:15Z INFO  [api-gateway] Request GET /api/v1/users/profile completed in 25ms status=200
+2024-03-15T14:37:20Z INFO  [api-gateway] Request POST /api/v1/auth completed in 19ms status=200
+2024-03-15T14:37:25Z INFO  [cache] Cache hit for key=product:p-1142 ttl=3600s
+2024-03-15T14:37:30Z INFO  [api-gateway] Request GET /api/v1/products completed in 22ms status=200
+2024-03-15T14:37:35Z DEBUG [database] Connection pool stats: active=9 idle=41 max=50
+2024-03-15T14:37:40Z INFO  [api-gateway] Request GET /api/v1/orders completed in 35ms status=200
+2024-03-15T14:37:45Z INFO  [auth-service] Token validated for user=u-3310 session=s-7781
+2024-03-15T14:37:50Z INFO  [order-service] Processing order ord-28479 for user u-3310
+2024-03-15T14:37:55Z INFO  [api-gateway] Request POST /api/v1/orders completed in 52ms status=200
+2024-03-15T14:38:00Z DEBUG [database] Connection pool stats: active=11 idle=39 max=50
+2024-03-15T14:38:05Z INFO  [api-gateway] Request GET /api/v1/health completed in 8ms status=200
+2024-03-15T14:38:10Z INFO  [payment-service] Payment completed for order ord-28479 amount=234.00
+2024-03-15T14:38:15Z INFO  [notification-service] Email queued for user u-3310 template=order_confirmation
+2024-03-15T14:38:20Z INFO  [api-gateway] Request GET /api/v1/products completed in 27ms status=200
+2024-03-15T14:38:25Z DEBUG [database] Connection pool stats: active=10 idle=40 max=50
+2024-03-15T14:38:30Z INFO  [api-gateway] Request GET /api/v1/orders completed in 33ms status=200
+2024-03-15T14:38:35Z INFO  [cache] Cache miss for key=product:p-8834 fetching from database
+2024-03-15T14:38:40Z DEBUG [database] Query SELECT * FROM products WHERE id=$1 executed in 15ms
+2024-03-15T14:38:45Z INFO  [api-gateway] Request GET /api/v1/products/p-8834 completed in 42ms status=200
+2024-03-15T14:38:50Z INFO  [auth-service] Token validated for user=u-5567 session=s-2290
+2024-03-15T14:38:55Z INFO  [api-gateway] Request POST /api/v1/auth completed in 21ms status=200
+2024-03-15T14:39:00Z DEBUG [database] Connection pool stats: active=9 idle=41 max=50
+2024-03-15T14:39:05Z INFO  [api-gateway] Request GET /api/v1/users/profile completed in 30ms status=200
+2024-03-15T14:39:10Z INFO  [order-service] Processing order ord-28480 for user u-5567
+2024-03-15T14:39:15Z INFO  [api-gateway] Request POST /api/v1/orders completed in 61ms status=200
+2024-03-15T14:39:20Z INFO  [payment-service] Payment initiated for order ord-28480 amount=67.25
+2024-03-15T14:39:25Z DEBUG [database] Connection pool stats: active=12 idle=38 max=50
+2024-03-15T14:39:30Z INFO  [api-gateway] Request GET /api/v1/orders completed in 37ms status=200
+2024-03-15T14:39:35Z INFO  [payment-service] Payment completed for order ord-28480 amount=67.25
+2024-03-15T14:39:40Z INFO  [notification-service] Email queued for user u-5567 template=order_confirmation
+2024-03-15T14:39:45Z INFO  [api-gateway] Request GET /api/v1/health completed in 7ms status=200
+2024-03-15T14:39:50Z DEBUG [database] Connection pool stats: active=10 idle=40 max=50
+2024-03-15T14:39:55Z INFO  [api-gateway] Request GET /api/v1/products completed in 24ms status=200
+2024-03-15T14:40:00Z INFO  [api-gateway] Request POST /api/v1/auth completed in 18ms status=200
+2024-03-15T14:40:05Z INFO  [cache] Cache hit for key=session:u-5567 ttl=1800s
+2024-03-15T14:40:10Z INFO  [api-gateway] Request GET /api/v1/orders completed in 32ms status=200
+2024-03-15T14:40:15Z DEBUG [database] Connection pool stats: active=8 idle=42 max=50
+2024-03-15T14:40:20Z INFO  [api-gateway] Request GET /api/v1/products completed in 26ms status=200
+2024-03-15T14:40:25Z INFO  [auth-service] Token validated for user=u-1198 session=s-4456
+2024-03-15T14:40:30Z INFO  [order-service] Processing order ord-28481 for user u-1198
+2024-03-15T14:40:35Z INFO  [api-gateway] Request POST /api/v1/orders completed in 49ms status=200
+2024-03-15T14:40:40Z DEBUG [database] Connection pool stats: active=11 idle=39 max=50
+2024-03-15T14:40:45Z INFO  [payment-service] Payment initiated for order ord-28481 amount=312.75
+2024-03-15T14:40:50Z INFO  [api-gateway] Request GET /api/v1/health completed in 9ms status=200
+2024-03-15T14:40:55Z INFO  [payment-service] Payment completed for order ord-28481 amount=312.75
+2024-03-15T14:41:00Z INFO  [notification-service] Email queued for user u-1198 template=order_confirmation
+2024-03-15T14:41:05Z DEBUG [database] Connection pool stats: active=9 idle=41 max=50
+2024-03-15T14:41:10Z INFO  [api-gateway] Request GET /api/v1/orders completed in 34ms status=200
+2024-03-15T14:41:15Z INFO  [api-gateway] Request GET /api/v1/products completed in 28ms status=200
+2024-03-15T14:41:20Z INFO  [cache] Cache hit for key=product:p-1142 ttl=3600s
+2024-03-15T14:41:25Z INFO  [api-gateway] Request POST /api/v1/auth completed in 20ms status=200
+2024-03-15T14:41:30Z DEBUG [database] Connection pool stats: active=10 idle=40 max=50
+2024-03-15T14:41:35Z INFO  [api-gateway] Request GET /api/v1/users/profile completed in 31ms status=200
+2024-03-15T14:41:40Z INFO  [auth-service] Token validated for user=u-6644 session=s-8823
+2024-03-15T14:41:45Z INFO  [order-service] Processing order ord-28482 for user u-6644
+2024-03-15T14:41:50Z INFO  [api-gateway] Request POST /api/v1/orders completed in 57ms status=200
+2024-03-15T14:41:55Z DEBUG [database] Connection pool stats: active=12 idle=38 max=50
+2024-03-15T14:42:00Z INFO  [api-gateway] Request GET /api/v1/health completed in 8ms status=200
+2024-03-15T14:42:05Z INFO  [payment-service] Payment completed for order ord-28482 amount=45.99
+2024-03-15T14:42:10Z INFO  [notification-service] Email queued for user u-6644 template=order_confirmation
+2024-03-15T14:42:15Z INFO  [api-gateway] Request GET /api/v1/orders completed in 36ms status=200
+2024-03-15T14:42:20Z DEBUG [database] Connection pool stats: active=9 idle=41 max=50
+2024-03-15T14:42:25Z INFO  [api-gateway] Request GET /api/v1/products completed in 25ms status=200
+2024-03-15T14:42:30Z INFO  [api-gateway] Request POST /api/v1/auth completed in 22ms status=200
+2024-03-15T14:42:35Z INFO  [cache] Cache miss for key=session:u-2201 fetching from database
+2024-03-15T14:42:40Z INFO  [auth-service] Token validated for user=u-2201 session=s-5539
+2024-03-15T14:42:45Z INFO  [api-gateway] Request GET /api/v1/users/profile completed in 33ms status=200
+2024-03-15T14:42:50Z DEBUG [database] Connection pool stats: active=10 idle=40 max=50
+2024-03-15T14:42:55Z INFO  [api-gateway] Request GET /api/v1/products completed in 27ms status=200
+2024-03-15T14:43:00Z INFO  [api-gateway] Request GET /api/v1/health completed in 7ms status=200

@@ -1,0 +1,94 @@
+name: "Detect Log Volume Anomalies"
+type: skill
+category: aiops
+difficulty: medium
+tags: [logs, anomaly-detection, z-score, python, statistics]
+time_estimate: "20m"
+xp_reward: 150
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_log_timeseries.py
+    dest: ~/generate_log_timeseries.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Detect Log Volume Anomalies
+
+  A sudden spike or drop in log volume often signals an incident. In this challenge,
+  you'll use Z-score analysis to detect anomalous minutes in a log volume time series.
+
+  ### What is Z-score?
+
+  Z-score measures how many standard deviations a data point is from the mean:
+  ```
+  z = (x - mean) / std_dev
+  ```
+  A Z-score > 2 or < -2 typically indicates an anomaly (the value is unusually high or low).
+
+  ### Setup
+
+  A CSV file at `~/log_counts.csv` contains per-minute log counts for 24 hours (1440 rows):
+  ```
+  minute,count
+  2024-01-15T00:00,145
+  2024-01-15T00:01,152
+  ...
+  ```
+
+  Several anomalous minutes have been injected — sudden spikes and drops.
+
+  ### Your Tasks
+
+  1. **Write a Python script** at `~/detect_anomalies.py` that:
+     - Reads `~/log_counts.csv`
+     - Calculates the mean and standard deviation of the `count` column
+     - Computes the Z-score for each minute
+     - Flags minutes where `abs(z_score) > 2.0` as anomalies
+     - Outputs results to `~/anomalies.json`:
+       ```json
+       {
+         "mean": 150.5,
+         "std_dev": 25.3,
+         "threshold": 2.0,
+         "total_anomalies": 8,
+         "anomalies": [
+           {"minute": "2024-01-15T03:42", "count": 450, "z_score": 11.8, "type": "spike"},
+           {"minute": "2024-01-15T07:15", "count": 5, "z_score": -5.7, "type": "drop"},
+           ...
+         ]
+       }
+       ```
+
+  2. **Run the script**:
+     ```
+     python3 ~/detect_anomalies.py
+     ```
+
+  3. Each anomaly should have:
+     - `type`: `"spike"` if z_score > 0, `"drop"` if z_score < 0
+     - `z_score` rounded to 1 decimal place
+
+  ### Useful Python
+  ```python
+  import csv, json, statistics
+  data = list(csv.DictReader(open('log_counts.csv')))
+  counts = [int(row['count']) for row in data]
+  mean = statistics.mean(counts)
+  std = statistics.stdev(counts)
+  ```
+
+hints:
+  - "Use Python's `statistics` module for mean and stdev, or `numpy`. Then z = (count - mean) / std for each row."
+  - "Flag as anomaly when abs(z_score) > 2.0. Set type to 'spike' when z > 0, 'drop' when z < 0."
+  - "Round z_score with `round(z, 1)`. The injected anomalies have counts 3-5x above or below normal."
+validation:
+  script: validate.sh
+  success_message: "Anomaly detection working! You found the injected log volume spikes and drops."
+  failure_message: "Check that ~/anomalies.json exists with the correct structure and that anomalies are detected with Z-score > 2."

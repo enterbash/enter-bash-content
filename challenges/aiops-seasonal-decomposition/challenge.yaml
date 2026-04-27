@@ -1,0 +1,88 @@
+name: "Seasonal Decomposition of Metrics"
+type: skill
+category: aiops
+difficulty: hard
+tags: [time-series, seasonal-decomposition, stl, statsmodels, python]
+time_estimate: "25m"
+xp_reward: 200
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_seasonal_data.py
+    dest: ~/generate_seasonal_data.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Seasonal Decomposition of Metrics
+
+  Real metrics have patterns: daily cycles (traffic peaks at noon), weekly cycles (less
+  traffic on weekends), and long-term trends. STL decomposition separates a time series
+  into trend, seasonal, and residual components. Anomalies hide in the residual.
+
+  ### Setup
+
+  A CSV at `~/request_rate.csv` has hourly request counts for 7 days (168 data points):
+  ```
+  timestamp,requests
+  2024-01-15T00:00,1200
+  ...
+  ```
+
+  The data has a clear daily pattern (peak at 14:00, trough at 04:00) plus injected anomalies.
+
+  ### Your Tasks
+
+  1. **Write `~/decompose.py`** that:
+     - Reads `~/request_rate.csv`
+     - Performs STL decomposition with `period=24` (daily cycle in hourly data)
+     - Detects anomalies in the residual component (where `abs(residual) > 2 * std(residual)`)
+     - Outputs to `~/decomposition.json`:
+       ```json
+       {
+         "period": 24,
+         "trend_range": {"min": 1100, "max": 1500},
+         "seasonal_amplitude": 350,
+         "residual_std": 45.2,
+         "anomalies": [
+           {"timestamp": "2024-01-16T03:00", "requests": 3500, "residual": 2100, "z_score": 46.5}
+         ],
+         "total_anomalies": 5
+       }
+       ```
+
+  2. **Run it**: `python3 ~/decompose.py`
+
+  ### statsmodels STL
+  ```python
+  from statsmodels.tsa.seasonal import STL
+  import pandas as pd
+
+  df = pd.read_csv('request_rate.csv', parse_dates=['timestamp'], index_col='timestamp')
+  stl = STL(df['requests'], period=24)
+  result = stl.fit()
+
+  trend = result.trend
+  seasonal = result.seasonal
+  residual = result.resid
+  ```
+
+  ### Key Insight
+  A value of 3500 requests at 3am looks anomalous. But is it? STL tells you:
+  - Trend says baseline is 1300
+  - Seasonal says 3am is normally -200 from baseline (= 1100 expected)
+  - Residual = 3500 - 1300 - (-200) = 2400 → that's the actual anomaly magnitude
+
+hints:
+  - "Use `STL(series, period=24).fit()` — period=24 because data is hourly with daily seasonality."
+  - "Anomalies are in the residual: `std = result.resid.std()`, flag where `abs(resid) > 2 * std`."
+  - "seasonal_amplitude = `result.seasonal.max() - result.seasonal.min()`. trend_range = min/max of `result.trend`."
+validation:
+  script: validate.sh
+  success_message: "Seasonal decomposition complete! You can now separate real anomalies from normal daily patterns."
+  failure_message: "Check that ~/decomposition.json has period, trend_range, seasonal_amplitude, residual_std, and anomalies."

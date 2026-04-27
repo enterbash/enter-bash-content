@@ -1,0 +1,72 @@
+name: "Build a Self-Healing Operator"
+type: skill
+category: aiops
+difficulty: hard
+tags: [kubernetes, operator, self-healing, python, automation]
+time_estimate: "30m"
+xp_reward: 300
+packages: []
+pre_install: [kubectl]
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Build a Self-Healing Operator
+
+  A Kubernetes operator watches for specific conditions and takes remediation actions
+  automatically. In this challenge, you'll build a simple self-healing controller in Python.
+
+  ### Setup
+
+  A k3s cluster is running with several pods. Some will experience OOMKilled events and
+  CrashLoopBackOff states.
+
+  ### Your Tasks
+
+  1. **Write `~/healer.py`** — a Python script that:
+     - Connects to the Kubernetes API using the `kubernetes` Python client
+     - Watches for pods with these conditions:
+       - `OOMKilled` — restart the pod and log a recommendation to increase memory limits
+       - `CrashLoopBackOff` with restarts > 5 — delete the pod
+       - `ImagePullBackOff` — log the error (can't auto-fix)
+     - Logs all actions to `~/healer_log.json` (append one JSON object per line):
+       ```json
+       {"timestamp": "...", "action": "restart", "pod": "app-xyz", "namespace": "default", "reason": "OOMKilled", "recommendation": "Increase memory limit from 128Mi to 256Mi"}
+       ```
+
+  2. **Write the operator manifest** at `~/healer-deployment.yaml`:
+     - A Deployment running your healer script
+     - ServiceAccount with permissions to get/list/delete pods
+     - ClusterRole and ClusterRoleBinding
+
+  3. **Run the healer once** (not as a loop, just scan current state):
+     ```
+     python3 ~/healer.py --once
+     ```
+
+  ### kubernetes Python Client
+  ```python
+  from kubernetes import client, config
+  config.load_kube_config()
+  v1 = client.CoreV1Api()
+  pods = v1.list_pod_for_all_namespaces()
+  for pod in pods.items:
+      for cs in (pod.status.container_statuses or []):
+          if cs.state.waiting and cs.state.waiting.reason == 'CrashLoopBackOff':
+              # Take action
+              pass
+  ```
+
+hints:
+  - "Use `config.load_kube_config()` for local access. Check `container_statuses[].state.waiting.reason` and `last_state.terminated.reason`."
+  - "Delete pod: `v1.delete_namespaced_pod(name=pod_name, namespace=ns)`. This triggers recreation by the Deployment."
+  - "For OOMKilled, check `last_state.terminated.reason == 'OOMKilled'`. The current memory limit is in `pod.spec.containers[0].resources.limits`."
+validation:
+  script: validate.sh
+  success_message: "Self-healing operator built! This is the pattern behind production Kubernetes operators."
+  failure_message: "Check ~/healer.py exists, ~/healer_log.json has entries, and ~/healer-deployment.yaml is valid."

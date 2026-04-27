@@ -1,0 +1,85 @@
+name: "Full AIOps Pipeline"
+type: skill
+category: aiops
+difficulty: hard
+tags: [aiops, pipeline, end-to-end, capstone, integration]
+time_estimate: "30m"
+xp_reward: 300
+packages: []
+pre_install: [prometheus, prometheus-node-exporter, grafana]
+namespace: ""
+web_port: 3000
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/mock_llm_server.py
+    dest: ~/mock_llm_server.py
+  - source: files/inject_failure.py
+    dest: ~/inject_failure.py
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Full AIOps Pipeline
+
+  This is the capstone challenge. Build an end-to-end AIOps pipeline that:
+  monitoring -> anomaly detection -> event correlation -> diagnostics -> LLM summary
+
+  ### Setup
+
+  Prometheus, node_exporter, Grafana, and the mock LLM server are running.
+  A multi-component failure will be injected when you run `~/inject_failure.py`.
+
+  ### Your Tasks
+
+  1. **Build `~/aiops_pipeline.py`** — a single script that orchestrates the full pipeline:
+
+     **Stage 1: Monitor** — Query Prometheus for CPU, memory, disk, network metrics
+
+     **Stage 2: Detect** — Apply Z-score anomaly detection on all metrics
+
+     **Stage 3: Correlate** — Group detected anomalies by time window (60s)
+
+     **Stage 4: Diagnose** — Collect diagnostic info (which metrics, what changed)
+
+     **Stage 5: Summarize** — Send findings to the LLM for a human-readable summary
+
+  2. **Inject the failure**: `python3 ~/inject_failure.py`
+
+  3. **Wait 30 seconds**, then run: `python3 ~/aiops_pipeline.py`
+
+  4. **Output** to `~/pipeline_report.json`:
+     ```json
+     {
+       "pipeline_stages": ["monitor", "detect", "correlate", "diagnose", "summarize"],
+       "execution_time_seconds": 5.2,
+       "monitoring": {
+         "metrics_queried": 4,
+         "data_points": 120
+       },
+       "detection": {
+         "method": "z_score",
+         "anomalies_found": 3
+       },
+       "correlation": {
+         "incident_clusters": 1,
+         "correlated_events": 3
+       },
+       "diagnosis": {
+         "affected_metrics": ["cpu", "memory"],
+         "probable_cause": "Resource exhaustion"
+       },
+       "summary": "LLM-generated human-readable incident summary...",
+       "recommended_actions": ["Scale up resources", "Investigate memory leak"]
+     }
+     ```
+
+hints:
+  - "Build each stage as a function, then chain them: `metrics = monitor()`, `anomalies = detect(metrics)`, etc."
+  - "Reuse patterns from earlier challenges: Z-score detection, temporal correlation, Prometheus API queries."
+  - "For the LLM summary, send the diagnosis as context and ask for a human-readable incident report."
+validation:
+  script: validate.sh
+  success_message: "Full AIOps pipeline complete! You've built monitoring -> detection -> correlation -> diagnosis -> summary."
+  failure_message: "Check ~/pipeline_report.json has all 5 pipeline stages with results."

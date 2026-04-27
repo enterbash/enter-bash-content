@@ -1,5 +1,258 @@
 [
   {
+    "name": "AIOps Essentials",
+    "slug": "aiops-essentials",
+    "description": "Learn to apply AI and automation to IT operations. Covers observability, anomaly detection, log analysis, event correlation, automated remediation, and LLM-powered ops. Recommended prerequisites: Linux Fundamentals and Kubernetes Core paths.\n",
+    "icon": "🤖",
+    "category": "aiops",
+    "difficulty": "beginner-to-advanced",
+    "estimated_hours": 10,
+    "challenges": [
+      {
+        "dir_name": "aiops-setup-prometheus-monitoring",
+        "name": "Set Up Prometheus Monitoring",
+        "difficulty": "easy",
+        "category": "aiops",
+        "xp_reward": 75,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "aiops-structured-logging",
+        "name": "Implement Structured Logging",
+        "difficulty": "easy",
+        "category": "aiops",
+        "xp_reward": 75,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "aiops-configure-alertmanager",
+        "name": "Configure Alertmanager Routing",
+        "difficulty": "easy",
+        "category": "aiops",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "aiops-build-grafana-dashboard",
+        "name": "Build a Grafana Dashboard",
+        "difficulty": "easy",
+        "category": "aiops",
+        "xp_reward": 100,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "aiops-setup-otel-pipeline",
+        "name": "Set Up an OpenTelemetry Pipeline",
+        "difficulty": "medium",
+        "category": "aiops",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "aiops-parse-json-logs",
+        "name": "Parse and Query JSON Logs",
+        "difficulty": "easy",
+        "category": "aiops",
+        "xp_reward": 75,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "aiops-extract-error-patterns",
+        "name": "Extract Error Patterns from Logs",
+        "difficulty": "medium",
+        "category": "aiops",
+        "xp_reward": 100,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "aiops-cluster-log-messages",
+        "name": "Cluster Similar Log Messages",
+        "difficulty": "medium",
+        "category": "aiops",
+        "xp_reward": 150,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "aiops-detect-log-anomalies",
+        "name": "Detect Log Volume Anomalies",
+        "difficulty": "medium",
+        "category": "aiops",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "aiops-promql-analysis",
+        "name": "Advanced PromQL for Analysis",
+        "difficulty": "medium",
+        "category": "aiops",
+        "xp_reward": 100,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "aiops-statistical-anomaly-detection",
+        "name": "Statistical Anomaly Detection",
+        "difficulty": "medium",
+        "category": "aiops",
+        "xp_reward": 150,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "aiops-isolation-forest",
+        "name": "ML Anomaly Detection with Isolation Forest",
+        "difficulty": "hard",
+        "category": "aiops",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "aiops-seasonal-decomposition",
+        "name": "Seasonal Decomposition of Metrics",
+        "difficulty": "hard",
+        "category": "aiops",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "aiops-forecast-capacity",
+        "name": "Forecast Resource Capacity",
+        "difficulty": "hard",
+        "category": "aiops",
+        "xp_reward": 200,
+        "time_estimate": "30m"
+      },
+      {
+        "dir_name": "aiops-slo-error-budgets",
+        "name": "SLO-Based Error Budgets",
+        "difficulty": "medium",
+        "category": "aiops",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "aiops-alert-grouping-dedup",
+        "name": "Alert Grouping and Deduplication",
+        "difficulty": "medium",
+        "category": "aiops",
+        "xp_reward": 100,
+        "time_estimate": "15m"
+      },
+      {
+        "dir_name": "aiops-dynamic-thresholds",
+        "name": "Dynamic Thresholds from Baselines",
+        "difficulty": "hard",
+        "category": "aiops",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "aiops-alert-scoring",
+        "name": "ML-Based Alert Scoring",
+        "difficulty": "hard",
+        "category": "aiops",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "aiops-temporal-correlation",
+        "name": "Temporal Event Correlation",
+        "difficulty": "medium",
+        "category": "aiops",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "aiops-dependency-graph-rca",
+        "name": "Dependency Graph Root Cause Analysis",
+        "difficulty": "hard",
+        "category": "aiops",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "aiops-correlate-deploys-incidents",
+        "name": "Correlate Deployments with Incidents",
+        "difficulty": "medium",
+        "category": "aiops",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "aiops-auto-diagnostics",
+        "name": "Automated Incident Diagnostics",
+        "difficulty": "medium",
+        "category": "aiops",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "aiops-auto-restart-pods",
+        "name": "Auto-Restart Failing Pods",
+        "difficulty": "medium",
+        "category": "aiops",
+        "xp_reward": 150,
+        "time_estimate": "20m"
+      },
+      {
+        "dir_name": "aiops-auto-scale-on-anomaly",
+        "name": "Auto-Scale on Anomaly Detection",
+        "difficulty": "hard",
+        "category": "aiops",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "aiops-self-healing-operator",
+        "name": "Build a Self-Healing Operator",
+        "difficulty": "hard",
+        "category": "aiops",
+        "xp_reward": 300,
+        "time_estimate": "30m"
+      },
+      {
+        "dir_name": "aiops-llm-log-summarizer",
+        "name": "LLM Log Summarizer",
+        "difficulty": "hard",
+        "category": "aiops",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "aiops-llm-promql-generator",
+        "name": "LLM-Powered PromQL Generator",
+        "difficulty": "hard",
+        "category": "aiops",
+        "xp_reward": 200,
+        "time_estimate": "25m"
+      },
+      {
+        "dir_name": "aiops-llm-incident-copilot",
+        "name": "LLM Incident Copilot",
+        "difficulty": "hard",
+        "category": "aiops",
+        "xp_reward": 300,
+        "time_estimate": "30m"
+      },
+      {
+        "dir_name": "aiops-chaos-detection-pipeline",
+        "name": "Chaos Detection Pipeline",
+        "difficulty": "hard",
+        "category": "aiops",
+        "xp_reward": 300,
+        "time_estimate": "30m"
+      },
+      {
+        "dir_name": "aiops-full-aiops-pipeline",
+        "name": "Full AIOps Pipeline",
+        "difficulty": "hard",
+        "category": "aiops",
+        "xp_reward": 300,
+        "time_estimate": "30m"
+      }
+    ],
+    "total_challenges": 30,
+    "total_xp": 5075
+  },
+  {
     "name": "Ansible Automation",
     "slug": "ansible-automation",
     "description": "Automate infrastructure configuration with Ansible. From playbook basics to roles, vault, and advanced patterns used in real deployments.",

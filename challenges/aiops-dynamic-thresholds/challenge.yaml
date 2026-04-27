@@ -1,0 +1,66 @@
+name: "Dynamic Thresholds from Baselines"
+type: skill
+category: aiops
+difficulty: hard
+tags: [dynamic-thresholds, baseline, anomaly-detection, python]
+time_estimate: "25m"
+xp_reward: 200
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_baseline_data.py
+    dest: ~/generate_baseline_data.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Dynamic Thresholds from Baselines
+
+  Static thresholds ("alert when CPU > 80%") cause false positives during peak hours and
+  miss anomalies during quiet hours. Dynamic thresholds learn what's "normal" for each
+  hour of the day and alert on deviations from that baseline.
+
+  ### Setup
+
+  Two CSV files:
+  - `~/baseline_data.csv` — 7 days of hourly latency data (168 rows) for learning
+  - `~/new_data.csv` — 24 hours of new data to evaluate against the baseline
+
+  ### Your Tasks
+
+  1. **Write `~/dynamic_threshold.py`** that:
+     - Reads `~/baseline_data.csv` and learns a per-hour baseline:
+       - For each hour (0-23), calculate mean and standard deviation from the 7 days
+     - Reads `~/new_data.csv` and evaluates each point:
+       - Flag as anomaly if value deviates more than 2 standard deviations from the hour's mean
+     - Outputs to `~/threshold_results.json`:
+       ```json
+       {
+         "baseline": {
+           "0": {"mean": 45.2, "std": 5.1, "upper": 55.4, "lower": 35.0},
+           "1": {"mean": 42.1, "std": 4.8, "upper": 51.7, "lower": 32.5},
+           ...
+         },
+         "anomalies": [
+           {"timestamp": "2024-01-22T14:00", "value": 120.5, "expected_mean": 85.3, "expected_std": 8.2, "deviation_sigmas": 4.3}
+         ],
+         "total_evaluated": 24,
+         "total_anomalies": 3
+       }
+       ```
+
+  2. The `baseline` object should have entries for hours 0-23, each with `mean`, `std`, `upper` (mean + 2*std), `lower` (mean - 2*std).
+
+hints:
+  - "Group baseline data by hour: `df['hour'] = pd.to_datetime(df['timestamp']).dt.hour`, then `df.groupby('hour')['latency_ms'].agg(['mean', 'std'])`."
+  - "For each new data point, look up the baseline for that hour and check if `abs(value - mean) > 2 * std`."
+  - "deviation_sigmas = abs(value - mean) / std — how many standard deviations away."
+validation:
+  script: validate.sh
+  success_message: "Dynamic thresholds working! No more false positives during peak hours."
+  failure_message: "Check ~/threshold_results.json has baseline for all 24 hours and anomalies detected."

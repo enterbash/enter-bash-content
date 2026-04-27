@@ -1,0 +1,84 @@
+name: "Extract Error Patterns from Logs"
+type: skill
+category: aiops
+difficulty: medium
+tags: [logs, regex, python, error-analysis, pattern-mining]
+time_estimate: "20m"
+xp_reward: 100
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_messy_logs.py
+    dest: ~/generate_messy_logs.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Extract Error Patterns from Logs
+
+  Real-world logs are messy — mixed formats, inconsistent error messages, and noise.
+  In this challenge, you'll write a Python script to extract and categorize error patterns
+  from a realistic application log.
+
+  ### Setup
+
+  A messy log file has been generated at `~/application.log`. It contains a mix of:
+  - Standard INFO/WARNING/ERROR log lines
+  - Stack traces
+  - Connection errors with varying hostnames/ports
+  - Timeout errors with varying durations
+  - Database errors with varying query details
+
+  ### Your Tasks
+
+  1. **Write a Python script** at `~/extract_errors.py` that:
+     - Reads `~/application.log`
+     - Extracts all ERROR-level log lines
+     - Categorizes errors into types using regex patterns:
+       - `ConnectionError` — lines containing "connection refused", "connection reset", or "connection timeout"
+       - `TimeoutError` — lines containing "timed out" or "timeout exceeded"
+       - `DatabaseError` — lines containing "database", "SQL", or "query failed"
+       - `AuthError` — lines containing "authentication failed", "unauthorized", or "permission denied"
+       - `Other` — any ERROR line not matching above categories
+     - Outputs a JSON report to `~/error_report.json` with this structure:
+       ```json
+       {
+         "total_errors": 42,
+         "categories": {
+           "ConnectionError": {"count": 15, "percentage": 35.7},
+           "TimeoutError": {"count": 10, "percentage": 23.8},
+           ...
+         },
+         "top_messages": ["most common error message", ...]
+       }
+       ```
+
+  2. **Run the script**:
+     ```
+     python3 ~/extract_errors.py
+     ```
+
+  3. **Verify** the output:
+     ```
+     cat ~/error_report.json | jq .
+     ```
+
+  ### Requirements
+  - `total_errors` must match the actual count of ERROR lines
+  - Each category must have `count` and `percentage` (percentage of total errors)
+  - `top_messages` must list the 5 most common error message patterns
+  - Percentages should sum to approximately 100%
+
+hints:
+  - "Use `re.search(r'pattern', line, re.IGNORECASE)` for case-insensitive matching."
+  - "Read the file line by line, check if 'ERROR' is in the line, then categorize with regex. Use a dict to count each category."
+  - "For top_messages, use `collections.Counter` on the error messages (strip timestamps first) and get `.most_common(5)`."
+validation:
+  script: validate.sh
+  success_message: "Error patterns extracted and categorized correctly!"
+  failure_message: "Check that ~/error_report.json exists with correct structure and accurate counts."

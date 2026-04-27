@@ -1,0 +1,72 @@
+name: "Parse and Query JSON Logs"
+type: skill
+category: aiops
+difficulty: easy
+tags: [logs, json, jq, analysis, observability]
+time_estimate: "15m"
+xp_reward: 75
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/generate_logs.py
+    dest: ~/generate_logs.py
+    cleanup: true
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Parse and Query JSON Logs
+
+  JSON logs are the standard in modern systems. Being able to slice and dice them with `jq`
+  is a fundamental AIOps skill. In this challenge, you'll analyze a web service log file.
+
+  ### Setup
+
+  A JSON log file has been generated at `~/webservice.log`. Each line is a JSON object with:
+  - `timestamp` — ISO 8601
+  - `method` — HTTP method (GET, POST, PUT, DELETE)
+  - `path` — request path
+  - `status` — HTTP status code
+  - `latency_ms` — response time in milliseconds
+  - `user_id` — requesting user
+
+  ### Your Tasks
+
+  Save each answer to the specified file:
+
+  1. **Count errors by status code** — count how many requests returned each 5xx status code.
+     Save as JSON to `~/errors_by_status.json`:
+     ```
+     cat ~/webservice.log | jq -s '[.[] | select(.status >= 500)] | group_by(.status) | map({status: .[0].status, count: length})' > ~/errors_by_status.json
+     ```
+
+  2. **Find the top 5 slowest requests** — sorted by latency descending.
+     Save to `~/slowest_requests.json`:
+     ```
+     cat ~/webservice.log | jq -s 'sort_by(-.latency_ms) | .[0:5] | map({path, latency_ms, status})' > ~/slowest_requests.json
+     ```
+
+  3. **Find the 1-minute window with the most errors** — group by minute, count errors (status >= 400).
+     Save the minute with the highest error count to `~/worst_minute.txt`:
+     ```
+     cat ~/webservice.log | jq -r 'select(.status >= 400) | .timestamp[0:16]' | sort | uniq -c | sort -rn | head -1 | awk '{print $2}' > ~/worst_minute.txt
+     ```
+
+  ### Useful jq Patterns
+  - Select by field: `jq 'select(.status >= 500)'`
+  - Slurp into array: `jq -s '.'`
+  - Group and count: `jq -s 'group_by(.field) | map({key: .[0].field, count: length})'`
+  - Sort: `jq -s 'sort_by(.field)'`
+
+hints:
+  - "Use `jq -s` (slurp) to read all lines into a single array, then you can sort, group, and slice."
+  - "For errors by status: `select(.status >= 500)` filters to server errors, then `group_by(.status)` groups them."
+  - "For worst minute: extract the minute portion of timestamp with `.[0:16]` (YYYY-MM-DDTHH:MM), then count with `uniq -c`."
+validation:
+  script: validate.sh
+  success_message: "Great log analysis! You can slice JSON logs like a pro."
+  failure_message: "Check that all three output files exist and contain the correct data."

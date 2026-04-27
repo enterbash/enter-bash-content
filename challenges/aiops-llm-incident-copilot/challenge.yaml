@@ -1,0 +1,80 @@
+name: "LLM Incident Copilot"
+type: skill
+category: aiops
+difficulty: hard
+tags: [llm, incident-response, tool-use, function-calling, python]
+time_estimate: "30m"
+xp_reward: 300
+packages: []
+pre_install: []
+namespace: ""
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/mock_llm_server.py
+    dest: ~/mock_llm_server.py
+  - source: files/mock_tools.py
+    dest: ~/mock_tools.py
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## LLM Incident Copilot
+
+  Build an incident analysis agent that uses the LLM tool-use pattern: given an incident
+  description, the agent decides which tools to call (query metrics, search logs), analyzes
+  the results, and produces a diagnosis.
+
+  ### Setup
+
+  - Mock LLM server on `http://localhost:8080`
+  - Mock tool functions in `~/mock_tools.py`:
+    - `query_prometheus(query)` — returns mock metric data
+    - `search_logs(service, timerange)` — returns mock log snippets
+    - `get_deployments(service)` — returns recent deployments
+
+  ### Your Tasks
+
+  1. **Write `~/incident_copilot.py`** that implements a tool-use loop:
+     - Takes an incident description from `~/incident.txt`
+     - Sends it to the LLM with available tool descriptions
+     - Parses the LLM response for tool calls
+     - Executes the requested tools (from mock_tools.py)
+     - Feeds tool results back to the LLM
+     - Repeats until the LLM produces a final diagnosis
+     - Outputs to `~/diagnosis.json`:
+       ```json
+       {
+         "incident_description": "High latency on payment service since 14:00",
+         "tools_called": [
+           {"tool": "query_prometheus", "args": {"query": "rate(http_requests_total{service='payment',status=~'5..'}[5m])"}, "result_summary": "Error rate: 15%"},
+           {"tool": "search_logs", "args": {"service": "payment", "timerange": "14:00-14:30"}, "result_summary": "Found 45 connection timeout errors"}
+         ],
+         "diagnosis": "Payment service experiencing high latency due to database connection timeouts...",
+         "evidence": ["15% error rate", "45 connection timeouts", "DB deployment at 13:55"],
+         "recommended_actions": ["Rollback database deployment v2.3.1", "Scale payment service to 5 replicas"],
+         "confidence": "high"
+       }
+       ```
+
+  2. The agent should call at least 2 different tools before producing a diagnosis.
+
+  ### Tool-Use Pattern
+  ```python
+  tools = [
+      {"name": "query_prometheus", "description": "Query Prometheus metrics", "parameters": {"query": "PromQL string"}},
+      {"name": "search_logs", "description": "Search service logs", "parameters": {"service": "string", "timerange": "string"}},
+      {"name": "get_deployments", "description": "Get recent deployments", "parameters": {"service": "string"}}
+  ]
+  # Send tools in the API call, parse response for tool_calls, execute, feed back
+  ```
+
+hints:
+  - "The tool-use loop: 1) Send message + tools to LLM, 2) If response has tool_calls, execute them, 3) Add tool results to messages, 4) Send again, 5) Repeat until no more tool_calls."
+  - "The mock LLM will return tool_calls in its response. Parse `response['choices'][0]['message']['tool_calls']`."
+  - "After all tools are called, the LLM's final response is the diagnosis. Extract it and structure into the output format."
+validation:
+  script: validate.sh
+  success_message: "Incident copilot built! This is the architecture behind AI-powered incident response tools."
+  failure_message: "Check ~/diagnosis.json has tools_called (2+), diagnosis, evidence, and recommended_actions."
