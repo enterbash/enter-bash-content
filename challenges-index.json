@@ -5580,7 +5580,7 @@
     "setup": [
       "bash ~/setup.sh"
     ],
-    "instructions": "## Manage LVM Volumes\n\nYou need to extend an LVM logical volume that is running out of space. The volume group has free space available.\n\n### What you know\n\n- A volume group `vg_data` exists with available free space\n- A logical volume `lv_app` exists but is too small (64MB)\n- The logical volume is mounted at `/mnt/appdata`\n- You need to extend it to use all available space in the VG\n- The filesystem on the LV needs to be resized too\n\n### Your task\n\n1. Check the current LVM configuration with `lvs`, `vgs`, `pvs`\n2. Extend the logical volume `lv_app` to use all free space\n3. Resize the filesystem to use the new space\n4. Verify the mount shows the increased size\n\n### Useful commands\n\n```bash\nsudo lvs\nsudo vgs\nsudo lvextend -l +100%FREE /dev/vg_data/lv_app\nsudo resize2fs /dev/vg_data/lv_app\ndf -h /mnt/appdata\n```\n",
+    "instructions": "## Manage LVM Volumes\n\nYou need to extend an LVM logical volume that is running out of space. The volume group has free space available.\n\n### What you know\n\n- A volume group `vg_data` exists with available free space\n- A logical volume `lv_app` exists but is too small (64MB)\n- The logical volume is mounted at `/mnt/appdata`\n- You need to extend it to use all available space in the VG\n- The filesystem on the LV needs to be resized too\n\n> **Important:** Do NOT reformat the filesystem (`mkfs`). The existing data must be preserved. Use `resize2fs` to grow the filesystem in-place.\n\n### Your task\n\n1. Check the current LVM configuration with `lvs`, `vgs`, `pvs`\n2. Extend the logical volume `lv_app` to use all free space\n3. Resize the filesystem to use the new space\n4. Verify the mount shows the increased size\n\n### Useful commands\n\n```bash\nsudo lvs\nsudo vgs\nsudo lvextend -l +100%FREE /dev/vg_data/lv_app\nsudo resize2fs /dev/vg_data/lv_app\ndf -h /mnt/appdata\n```\n",
     "hints": [
       "Check free space with `sudo vgs` — look at VFree column",
       "Extend with `sudo lvextend -l +100%FREE /dev/vg_data/lv_app`",
@@ -5966,6 +5966,154 @@
       "script": "validate.sh",
       "success_message": "SSH keys are generated and configured correctly!",
       "failure_message": "SSH key setup is incomplete or has wrong permissions."
+    }
+  },
+  {
+    "dir_name": "project-ci-pipeline",
+    "name": "Build a CI/CD Pipeline",
+    "type": "project",
+    "category": "linux",
+    "difficulty": "hard",
+    "tags": [
+      "linux",
+      "bash",
+      "git",
+      "automation",
+      "testing",
+      "deployment"
+    ],
+    "time_estimate": "30m",
+    "xp_reward": 300,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "default",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/app.sh",
+        "dest": "~/pipeline/app.sh"
+      },
+      {
+        "source": "files/test_app.sh",
+        "dest": "~/pipeline/tests/test_app.sh"
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Build a CI/CD Pipeline\n\nYou need to create a simple but complete CI/CD pipeline using bash scripts. The pipeline should lint, test, build, and deploy a shell application.\n\n### What you have\n\n- A shell app in `~/pipeline/app.sh`\n- A test script in `~/pipeline/tests/test_app.sh` (has issues to fix)\n- No pipeline script yet\n\n### Your task\n\n1. **Fix the test script** `~/pipeline/tests/test_app.sh`\n   - It should source `app.sh` and test the `greet` and `add` functions\n   - Tests should exit 0 on success, 1 on failure\n\n2. **Create the pipeline script** `~/pipeline/pipeline.sh` with these stages:\n   - **Lint**: Run `bash -n app.sh` to check syntax\n   - **Test**: Run `bash tests/test_app.sh` and fail if tests fail\n   - **Build**: Create a `build/` directory and copy `app.sh` into it with a version header\n   - **Deploy**: Copy `build/app.sh` to `~/deployed/app.sh` and create `~/deployed/version.txt` with the current date\n\n3. **Make it executable** and run it successfully\n\n### Expected output\n\nAfter running `~/pipeline/pipeline.sh`:\n- `~/pipeline/build/app.sh` exists with a version header\n- `~/deployed/app.sh` exists\n- `~/deployed/version.txt` exists with a date\n- All tests passed\n\n### Useful commands\n\n```bash\ncd ~/pipeline\nchmod +x pipeline.sh\n./pipeline.sh\ncat ~/deployed/version.txt\n```\n",
+    "hints": [
+      "The test script needs to source app.sh first: source ./app.sh or . ./app.sh",
+      "pipeline.sh stages: bash -n app.sh (lint), bash tests/test_app.sh (test), mkdir -p build && cp app.sh build/ (build), mkdir -p ~/deployed && cp build/app.sh ~/deployed/ (deploy)",
+      "version.txt should contain the date: echo \"$(date +%Y-%m-%d)\" > ~/deployed/version.txt"
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "CI/CD pipeline built and executed successfully!",
+      "failure_message": "The pipeline is not complete."
+    }
+  },
+  {
+    "dir_name": "project-deploy-webapp",
+    "name": "Deploy a Web Application Stack",
+    "type": "project",
+    "category": "docker",
+    "difficulty": "hard",
+    "tags": [
+      "docker",
+      "nginx",
+      "docker-compose",
+      "networking",
+      "volumes"
+    ],
+    "time_estimate": "30m",
+    "xp_reward": 300,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "default",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/app.py",
+        "dest": "~/webapp/app.py"
+      },
+      {
+        "source": "files/requirements.txt",
+        "dest": "~/webapp/requirements.txt"
+      },
+      {
+        "source": "files/nginx.conf",
+        "dest": "~/webapp/nginx.conf"
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Deploy a Web Application Stack\n\nYou have a Python Flask application that needs to be containerized and deployed behind an Nginx reverse proxy using Docker Compose.\n\n### What you have\n\n- A Flask app in `~/webapp/app.py` that listens on port 5000\n- A `requirements.txt` with Flask dependency\n- An Nginx config in `~/webapp/nginx.conf` (needs fixing)\n- No Dockerfile or docker-compose.yml yet\n\n### Your task\n\n1. Create a `Dockerfile` in `~/webapp/` for the Flask app\n   - Use `python:3-alpine` as the base image\n   - Install dependencies from `requirements.txt`\n   - Expose port 5000\n   - Run the app with `python app.py`\n\n2. Create a `docker-compose.yml` in `~/webapp/` with two services:\n   - `app` — builds from the Dockerfile, exposes port 5000 internally\n   - `nginx` — uses `nginx:alpine`, maps port 8080 to 80, mounts `nginx.conf`\n\n3. Fix `nginx.conf` to proxy requests to the `app` service on port 5000\n\n4. Run `docker compose up -d` and verify the stack works\n\n### Verification\n\n```bash\ncurl http://localhost:8080\n```\n\nShould return: `{\"status\": \"ok\", \"message\": \"Hello from Enter Bash!\"}`\n\n### Useful commands\n\n```bash\ncd ~/webapp\ndocker compose up -d\ndocker compose ps\ndocker compose logs\ncurl http://localhost:8080\n```\n",
+    "hints": [
+      "The Dockerfile needs: FROM python:3-alpine, WORKDIR /app, COPY requirements.txt ., RUN pip install -r requirements.txt, COPY app.py ., EXPOSE 5000, CMD [\"python\", \"app.py\"]",
+      "In docker-compose.yml, the nginx service needs: volumes: [\"./nginx.conf:/etc/nginx/conf.d/default.conf\"] and ports: [\"8080:80\"]",
+      "In nginx.conf, proxy_pass should be http://app:5000 — Docker Compose DNS resolves service names"
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Web application stack deployed successfully!",
+      "failure_message": "The web stack is not working correctly."
+    }
+  },
+  {
+    "dir_name": "project-k8s-microservice",
+    "name": "Deploy a Kubernetes Microservice",
+    "type": "project",
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "tags": [
+      "kubernetes",
+      "deployment",
+      "service",
+      "configmap",
+      "ingress"
+    ],
+    "time_estimate": "30m",
+    "xp_reward": 300,
+    "packages": [],
+    "pre_install": [],
+    "namespace": "default",
+    "files": [
+      {
+        "source": "files/setup.sh",
+        "dest": "~/setup.sh",
+        "executable": true,
+        "cleanup": true
+      },
+      {
+        "source": "files/app.yaml",
+        "dest": "~/microservice/app.yaml"
+      }
+    ],
+    "setup": [
+      "bash ~/setup.sh"
+    ],
+    "instructions": "## Deploy a Kubernetes Microservice\n\nYou need to deploy a complete microservice on Kubernetes with proper configuration, health checks, and resource management.\n\n### What you have\n\n- A broken manifest in `~/microservice/app.yaml` with several issues to fix\n- A running k3s cluster with `kubectl` configured\n\n### Your task\n\n1. **Fix the ConfigMap** — values must be strings, not integers\n\n2. **Fix the Deployment**:\n   - Image should be `nginx:alpine`\n   - Add resource requests (cpu: 100m, memory: 128Mi) and limits (cpu: 500m, memory: 256Mi)\n   - Add a liveness probe (HTTP GET / on port 80, initialDelaySeconds: 5)\n   - Add a readiness probe (HTTP GET / on port 80, initialDelaySeconds: 3)\n   - Replicas should be 3\n   - Labels must match between selector, template, and Service\n\n3. **Fix the Service** — targetPort must match the container port (80)\n\n4. **Apply the manifest** and verify all pods are running\n\n### Verification\n\n```bash\nkubectl apply -f ~/microservice/app.yaml\nkubectl get pods -l app=web-api\nkubectl get svc web-api-svc\n```\n\nAll 3 pods should be Running and the Service should exist.\n\n### Useful commands\n\n```bash\nkubectl apply -f ~/microservice/app.yaml\nkubectl get pods -l app=web-api\nkubectl describe pod -l app=web-api\nkubectl get svc\nkubectl logs -l app=web-api\n```\n",
+    "hints": [
+      "ConfigMap values must be strings — wrap numbers in quotes: \"8080\" not 8080",
+      "The Deployment selector.matchLabels, template labels, and Service selector must all be 'app: web-api'",
+      "Add livenessProbe and readinessProbe under the container spec with httpGet on path / port 80"
+    ],
+    "validation": {
+      "script": "validate.sh",
+      "success_message": "Kubernetes microservice deployed successfully!",
+      "failure_message": "The microservice deployment is not complete."
     }
   },
   {

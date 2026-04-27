@@ -11,14 +11,14 @@
 
 ```bash
 docker swarm init
-docker network create --driver overlay --attachable app-overlay
+docker network create --driver overlay --attachable myoverlay
 
 docker service create \
   --name web-service \
-  --network app-overlay \
+  --network myoverlay \
   --replicas 2 \
   nginx:alpine
 
 docker network ls | grep overlay
-docker service ls   # should show web-service  2/2
+docker service ls
 ```

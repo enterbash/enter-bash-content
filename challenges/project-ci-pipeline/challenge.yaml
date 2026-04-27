@@ -1,0 +1,70 @@
+name: "Build a CI/CD Pipeline"
+type: project
+category: linux
+difficulty: hard
+tags: [linux, bash, git, automation, testing, deployment]
+time_estimate: "30m"
+xp_reward: 300
+packages: []
+pre_install: []
+namespace: default
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/app.sh
+    dest: ~/pipeline/app.sh
+  - source: files/test_app.sh
+    dest: ~/pipeline/tests/test_app.sh
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Build a CI/CD Pipeline
+
+  You need to create a simple but complete CI/CD pipeline using bash scripts. The pipeline should lint, test, build, and deploy a shell application.
+
+  ### What you have
+
+  - A shell app in `~/pipeline/app.sh`
+  - A test script in `~/pipeline/tests/test_app.sh` (has issues to fix)
+  - No pipeline script yet
+
+  ### Your task
+
+  1. **Fix the test script** `~/pipeline/tests/test_app.sh`
+     - It should source `app.sh` and test the `greet` and `add` functions
+     - Tests should exit 0 on success, 1 on failure
+
+  2. **Create the pipeline script** `~/pipeline/pipeline.sh` with these stages:
+     - **Lint**: Run `bash -n app.sh` to check syntax
+     - **Test**: Run `bash tests/test_app.sh` and fail if tests fail
+     - **Build**: Create a `build/` directory and copy `app.sh` into it with a version header
+     - **Deploy**: Copy `build/app.sh` to `~/deployed/app.sh` and create `~/deployed/version.txt` with the current date
+
+  3. **Make it executable** and run it successfully
+
+  ### Expected output
+
+  After running `~/pipeline/pipeline.sh`:
+  - `~/pipeline/build/app.sh` exists with a version header
+  - `~/deployed/app.sh` exists
+  - `~/deployed/version.txt` exists with a date
+  - All tests passed
+
+  ### Useful commands
+
+  ```bash
+  cd ~/pipeline
+  chmod +x pipeline.sh
+  ./pipeline.sh
+  cat ~/deployed/version.txt
+  ```
+hints:
+  - "The test script needs to source app.sh first: source ./app.sh or . ./app.sh"
+  - "pipeline.sh stages: bash -n app.sh (lint), bash tests/test_app.sh (test), mkdir -p build && cp app.sh build/ (build), mkdir -p ~/deployed && cp build/app.sh ~/deployed/ (deploy)"
+  - "version.txt should contain the date: echo \"$(date +%Y-%m-%d)\" > ~/deployed/version.txt"
+validation:
+  script: validate.sh
+  success_message: "CI/CD pipeline built and executed successfully!"
+  failure_message: "The pipeline is not complete."

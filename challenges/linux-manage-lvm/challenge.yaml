@@ -29,6 +29,8 @@ instructions: |
   - You need to extend it to use all available space in the VG
   - The filesystem on the LV needs to be resized too
 
+  > **Important:** Do NOT reformat the filesystem (`mkfs`). The existing data must be preserved. Use `resize2fs` to grow the filesystem in-place.
+
   ### Your task
 
   1. Check the current LVM configuration with `lvs`, `vgs`, `pvs`

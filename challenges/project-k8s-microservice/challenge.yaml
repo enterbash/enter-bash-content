@@ -1,0 +1,72 @@
+name: "Deploy a Kubernetes Microservice"
+type: project
+category: kubernetes
+difficulty: hard
+tags: [kubernetes, deployment, service, configmap, ingress]
+time_estimate: "30m"
+xp_reward: 300
+packages: []
+pre_install: []
+namespace: default
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/app.yaml
+    dest: ~/microservice/app.yaml
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Deploy a Kubernetes Microservice
+
+  You need to deploy a complete microservice on Kubernetes with proper configuration, health checks, and resource management.
+
+  ### What you have
+
+  - A broken manifest in `~/microservice/app.yaml` with several issues to fix
+  - A running k3s cluster with `kubectl` configured
+
+  ### Your task
+
+  1. **Fix the ConfigMap** — values must be strings, not integers
+
+  2. **Fix the Deployment**:
+     - Image should be `nginx:alpine`
+     - Add resource requests (cpu: 100m, memory: 128Mi) and limits (cpu: 500m, memory: 256Mi)
+     - Add a liveness probe (HTTP GET / on port 80, initialDelaySeconds: 5)
+     - Add a readiness probe (HTTP GET / on port 80, initialDelaySeconds: 3)
+     - Replicas should be 3
+     - Labels must match between selector, template, and Service
+
+  3. **Fix the Service** — targetPort must match the container port (80)
+
+  4. **Apply the manifest** and verify all pods are running
+
+  ### Verification
+
+  ```bash
+  kubectl apply -f ~/microservice/app.yaml
+  kubectl get pods -l app=web-api
+  kubectl get svc web-api-svc
+  ```
+
+  All 3 pods should be Running and the Service should exist.
+
+  ### Useful commands
+
+  ```bash
+  kubectl apply -f ~/microservice/app.yaml
+  kubectl get pods -l app=web-api
+  kubectl describe pod -l app=web-api
+  kubectl get svc
+  kubectl logs -l app=web-api
+  ```
+hints:
+  - "ConfigMap values must be strings — wrap numbers in quotes: \"8080\" not 8080"
+  - "The Deployment selector.matchLabels, template labels, and Service selector must all be 'app: web-api'"
+  - "Add livenessProbe and readinessProbe under the container spec with httpGet on path / port 80"
+validation:
+  script: validate.sh
+  success_message: "Kubernetes microservice deployed successfully!"
+  failure_message: "The microservice deployment is not complete."

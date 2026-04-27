@@ -1,0 +1,76 @@
+name: "Deploy a Web Application Stack"
+type: project
+category: docker
+difficulty: hard
+tags: [docker, nginx, docker-compose, networking, volumes]
+time_estimate: "30m"
+xp_reward: 300
+packages: []
+pre_install: []
+namespace: default
+files:
+  - source: files/setup.sh
+    dest: ~/setup.sh
+    executable: true
+    cleanup: true
+  - source: files/app.py
+    dest: ~/webapp/app.py
+  - source: files/requirements.txt
+    dest: ~/webapp/requirements.txt
+  - source: files/nginx.conf
+    dest: ~/webapp/nginx.conf
+setup:
+  - bash ~/setup.sh
+instructions: |
+  ## Deploy a Web Application Stack
+
+  You have a Python Flask application that needs to be containerized and deployed behind an Nginx reverse proxy using Docker Compose.
+
+  ### What you have
+
+  - A Flask app in `~/webapp/app.py` that listens on port 5000
+  - A `requirements.txt` with Flask dependency
+  - An Nginx config in `~/webapp/nginx.conf` (needs fixing)
+  - No Dockerfile or docker-compose.yml yet
+
+  ### Your task
+
+  1. Create a `Dockerfile` in `~/webapp/` for the Flask app
+     - Use `python:3-alpine` as the base image
+     - Install dependencies from `requirements.txt`
+     - Expose port 5000
+     - Run the app with `python app.py`
+
+  2. Create a `docker-compose.yml` in `~/webapp/` with two services:
+     - `app` — builds from the Dockerfile, exposes port 5000 internally
+     - `nginx` — uses `nginx:alpine`, maps port 8080 to 80, mounts `nginx.conf`
+
+  3. Fix `nginx.conf` to proxy requests to the `app` service on port 5000
+
+  4. Run `docker compose up -d` and verify the stack works
+
+  ### Verification
+
+  ```bash
+  curl http://localhost:8080
+  ```
+
+  Should return: `{"status": "ok", "message": "Hello from Enter Bash!"}`
+
+  ### Useful commands
+
+  ```bash
+  cd ~/webapp
+  docker compose up -d
+  docker compose ps
+  docker compose logs
+  curl http://localhost:8080
+  ```
+hints:
+  - "The Dockerfile needs: FROM python:3-alpine, WORKDIR /app, COPY requirements.txt ., RUN pip install -r requirements.txt, COPY app.py ., EXPOSE 5000, CMD [\"python\", \"app.py\"]"
+  - "In docker-compose.yml, the nginx service needs: volumes: [\"./nginx.conf:/etc/nginx/conf.d/default.conf\"] and ports: [\"8080:80\"]"
+  - "In nginx.conf, proxy_pass should be http://app:5000 — Docker Compose DNS resolves service names"
+validation:
+  script: validate.sh
+  success_message: "Web application stack deployed successfully!"
+  failure_message: "The web stack is not working correctly."

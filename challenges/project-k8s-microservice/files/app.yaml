@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-api-config
+data:
+  APP_PORT: 8080
+  APP_ENV: production
+  MAX_CONNECTIONS: 100
+  LOG_LEVEL: info
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-api
+  labels:
+    app: web-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: api
+        image: nginx:latest
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: web-api-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-api-svc
+spec:
+  selector:
+    app: web-app
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
