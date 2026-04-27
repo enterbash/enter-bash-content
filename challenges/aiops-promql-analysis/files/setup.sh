@@ -16,8 +16,11 @@ scrape_configs:
       - targets: ['localhost:9100']
 EOF
 
+# Serve Prometheus under /browser/ subpath for browser tab routing
 prometheus --config.file=/etc/prometheus/prometheus.yml \
-  --storage.tsdb.path=/tmp/prometheus > /dev/null 2>&1 &
+  --storage.tsdb.path=/tmp/prometheus \
+  --web.external-url=http://localhost:9090/browser/ \
+  --web.route-prefix=/ > /dev/null 2>&1 &
 
 sleep 5
 echo "Ready. Prometheus running on :9090 with node_exporter metrics. Write your PromQL queries."

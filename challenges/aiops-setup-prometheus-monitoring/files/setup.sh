@@ -19,3 +19,5 @@ EOF
 
 sudo cp /tmp/prometheus-default.yml /etc/prometheus/prometheus.yml
 sudo chown -R runner:runner /etc/prometheus
+
+echo "NOTE: When starting Prometheus, use: prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/tmp/prometheus --web.external-url=/browser/ --web.route-prefix=/ &"
