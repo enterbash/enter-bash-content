@@ -2,8 +2,8 @@
 # Setup for aiops-build-grafana-dashboard
 set -e
 
-# Start node_exporter
-node_exporter > /dev/null 2>&1 &
+# Start node_exporter (nohup to survive docker exec session end)
+nohup node_exporter > /dev/null 2>&1 &
 
 # Configure and start Prometheus
 sudo mkdir -p /etc/prometheus
@@ -19,11 +19,11 @@ scrape_configs:
       - targets: ['localhost:9100']
 EOF
 
-prometheus --config.file=/etc/prometheus/prometheus.yml \
+nohup prometheus --config.file=/etc/prometheus/prometheus.yml \
   --storage.tsdb.path=/tmp/prometheus > /dev/null 2>&1 &
 
-# Start Grafana (no subpath — Caddy routes / to Grafana, /terminal/ to ttyd)
-sudo grafana-server --homepath=/usr/share/grafana --config=/etc/grafana/grafana.ini > /dev/null 2>&1 &
+# Start Grafana
+nohup sudo grafana-server --homepath=/usr/share/grafana --config=/etc/grafana/grafana.ini > /dev/null 2>&1 &
 
 # Wait for Grafana to be ready
 for i in $(seq 1 30); do

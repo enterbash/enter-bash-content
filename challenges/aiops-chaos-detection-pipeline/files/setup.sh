@@ -14,15 +14,15 @@ scrape_configs:
       - targets: ['localhost:9090']
 EOF
 
-prometheus --config.file=/tmp/prometheus.yml --storage.tsdb.path=/tmp/prometheus-data --web.listen-address=:9090 &
+nohup prometheus --config.file=/tmp/prometheus.yml --storage.tsdb.path=/tmp/prometheus-data --web.listen-address=:9090 > /dev/null 2>&1 &
 sleep 2
 
 # Start node_exporter
-node_exporter --web.listen-address=:9100 &
+nohup node_exporter --web.listen-address=:9100 > /dev/null 2>&1 &
 sleep 1
 
-# Start Grafana (no subpath — Caddy routes / to Grafana, /terminal/ to ttyd)
-sudo grafana-server --homepath=/usr/share/grafana --config=/etc/grafana/grafana.ini > /dev/null 2>&1 &
+# Start Grafana
+nohup sudo grafana-server --homepath=/usr/share/grafana --config=/etc/grafana/grafana.ini > /dev/null 2>&1 &
 
 for i in $(seq 1 30); do
   if curl -sf http://localhost:3000/api/health > /dev/null 2>&1; then break; fi
