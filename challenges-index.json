@@ -999,11 +999,6 @@
         "dest": "~/setup.sh",
         "executable": true,
         "cleanup": true
-      },
-      {
-        "source": "files/generate_metrics.py",
-        "dest": "~/generate_metrics.py",
-        "cleanup": true
       }
     ],
     "setup": [
