@@ -27,7 +27,8 @@ instructions: |
   Prometheus and node_exporter are already running and scraping metrics. Grafana is running
   on port 3000 (use the Browser tab to access it). A Prometheus data source is pre-configured.
 
-  - Grafana login: `admin` / `admin`
+  - Grafana access: anonymous with Admin role (no login needed in Browser tab)
+  - API access from terminal: use `admin:admin` credentials
 
   ### Your Tasks
 
