@@ -8,7 +8,6 @@ xp_reward: 75
 packages: []
 pre_install: [prometheus, prometheus-node-exporter]
 namespace: ""
-web_port: 9090
 files:
   - source: files/setup.sh
     dest: ~/setup.sh
